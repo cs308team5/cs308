@@ -71,6 +71,7 @@ After the branch is created, fetch it locally.
 ```bash
 git checkout develop
 git pull origin develop
+```
 
 # Committing Code
 
@@ -81,6 +82,7 @@ Example:
 ```bash
 git add .
 git commit -m "SCRUM-69 Implement login page layout"
+```
 
 Important rules:
 
