@@ -8,13 +8,14 @@ To keep development organised, all team members must follow the workflow describ
 
 # Branch Structure
 Our repository follows this branch hierarchy:
+
+```
 main
-│
 └── develop
-      │
-      ├── SCRUM-XX-feature-name
-      ├── SCRUM-XX-feature-name
-      └── SCRUM-XX-feature-name
+    ├── SCRUM-69-create-login-ui
+    ├── SCRUM-70-signup-api
+    └── SCRUM-71-product-page
+```
 
 ## Branch Roles
 
