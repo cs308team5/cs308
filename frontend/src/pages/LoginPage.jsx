@@ -1,7 +1,10 @@
 import React from "react";
 import "./LoginPage.css";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  
   return (
     <div className="login-page">
 
@@ -28,13 +31,24 @@ export default function LoginPage() {
           <input type="password" placeholder="••••••••" />
 
           <div className="row">
-            <label>
-              <input type="checkbox" /> Remember me
+            <label className="remember">
+              <input type="checkbox" />
+              <span>Remember me</span>
             </label>
             <span className="link">Forgot password?</span>
           </div>
 
           <button className="signin caps">Sign In</button>
+
+          <p className="register-text typewriter">
+            Don’t have an account?{" "}
+            <span 
+              className="register-link"
+              onClick={() => navigate("/register")}
+            >
+              Register
+            </span>
+          </p>
         </div>
       </div>
 
