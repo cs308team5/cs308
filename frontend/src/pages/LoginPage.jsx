@@ -1,10 +1,37 @@
-import React from "react";
+import React, { useState } from "react";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
+import { login } from "../services/authService";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+
+    setError("");
+    setLoading(true);
+
+    const response = await login(email, password);
+
+    setLoading(false);
+
+    if (response.success) {
+      console.log("Logged in:", response);
+      navigate("/home"); // change if your route is different
+    } else {
+      setError(response.message);
+    }
+  };
+
   return (
     <div className="login-page">
 
@@ -25,10 +52,23 @@ export default function LoginPage() {
           <h2 className="caps">Welcome Back</h2>
 
           <label className="caps">Email</label>
-          <input type="email" placeholder="your@email.com" />
+          <input
+            type="email"
+            placeholder="your@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
           <label className="caps">Password</label>
-          <input type="password" placeholder="••••••••" />
+          <input
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          {/* ERROR MESSAGE */}
+          {error && <p className="error">{error}</p>}
 
           <div className="row">
             <label className="remember">
@@ -38,17 +78,24 @@ export default function LoginPage() {
             <span className="link">Forgot password?</span>
           </div>
 
-          <button className="signin caps">Sign In</button>
+          <button
+            className="signin caps"
+            onClick={handleLogin}
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : "LOGIN"}
+          </button>
 
-          <p className="register-text typewriter">
+          <p className="register-text">
             Don’t have an account?{" "}
-            <span 
+            <span
               className="register-link"
               onClick={() => navigate("/register")}
             >
               Register
             </span>
           </p>
+
         </div>
       </div>
 
