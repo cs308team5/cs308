@@ -11,9 +11,10 @@
 /* LOGO */
 .logo-container {
   position: absolute;
-  top: 50px;
+  top: 30px;
   width: 100%;
   text-align: center;
+  z-index: 2;
 }
 
 .logo {
@@ -213,4 +214,10 @@
 
 .remember input {
   margin: 0;
+}
+
+.error {
+  color: var(--blue);
+  font-size: 13px;
+  margin-top: 6px;
 }
