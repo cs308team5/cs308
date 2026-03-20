@@ -172,7 +172,7 @@
 
 @media (max-width: 700px) {
   .help-note {
-    display: none; /* 🔥 simplest clean fix */
+    display: none;
   }
 }
 
@@ -186,4 +186,31 @@
     width: 90%;
     padding: 30px;
   }
+}
+
+.register-text {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.register-link {
+  color: var(--blue);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.register-link:hover {
+  text-decoration: underline;
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.remember input {
+  margin: 0;
 }
