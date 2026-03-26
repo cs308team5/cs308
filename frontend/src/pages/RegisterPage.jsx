@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { register } from "../services/authService";
 import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 
@@ -6,7 +7,7 @@ export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(""); // UI'da var, şu an DB'ye gönderilmiyor
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -15,8 +16,8 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEmail = (value) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
   const handleRegister = async () => {
@@ -86,8 +87,18 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      // Backend hazır olduğunda:
-      // const response = await register(fullName, username, email, password);
+      const response = await register({
+        fullName,
+        username,
+        email,
+        password,
+      });
+
+      if (!response.success) {
+        setError(response.message || "Registration failed.");
+        setLoading(false);
+        return;
+      }
 
       setSuccess("Account created successfully! Redirecting to login...");
       setLoading(false);
