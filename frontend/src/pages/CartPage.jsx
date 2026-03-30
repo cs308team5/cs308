@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./CartPage.css";
+import { useNavigate } from "react-router-dom";
 
 const initialCart = [
   {
@@ -30,6 +31,7 @@ const initialCart = [
 
 export default function CartPage() {
   const [cart, setCart] = useState(initialCart);
+  const navigate = useNavigate();
 
   const updateQuantity = (id, change) => {
     setCart(cart.map(item =>
@@ -101,7 +103,9 @@ export default function CartPage() {
           <span>${total.toFixed(2)}</span>
         </div>
 
-        <button className="checkout">Proceed to Checkout</button>
+        <button className="checkout" onClick={() => navigate("/checkout")}>
+        Proceed to Checkout
+      </button>
 
         <p className="note">Free shipping on orders over $100</p>
       </div>
