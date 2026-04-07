@@ -5,6 +5,8 @@ import RegisterPage from "./pages/RegisterPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import TestPage from "./pages/TestPage";
+import DiscoverPage from "./pages/DiscoverPage.jsx";
+
 
 const router = createBrowserRouter([
   {
@@ -18,6 +20,10 @@ const router = createBrowserRouter([
   {
     path: "/home",
     element: <HomePage />,
+  },
+  {
+    path: "/discover",
+    element: <DiscoverPage />,
   },
   {
     path: "/login",

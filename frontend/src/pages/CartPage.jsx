@@ -1,48 +1,34 @@
-import React, { useState } from "react";
-import "./CartPage.css";
+import React, { useState, useEffect } from "react";
+import { fetchCart, updateCartQuantity, removeFromCart } from "../services/productAndCartService.js";
+import { getCurrentUser } from "../services/authService.js";
 import { useNavigate } from "react-router-dom";
+import "./CartPage.css";
 
-const initialCart = [
-  {
-    id: 1,
-    name: "Premium Wireless Headphones",
-    description: "High-quality audio with active noise cancellation",
-    price: 299.99,
-    quantity: 1,
-    image: "https://via.placeholder.com/80",
-  },
-  {
-    id: 2,
-    name: "Minimalist Watch",
-    description: "Swiss movement with sapphire crystal glass",
-    price: 189.99,
-    quantity: 1,
-    image: "https://via.placeholder.com/80",
-  },
-  {
-    id: 3,
-    name: "Leather Backpack",
-    description: "Genuine leather with laptop compartment",
-    price: 149.99,
-    quantity: 1,
-    image: "https://via.placeholder.com/80",
-  },
-];
 
 export default function CartPage() {
-  const [cart, setCart] = useState(initialCart);
+  const [cart, setCart] = useState([]);
+  const user = getCurrentUser();
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const updateQuantity = (id, change) => {
-    setCart(cart.map(item =>
-      item.id === id
-        ? { ...item, quantity: Math.max(1, item.quantity + change) }
-        : item
-    ));
+  useEffect(() => {
+    if (!user) return;
+    fetchCart(user.customer_id)
+        .then(setCart)
+        .catch(console.error)
+        .finally(() => setLoading(false));
+  }, []);
+
+  const updateQuantity = async (item, change) => {
+    if (change > 0 && item.quantity >= item.stock_quantity) return;
+    const newQty = Math.max(1, item.quantity + change);
+    await updateCartQuantity(item.id, newQty);
+    setCart(cart.map(c => c.id === item.id ? { ...c, quantity: newQty } : c));
   };
 
-  const removeItem = (id) => {
-    setCart(cart.filter(item => item.id !== id));
+  const removeItem = async (id) => {
+      await removeFromCart(id);
+      setCart(cart.filter(c => c.id !== id));
   };
 
   const subtotal = cart.reduce(
@@ -67,9 +53,9 @@ export default function CartPage() {
               <p>{item.description}</p>
 
               <div className="quantity">
-                <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                <button onClick={() => updateQuantity(item, -1)}>-</button>
                 <span>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                <button className={item.quantity >= item.stock_quantity ? "stock-reached" : ""} onClick={() => updateQuantity(item, 1)} disabled={item.quantity >= item.stock_quantity}>{item.quantity >= item.stock_quantity ? "Stock Reached" : "+"}</button>
               </div>
             </div>
 
@@ -103,7 +89,8 @@ export default function CartPage() {
           <span>${total.toFixed(2)}</span>
         </div>
 
-        <button className="checkout" onClick={() => navigate("/checkout")}>
+        <button className="checkout" onClick={() => navigate("/checkout")} disabled={cart.length === 0}>
+          
         Proceed to Checkout
       </button>
 
