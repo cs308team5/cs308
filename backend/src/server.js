@@ -4,6 +4,7 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js";
 
 dotenv.config();
 
@@ -17,13 +18,25 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/checkout", checkoutRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
     res.json({ status: "Server is running" });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+
+import pool from "./config/db.js";
+
+try {
+  const result = await pool.query("SELECT NOW()");
+  console.log("DB connected:", result.rows[0]);
+} catch (err) {
+  console.error("DB connection test failed:", err.message);
+  console.error(err);
+}
