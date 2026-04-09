@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
+import invoiceRoutes from "./routes/invoiceRoutes.js";
 
 dotenv.config();
 
@@ -19,15 +20,16 @@ app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/checkout", checkoutRoutes);
+app.use("/api/invoice", invoiceRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
-    res.json({ status: "Server is running" });
+  res.json({ status: "Server is running" });
 });
 
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
 
