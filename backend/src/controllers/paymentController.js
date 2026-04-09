@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { createOrder } from "./orderController.js";
 
 // Test kart numaraları
 const ALWAYS_DECLINE = "4000000000000002";
@@ -27,7 +28,7 @@ function isCardExpired(month, year) {
 }
 
 export const processPayment = async (req, res) => {
-    const { cardNumber, cvv, expiryMonth, expiryYear, amount } = req.body;
+    const { cardNumber, cvv, expiryMonth, expiryYear, amount, customer_id, cart_items } = req.body;
 
     // 1. Alan kontrolü
     if (!cardNumber || !cvv || !expiryMonth || !expiryYear || !amount) {
@@ -87,6 +88,26 @@ export const processPayment = async (req, res) => {
             message: "Payment declined by bank.",
             transactionId,
         });
+    }
+
+    // 8. ödeme onaylandıysa order ı kaydet
+    if (customer_id && cart_items?.length) {
+        try {
+            const { order_id } = await createOrder(customer_id, cart_items, amount);
+            return res.status(200).json({
+                success: true,
+                message: "Payment approved.",
+                transactionId,
+                amount,
+                order_id,
+            });
+        } catch (error) {
+            console.error("Order creation failed:", error);
+            return res.status(500).json({
+                success: false,
+                message: "Payment approved but order could not be saved.",
+            });
+        }
     }
 
     // ALWAYS_APPROVE veya diğer geçerli kartlar → başarılı

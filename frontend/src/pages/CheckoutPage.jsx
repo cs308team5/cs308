@@ -1,7 +1,67 @@
 import React from "react";
+import { useState, useEffect } from "react";
+import { fetchCart } from "../services/productAndCartService.js";
+import { getCurrentUser } from "../services/authService.js";
 import "./CheckoutPage.css";
 
 export default function CheckoutPage() {
+  const user = getCurrentUser();
+  const [cart, setCart] = useState([]);
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchCart(user.customer_id).then(setCart).catch(console.error);
+  }, []);
+
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const shipping = 15.00;
+  const tax = subtotal * 0.08;
+  const total = subtotal + shipping + tax;
+
+  const handlePlaceOrder = async () => {
+    setError("");
+    const [expiryMonth, expiryYear] = expiry.split("/").map((s) => s.trim());
+
+    setSubmitting(true);
+    try {
+      // hardcoded for now but change it later
+      const res = await fetch("http://localhost:3000/api/payment/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardNumber,
+          cvv,
+          expiryMonth,
+          expiryYear,
+          amount: total.toFixed(2),
+          customer_id: user.customer_id,
+          cart_items: cart.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || "Payment failed.");
+        return;
+      }
+      // alerti silebiliriz belki
+      alert('Order placed!');
+    } catch (err) {
+      setError("Could not connect to server. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="checkout-container">
 
@@ -84,7 +144,7 @@ export default function CheckoutPage() {
 
             <div className="input-group">
               <label>Card Number</label>
-              <input placeholder="1234 5678 9012 3456" />
+              <input placeholder="1234 5678 9012 3456" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
             </div>
 
             <div className="input-group">
@@ -95,12 +155,12 @@ export default function CheckoutPage() {
             <div className="grid-2">
               <div className="input-group">
                 <label>Expiry Date</label>
-                <input placeholder="MM/YY" />
+                <input placeholder="MM/YY" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
               </div>
 
               <div className="input-group">
                 <label>CVV</label>
-                <input placeholder="123" />
+                <input placeholder="123" value={cvv} onChange={(e) => setCvv(e.target.value)} />
               </div>
             </div>
 
@@ -117,7 +177,7 @@ export default function CheckoutPage() {
 
           <div className="summary-row">
             <span>Subtotal</span>
-            <span>$299.00</span>
+            <span>${subtotal.toFixed(2)}</span>
           </div>
 
           <div className="summary-row">
@@ -126,18 +186,22 @@ export default function CheckoutPage() {
           </div>
 
           <div className="summary-row">
-            <span>Tax</span>
-            <span>$24.92</span>
+            <span>Tax (8%)</span>
+            <span>${tax.toFixed(2)}</span>
           </div>
 
           <hr />
 
           <div className="total">
             <span>Total</span>
-            <span>$338.92</span>
+            <span>${total.toFixed(2)}</span>
           </div>
 
-          <button className="place-order">Place Order</button>
+          {error && <p style={{ color: "red", fontSize: "0.9rem" }}>{error}</p>}
+
+          <button className="place-order" onClick={handlePlaceOrder} disabled={submitting}>
+            {submitting ? "Placing Order..." : "Place Order"}
+          </button>
 
           <div className="extra">
             <p>🔒 Secure 256-bit SSL encryption</p>
