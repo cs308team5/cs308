@@ -122,6 +122,13 @@ export const generateInvoice = async (req, res) => {
             .fillColor("gray")
             .text("Thank you for your order.", { align: "center" });
 
+        // 4. Save invoice record to database
+        await pool.query(
+            `INSERT INTO invoices (order_id, customer_id, generated_at, total_price)
+            VALUES ($1, $2, NOW(), $3)`,
+            [orderId, customerId, order.total_price]
+        );
+
         doc.end();
     } catch (error) {
         console.error("Invoice generation error:", error);
