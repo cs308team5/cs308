@@ -1,7 +1,57 @@
-import React from "react";
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import "./CheckoutPage.css";
 
 export default function CheckoutPage() {
+
+  const { state } = useLocation();
+  const navigate = useNavigate();
+
+  const cart = state?.cart ?? [];
+  const subtotal = state?.subtotal ?? 0;
+  const shipping = 15.00;
+  const tax = +(subtotal * 0.0835).toFixed(2);
+  const total = subtotal + shipping + tax;
+
+  const [form, setForm] = useState({
+    fullName: "", email: "", phone: "",
+    street: "", city: "", state: "", zip: "", country: "",
+    cardNumber: "", cardName: "", expiry: "", cvv: "",
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+
+  const handlePlaceOrder = () => {
+    navigate("/invoice", {
+      state: {
+        order: {
+          invoiceNumber: `INV-${Date.now()}`,
+          date: new Date().toLocaleDateString("en-US", {
+            year: "numeric", month: "long", day: "numeric",
+          }),
+          items: cart,
+          shipping: {
+            fullName: form.fullName,
+            email:    form.email,
+            phone:    form.phone,
+            street:   form.street,
+            city:     form.city,
+            state:    form.state,
+            zip:      form.zip,
+            country:  form.country,
+          },
+          subtotal,
+          shippingCost: shipping,
+          tax,
+          total,
+        }
+      }
+    });
+  };
+
   return (
     <div className="checkout-container">
 
@@ -23,45 +73,45 @@ export default function CheckoutPage() {
             <div className="grid-2">
               <div className="input-group">
                 <label>Full Name</label>
-                <input placeholder="John Doe" />
+                <input name="fullName" value={form.fullName} onChange={handleChange} placeholder="John Doe" />
               </div>
 
               <div className="input-group">
                 <label>Email</label>
-                <input placeholder="john@example.com" />
+                <input name="email" value={form.email} onChange={handleChange} placeholder="john@example.com" />
               </div>
             </div>
 
             <div className="input-group">
               <label>Phone Number</label>
-              <input placeholder="+1 (555) 123-4567" />
+              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+1 (555) 123-4567" />
             </div>
 
             <div className="input-group">
               <label>Street Address</label>
-              <input placeholder="123 Main Street, Apt 4B" />
+              <input name="street" value={form.street} onChange={handleChange} placeholder="123 Main Street, Apt 4B" />
             </div>
 
             <div className="grid-3">
               <div className="input-group">
                 <label>City</label>
-                <input placeholder="New York" />
+                <input name="city" value={form.city} onChange={handleChange} placeholder="New York" />
               </div>
 
               <div className="input-group">
                 <label>State</label>
-                <input placeholder="NY" />
+                <input name="state" value={form.state} onChange={handleChange} placeholder="NY" />
               </div>
 
               <div className="input-group">
                 <label>ZIP Code</label>
-                <input placeholder="10001" />
+                <input name="zip" value={form.zip} onChange={handleChange} placeholder="10001" />
               </div>
             </div>
 
             <div className="input-group">
               <label>Country</label>
-              <select>
+              <select name="country" value={form.country} onChange={handleChange}>
                 <option>Select country</option>
                 <option>United States</option>
                 <option>United Kingdom</option>
@@ -84,23 +134,23 @@ export default function CheckoutPage() {
 
             <div className="input-group">
               <label>Card Number</label>
-              <input placeholder="1234 5678 9012 3456" />
+              <input name="cardNumber" value={form.cardNumber} onChange={handleChange} placeholder="1234 5678 9012 3456" />
             </div>
 
             <div className="input-group">
               <label>Cardholder Name</label>
-              <input placeholder="Name as it appears on card" />
+              <input name="cardName" value={form.cardName} onChange={handleChange} placeholder="Name as it appears on card" />
             </div>
 
             <div className="grid-2">
               <div className="input-group">
                 <label>Expiry Date</label>
-                <input placeholder="MM/YY" />
+                <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="MM/YY" />
               </div>
 
               <div className="input-group">
                 <label>CVV</label>
-                <input placeholder="123" />
+                <input name="cvv" value={form.cvv} onChange={handleChange} placeholder="123" />
               </div>
             </div>
 
@@ -117,27 +167,27 @@ export default function CheckoutPage() {
 
           <div className="summary-row">
             <span>Subtotal</span>
-            <span>$299.00</span>
+            <span>${subtotal.toFixed(2)}</span>
           </div>
 
           <div className="summary-row">
             <span>Shipping</span>
-            <span>$15.00</span>
+            <span>${shipping.toFixed(2)}</span>
           </div>
 
           <div className="summary-row">
             <span>Tax</span>
-            <span>$24.92</span>
+            <span>${tax.toFixed(2)}</span>
           </div>
 
           <hr />
 
           <div className="total">
             <span>Total</span>
-            <span>$338.92</span>
+            <span>${total.toFixed(2)}</span>
           </div>
 
-          <button className="place-order">Place Order</button>
+          <button className="place-order" onClick={handlePlaceOrder}>Place Order</button>
 
           <div className="extra">
             <p>🔒 Secure 256-bit SSL encryption</p>

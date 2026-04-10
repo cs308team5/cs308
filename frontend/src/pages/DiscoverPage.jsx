@@ -80,6 +80,14 @@ useEffect(() => {
         }
     };
 
+    const sortedProducts = [...products].sort((a, b) => {
+        if (filters.sort === "a-z")        return a.title.localeCompare(b.title);
+        if (filters.sort === "z-a")        return b.title.localeCompare(a.title);
+        if (filters.sort === "price_asc")  return parseFloat(a.price.replace("$", "")) - parseFloat(b.price.replace("$", ""));
+        if (filters.sort === "price_desc") return parseFloat(b.price.replace("$", "")) - parseFloat(a.price.replace("$", ""));
+        return 0;
+    });
+
   
 
     return (
@@ -106,6 +114,21 @@ useEffect(() => {
                 <aside className="filter-panel">
 
                     <h2 className="filter-header">Filters</h2>
+
+                    <div className="filter-group">
+                        <p className="filter-label">Sort By</p>
+                        <select
+                            className="sort-select"
+                            value={filters.sort}
+                            onChange={(e) => setFilters({ ...filters, sort: e.target.value })}
+                        >
+                            <option value="all">Default</option>
+                            <option value="a-z">A → Z</option>
+                            <option value="z-a">Z → A</option>
+                            <option value="price_asc">Price: Low → High</option>
+                            <option value="price_desc">Price: High → Low</option>
+                        </select>
+                    </div>
 
                     <div className="filter-group">
                         <p className="filter-label">Price Range</p>
@@ -146,14 +169,14 @@ useEffect(() => {
                 <main className="results-grid">
                 <div className="header-actions" style={{ paddingRight: "40px" }}>
                     <h1 className="greeting-text">
-                    Explore <span className="username-highlight">{filters.sort}</span>
+                    Explore
                     </h1>
                     <CartButton onClick={() => navigate("/cart")} />
                 </div>
                 <div className="product-grid-container">
                     {loading && <p>Loading products…</p>}
                     {error   && <p>Error: {error}</p>}
-                    {!loading && !error && products.map((product) => (
+                    {!loading && !error && sortedProducts.map((product) => (
                         <div key={product.id} className="grid-item">
                             <PolaroidCard title={product.title} creator={product.creator} price={product.price} img={product.img} productId={product.id}/>
                         </div>

@@ -5,6 +5,7 @@ const mapProduct = (row) => ({
   title:    row.name,
   creator:  row.additional_attributes?.creator ?? "@unknown",
   price:    `$${Number(row.price).toFixed(2)}`,
+  stock_quantity: row.stock_quantity,
   category: row.category ?? "uncategorized",
   img:      row.image_url ?? null,
 });
@@ -90,4 +91,37 @@ export async function removeFromCart(cartItemId) {
     .delete()
     .eq("id", cartItemId);
   if (error) throw error;
+}
+
+// Local cart for quests
+
+export function getGuestCart() {
+  return JSON.parse(localStorage.getItem("guest_cart") ?? "[]");
+}
+
+export function saveGuestCart(cart) {
+  localStorage.setItem("guest_cart", JSON.stringify(cart));
+}
+
+export function addToGuestCart(product) {
+  const cart = getGuestCart();
+  const existing = cart.find(i => i.product_id === product.id);
+
+  if (existing) {
+
+    existing.quantity += 1;
+  }
+  else {
+    cart.push({
+      product_id:     product.id,
+      quantity:       1,
+      name:           product.title,
+      description:    product.description ?? "",
+      price:          Number(String(product.price).replace("$", "")),
+      image:          product.img,
+      stock_quantity: product.stock_quantity,
+    });
+  }
+
+  saveGuestCart(cart);
 }

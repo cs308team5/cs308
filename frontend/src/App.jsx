@@ -6,6 +6,7 @@ import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import TestPage from "./pages/TestPage";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
+import InvoicePage from "./pages/InvoicePage.jsx";
 
 
 const router = createBrowserRouter([
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
   {
     path: "/checkout",
     element: <CheckoutPage />,
+  },
+  {
+    path: "/invoice",
+    element: <InvoicePage />,
   },
 ]);
 

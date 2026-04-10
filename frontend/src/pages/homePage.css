@@ -5,9 +5,12 @@ html, body {
     overflow: hidden;
 }
 
-.greeting-container {
-    padding: 60px 0 20px 40px;
 
+.greeting-container {
+    padding: 60px 60px 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .greeting-text {
@@ -168,6 +171,71 @@ html, body {
 
 .content-area::-webkit-scrollbar {
     display: none;
+}
+
+/* Cart and logout */
+
+.cart-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: var(--blue);
+    color: var(--offwhite);
+    border: none;
+    border-radius: 10px;
+    font-family: "Playfair Display", serif;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.cart-btn:hover {
+    background-color: var(--black);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cart-count {
+    background-color: var(--offwhite);
+    color: var(--black);
+    font-family: "inter", sans-serif;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 20px;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* Logout Button */
+.logout-btn {
+    margin-right: 50px;
+    padding: 10px 20px;
+    background-color: var(--blue);
+    color: var(--offwhite);
+    border: none;
+    border-radius: 10px;
+    font-family: "Playfair Display", serif;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.logout-btn:hover {
+    background-color: var(--black);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
 /* Polaroid Card */
