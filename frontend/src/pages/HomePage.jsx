@@ -6,7 +6,7 @@ import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
 import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { faShareNodes } from '@fortawesome/free-solid-svg-icons'
 import { getCurrentUser, logout} from "../services/authService.js";
-import { fetchProducts, addToCart } from "../services/productAndCartService.js";
+import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
 
 
 // --------------|
@@ -62,7 +62,11 @@ export const CartButton = ({ onClick }) => {
  
     const loadCartCount = () => {
         const user = getCurrentUser();
-        if (!user?.customer_id) return;
+        if (!user?.customer_id) {
+            const guestCart = JSON.parse(localStorage.getItem("guest_cart") ?? "[]");
+            setCount(guestCart.reduce((s, i) => s + i.quantity, 0));
+            return;
+        }
  
         import("../services/productAndCartService.js").then(({ fetchCart }) => {
             fetchCart(user.customer_id)
@@ -89,7 +93,7 @@ export const CartButton = ({ onClick }) => {
 
 // Polaroid card and row
 
-export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId}) => {
+export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity}) => {
 
     const [isLiked, setIsLiked] = useState(false);
 
@@ -104,19 +108,23 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
 
     const handleAddToCart = async () => {
         const user = getCurrentUser();
-        if (!user) { 
-            alert("Please log in to add items to cart."); 
-            return; 
-        }
-
-        if (!user.customer_id) {
-            console.error("Missing customer_id. The user object is:", user);
-            alert("Error: User is missing a customer_id. (Check your console)");
-            return;
-        }
 
         try {
-            await addToCart(user.customer_id, productId);
+
+            if (!user) {
+                addToGuestCart({
+                    id:             productId,
+                    title,
+                    img,
+                    price,
+                    stock_quantity,
+                    description: "",
+                });
+            }
+            else {
+                await addToCart(user.customer_id, productId);
+            }
+
             window.dispatchEvent(new Event("cartUpdated"));
             
         } 
@@ -194,7 +202,7 @@ const PolaroidRow = ({ title, sort, linkedFilter }) => {
             <h2 className="row-title">{title}</h2>
             <div className="polaroid-grid" ref={scrollRef}>
                 {loading ? <p>Loading…</p> : items.map((item) => (
-                    <PolaroidCard key={item.id} title={item.title} creator={item.creator} img={item.img} price={item.price} productId={item.id}/>
+                    <PolaroidCard key={item.id} title={item.title} creator={item.creator} img={item.img} price={item.price} productId={item.id} stock_quantity={item.stock_quantity}/>
                 ))}
                 {!loading && <CheckMoreCard linkedFilter={linkedFilter} />}
                 <div className="grid-end-spacer" />
