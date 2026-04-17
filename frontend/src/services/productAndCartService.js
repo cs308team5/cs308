@@ -5,8 +5,10 @@ const mapProduct = (row) => ({
   title:    row.name,
   creator:  row.additional_attributes?.creator ?? "@unknown",
   price:    `$${Number(row.price).toFixed(2)}`,
+  stock_quantity: row.stock_quantity,
   category: row.category ?? "uncategorized",
   img:      row.image_url ?? null,
+  stock_quantity: row.stock_quantity,
 });
 
 export async function fetchProducts({ category = [], min_price = 0, max_price = 10000, sort = "all", search = "", limit = 1000 } = {}) {
@@ -42,7 +44,7 @@ export async function fetchCart(userId) {
     stock_quantity: row.products.stock_quantity,
   }));
 }
-
+/*
 export async function addToCart(userId, productId) {
   // If item already in cart, increment quantity
   if (userId === undefined || productId === undefined) {
@@ -75,6 +77,28 @@ export async function addToCart(userId, productId) {
     if (error) throw error;
   }
 }
+*/
+export async function addToCart(userId, productId) {
+  if (userId === undefined || productId === undefined) {
+    throw new Error("userId or productId is undefined.");
+  }
+
+  const response = await fetch("/api/cart/add", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ userId, productId }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to add to cart");
+  }
+
+  return data;
+}
 
 export async function updateCartQuantity(cartItemId, quantity) {
   const { error } = await supabase
@@ -90,4 +114,37 @@ export async function removeFromCart(cartItemId) {
     .delete()
     .eq("id", cartItemId);
   if (error) throw error;
+}
+
+// Local cart for quests
+
+export function getGuestCart() {
+  return JSON.parse(localStorage.getItem("guest_cart") ?? "[]");
+}
+
+export function saveGuestCart(cart) {
+  localStorage.setItem("guest_cart", JSON.stringify(cart));
+}
+
+export function addToGuestCart(product) {
+  const cart = getGuestCart();
+  const existing = cart.find(i => i.product_id === product.id);
+
+  if (existing) {
+
+    existing.quantity += 1;
+  }
+  else {
+    cart.push({
+      product_id:     product.id,
+      quantity:       1,
+      name:           product.title,
+      description:    product.description ?? "",
+      price:          Number(String(product.price).replace("$", "")),
+      image:          product.img,
+      stock_quantity: product.stock_quantity,
+    });
+  }
+
+  saveGuestCart(cart);
 }

@@ -1,3 +1,5 @@
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import React from "react";
 import { useState, useEffect } from "react";
 import { fetchCart } from "../services/productAndCartService.js";
@@ -83,45 +85,45 @@ export default function CheckoutPage() {
             <div className="grid-2">
               <div className="input-group">
                 <label>Full Name</label>
-                <input placeholder="John Doe" />
+                <input name="fullName" value={form.fullName} onChange={handleChange} placeholder="John Doe" />
               </div>
 
               <div className="input-group">
                 <label>Email</label>
-                <input placeholder="john@example.com" />
+                <input name="email" value={form.email} onChange={handleChange} placeholder="john@example.com" />
               </div>
             </div>
 
             <div className="input-group">
               <label>Phone Number</label>
-              <input placeholder="+1 (555) 123-4567" />
+              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+1 (555) 123-4567" />
             </div>
 
             <div className="input-group">
               <label>Street Address</label>
-              <input placeholder="123 Main Street, Apt 4B" />
+              <input name="street" value={form.street} onChange={handleChange} placeholder="123 Main Street, Apt 4B" />
             </div>
 
             <div className="grid-3">
               <div className="input-group">
                 <label>City</label>
-                <input placeholder="New York" />
+                <input name="city" value={form.city} onChange={handleChange} placeholder="New York" />
               </div>
 
               <div className="input-group">
                 <label>State</label>
-                <input placeholder="NY" />
+                <input name="state" value={form.state} onChange={handleChange} placeholder="NY" />
               </div>
 
               <div className="input-group">
                 <label>ZIP Code</label>
-                <input placeholder="10001" />
+                <input name="zip" value={form.zip} onChange={handleChange} placeholder="10001" />
               </div>
             </div>
 
             <div className="input-group">
               <label>Country</label>
-              <select>
+              <select name="country" value={form.country} onChange={handleChange}>
                 <option>Select country</option>
                 <option>United States</option>
                 <option>United Kingdom</option>
@@ -149,7 +151,7 @@ export default function CheckoutPage() {
 
             <div className="input-group">
               <label>Cardholder Name</label>
-              <input placeholder="Name as it appears on card" />
+              <input name="cardName" value={form.cardName} onChange={handleChange} placeholder="Name as it appears on card" />
             </div>
 
             <div className="grid-2">
@@ -178,11 +180,12 @@ export default function CheckoutPage() {
           <div className="summary-row">
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
+            <span>${subtotal.toFixed(2)}</span>
           </div>
 
           <div className="summary-row">
             <span>Shipping</span>
-            <span>$15.00</span>
+            <span>${shipping.toFixed(2)}</span>
           </div>
 
           <div className="summary-row">

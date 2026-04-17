@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { fetchCart, updateCartQuantity, removeFromCart } from "../services/productAndCartService.js";
+import { fetchCart, updateCartQuantity, removeFromCart, getGuestCart, saveGuestCart } from "../services/productAndCartService.js";
 import { getCurrentUser } from "../services/authService.js";
 import { useNavigate } from "react-router-dom";
 import "./CartPage.css";
@@ -12,7 +12,15 @@ export default function CartPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      const guestCart = getGuestCart().map((item, index) => ({
+        ...item,
+        id: index, // use index as local id
+      }));
+      setCart(guestCart);
+      setLoading(false);
+      return;
+    }
     fetchCart(user.customer_id)
         .then(setCart)
         .catch(console.error)
@@ -22,13 +30,31 @@ export default function CartPage() {
   const updateQuantity = async (item, change) => {
     if (change > 0 && item.quantity >= item.stock_quantity) return;
     const newQty = Math.max(1, item.quantity + change);
+
+    if (!user) {
+      const updated = cart.map(c =>
+          c.product_id === item.product_id ? { ...c, quantity: newQty } : c
+      );
+      setCart(updated);
+      saveGuestCart(updated);
+      return;
+    }
+
     await updateCartQuantity(item.id, newQty);
     setCart(cart.map(c => c.id === item.id ? { ...c, quantity: newQty } : c));
   };
 
   const removeItem = async (id) => {
-      await removeFromCart(id);
-      setCart(cart.filter(c => c.id !== id));
+
+    if (!user) {
+      const updated = cart.filter((_, i) => i !== id);
+      setCart(updated);
+      saveGuestCart(updated);
+      return;
+    }
+
+    await removeFromCart(id);
+    setCart(cart.filter(c => c.id !== id));
   };
 
   const subtotal = cart.reduce(
@@ -89,7 +115,7 @@ export default function CartPage() {
           <span>${total.toFixed(2)}</span>
         </div>
 
-        <button className="checkout" onClick={() => navigate("/checkout")} disabled={cart.length === 0}>
+        <button className="checkout" onClick={() => navigate("/checkout", {state: {cart, subtotal, total,}})}  disabled={cart.length === 0}>
           
         Proceed to Checkout
       </button>
