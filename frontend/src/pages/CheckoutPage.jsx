@@ -1,55 +1,67 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import React from "react";
+import { useState, useEffect } from "react";
+import { fetchCart } from "../services/productAndCartService.js";
+import { getCurrentUser } from "../services/authService.js";
 import "./CheckoutPage.css";
 
 export default function CheckoutPage() {
+  const user = getCurrentUser();
+  const [cart, setCart] = useState([]);
+  const [cardNumber, setCardNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const { state } = useLocation();
-  const navigate = useNavigate();
+  useEffect(() => {
+    if (!user) return;
+    fetchCart(user.customer_id).then(setCart).catch(console.error);
+  }, []);
 
-  const cart = state?.cart ?? [];
-  const subtotal = state?.subtotal ?? 0;
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shipping = 15.00;
-  const tax = +(subtotal * 0.0835).toFixed(2);
+  const tax = subtotal * 0.08;
   const total = subtotal + shipping + tax;
 
-  const [form, setForm] = useState({
-    fullName: "", email: "", phone: "",
-    street: "", city: "", state: "", zip: "", country: "",
-    cardNumber: "", cardName: "", expiry: "", cvv: "",
-  });
+  const handlePlaceOrder = async () => {
+    setError("");
+    const [expiryMonth, expiryYear] = expiry.split("/").map((s) => s.trim());
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+    setSubmitting(true);
+    try {
+      // hardcoded for now but change it later
+      const res = await fetch("http://localhost:3000/api/payment/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cardNumber,
+          cvv,
+          expiryMonth,
+          expiryYear,
+          amount: total.toFixed(2),
+          customer_id: user.customer_id,
+          cart_items: cart.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: item.price,
+          })),
+        }),
+      });
 
-
-  const handlePlaceOrder = () => {
-    navigate("/invoice", {
-      state: {
-        order: {
-          invoiceNumber: `INV-${Date.now()}`,
-          date: new Date().toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric",
-          }),
-          items: cart,
-          shipping: {
-            fullName: form.fullName,
-            email:    form.email,
-            phone:    form.phone,
-            street:   form.street,
-            city:     form.city,
-            state:    form.state,
-            zip:      form.zip,
-            country:  form.country,
-          },
-          subtotal,
-          shippingCost: shipping,
-          tax,
-          total,
-        }
+      const data = await res.json();
+      if (!data.success) {
+        setError(data.message || "Payment failed.");
+        return;
       }
-    });
+      // alerti silebiliriz belki
+      alert('Order placed!');
+    } catch (err) {
+      setError("Could not connect to server. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -134,7 +146,7 @@ export default function CheckoutPage() {
 
             <div className="input-group">
               <label>Card Number</label>
-              <input name="cardNumber" value={form.cardNumber} onChange={handleChange} placeholder="1234 5678 9012 3456" />
+              <input placeholder="1234 5678 9012 3456" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
             </div>
 
             <div className="input-group">
@@ -145,12 +157,12 @@ export default function CheckoutPage() {
             <div className="grid-2">
               <div className="input-group">
                 <label>Expiry Date</label>
-                <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="MM/YY" />
+                <input placeholder="MM/YY" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
               </div>
 
               <div className="input-group">
                 <label>CVV</label>
-                <input name="cvv" value={form.cvv} onChange={handleChange} placeholder="123" />
+                <input placeholder="123" value={cvv} onChange={(e) => setCvv(e.target.value)} />
               </div>
             </div>
 
@@ -168,6 +180,7 @@ export default function CheckoutPage() {
           <div className="summary-row">
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
+            <span>${subtotal.toFixed(2)}</span>
           </div>
 
           <div className="summary-row">
@@ -176,7 +189,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="summary-row">
-            <span>Tax</span>
+            <span>Tax (8%)</span>
             <span>${tax.toFixed(2)}</span>
           </div>
 
@@ -187,7 +200,11 @@ export default function CheckoutPage() {
             <span>${total.toFixed(2)}</span>
           </div>
 
-          <button className="place-order" onClick={handlePlaceOrder}>Place Order</button>
+          {error && <p style={{ color: "red", fontSize: "0.9rem" }}>{error}</p>}
+
+          <button className="place-order" onClick={handlePlaceOrder} disabled={submitting}>
+            {submitting ? "Placing Order..." : "Place Order"}
+          </button>
 
           <div className="extra">
             <p>🔒 Secure 256-bit SSL encryption</p>
