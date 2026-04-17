@@ -1,35 +1,19 @@
-import "./homePage.css";
+import "./HomePage.css";
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons'
 import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { faShareNodes } from '@fortawesome/free-solid-svg-icons'
+import { getCurrentUser, logout} from "../services/authService.js";
+import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
+
 
 // --------------|
 // IMAGE IMPORTS |
 // --------------|
 
 import brushStroke from "../assets/homePageAssets/brushStroke.png";
-
-
-// Button Icons
-import homeIcon    from "../assets/homePageAssets/house.png";
-import diaryIcon   from "../assets/homePageAssets/diary.png";
-import compassIcon from "../assets/homePageAssets/compass.png";
-
-import personIcon  from "../assets/homePageAssets/person.png";
-import cactusIcon  from "../assets/homePageAssets/cactus.png";
-import plusIcon    from "../assets/homePageAssets/plusSign.png";
-
-import mapIcon     from "../assets/homePageAssets/map.png";
-import grassIcon   from "../assets/homePageAssets/grass.png";
-import mGlassIcon  from "../assets/homePageAssets/magnifyingGlass.png";
-
-import heart1Icon  from "../assets/homePageAssets/heart1.png";
-import heart2Icon  from "../assets/homePageAssets/heart2.png";
-import heart3Icon  from "../assets/homePageAssets/heart3.png";
-
-import zipperImg   from "../assets/homePageAssets/zipper.png";
 
 // Polaroid shapes
 const PennantSvg = ({ className, onClick}) => (
@@ -43,113 +27,25 @@ const PennantSvg = ({ className, onClick}) => (
     </svg>
 );
 
-// Product images
-import frogHeadphones  from "../assets/homePageAssets/tempProduct/frogHeadphones.jpg";
-import hazelRings      from "../assets/homePageAssets/tempProduct/hazelRings.jpg";
-import fishMug         from "../assets/homePageAssets/tempProduct/fishMug.jpg";
-import greaves         from "../assets/homePageAssets/tempProduct/greaves.jpg";
-import beachEarrings   from "../assets/homePageAssets/tempProduct/beachEarrings.jpeg";
-import eyeEarrings     from "../assets/homePageAssets/tempProduct/eyeEarrings.jpg";
-import dress           from "../assets/homePageAssets/tempProduct/dress.jpeg";
-import bananaBoots     from "../assets/homePageAssets/tempProduct/bananaBoots.jpg";
-
-
-// Temporary product data
-const RECENT_TASTE = [
-  { id: 1, title: "Frog cottage headphones",  creator: "@MrFrogCraft",      img: frogHeadphones},
-  { id: 2, title: "Hazel eye ring set",       creator: "@SpookyEyeGirl",    img: hazelRings},
-  { id: 3, title: "Fish mug blub",            creator: "@CuteFish1268",     img: fishMug},
-  { id: 4, title: "Hell Yeah Greaves",        creator: "@CoolKnightArthur", img: greaves},
-  { id: 5, title: "Beach Earring Set",        creator: "@PatrickTheStar",   img: beachEarrings},
-  { id: 6, title: "Sunset Dress",             creator: "@EmiliaTalia",      img: dress},
-  { id: 7, title: "Eyes of Ctulhu earrings",  creator: "@MoonLord",         img: eyeEarrings},
-  { id: 8, title: "Banana Poopaye",           creator: "@YellowGuy",        img: bananaBoots},
-];
-
-const MIGHT_LIKE = [...RECENT_TASTE];
-const TRENDING = [...RECENT_TASTE]
-const YOU_FOLLOW = [...RECENT_TASTE]
-const DISCOUNT = [...RECENT_TASTE]
 
 // ------------------|
 // CUSTOM COMPONENTS |
 // ------------------|
 
 // Button data and component
-export const buttonData = [
-    {
-        id: "home",
-        label: "Home",
-        icons: [
-            { img: compassIcon, start: { t: -10, l: 4 }, end: { t: -16, l: -2 }, z: 3, rot: -30},
-            { img: diaryIcon, start: { b: -10, l: 24 }, end: { b: -16, l: 18 }, z: 1, rot: -25},
-            { img: homeIcon, start: { b: -1, r: -1 }, end: { b: -7, r: -8 }, z: 3, rot: 15},
-        ]
-    },
-    {
-        id: "profile",
-        label: "Profile",
-        icons: [
-            { img: personIcon, start: { t: -4, l: -3 }, end: { t: -10, l: -10 }, z: 1, rot: -15},
-            { img: cactusIcon, start: { b: -15, r: 25 }, end: { b: -21, r: 18 }, z: 3, rot: -10},
-            { img: plusIcon, start: { t: -5, r: -2 }, end: { t: -15, r: -10 }, z: 3, rot: -15},
-        ]
-    },
-    {
-        id: "discover",
-        label: "Discover",
-        icons: [
-            { img: mapIcon, start: { b: -10, l: 1 }, end: { b: -19, l: -7 }, z: 3, rot: -20},
-            { img: grassIcon, start: { t: -6, r: 35 }, end: { t: -17, r: 20 }, z: 1, rot: 0},
-            { img: mGlassIcon, start: { b: 2, r: -3 }, end: { b: -4, r: -9 }, z: 3, rot: -110},
-        ]
-    },
-    {
-        id: "favorites",
-        label: "Favorites",
-        icons: [
-            { img: heart1Icon, start: { b: -12, l: 40 }, end: { b: -20, l: 19 }, z: 1, rot: -15},
-            { img: heart2Icon, start: { t: -8, l: -4 },  end: { t: -15, l: -10 }, z: 3, rot: 0},
-            { img: heart3Icon, start: { b: -5, r: -12 }, end: { b: -10, r: -14 }, z: 3, rot: 30},
-        ]
-    }
+const buttonData = [
+    { id: "home",      label: "Home",       path: "/home"},
+    { id: "profile",   label: "Profile",    path: "/home"},
+    { id: "discover",  label: "Discover",   path:"/discover"},
+    { id: "favorites", label: "Favorites",  path: "/home"}
 ];
 
-const SideBarButton = ({ label, icons, isActive, onClick}) => {
+const SideBarButton = ({ label, isActive, onClick}) => {
 
-    const style_choice = 1;
     return (
         <div className={`sidebar-btn-container ${isActive ? "active" : ""}`} onClick={onClick}>
 
-            {style_choice === 0 ?
-
-            icons.map((item, index) => {
-
-                const iconStyle = {
-                    "--t": item.start.t ? `${item.start.t}px` : "auto",
-                    "--b": item.start.b ? `${item.start.b}px` : "auto",
-                    "--l": item.start.l ? `${item.start.l}px` : "auto",
-                    "--r": item.start.r ? `${item.start.r}px` : "auto",
-                    "--hover-t": item.end.t ? `${item.end.t}px` : "auto",
-                    "--hover-b": item.end.b ? `${item.end.b}px` : "auto",
-                    "--hover-l": item.end.l ? `${item.end.l}px` : "auto",
-                    "--hover-r": item.end.r ? `${item.end.r}px` : "auto",
-                    "--z": item.z,
-                    "--rot": item.rot ? `${item.rot}deg` : "0deg",
-                };
-
-                return (
-                    <img
-                        key={index}
-                        src={item.img}
-                        className="btn-icon"
-                        style={iconStyle}
-                        alt=""
-                    />
-                );
-            })
-
-            : isActive && <img src={brushStroke} className="btn-brush-stroke" alt="" />}
+            {isActive && <img src={brushStroke} className="btn-brush-stroke" alt="" />}
 
 
             <button className="sidebar-btn" />
@@ -159,9 +55,45 @@ const SideBarButton = ({ label, icons, isActive, onClick}) => {
     );
 };
 
+// Cart Button
+
+export const CartButton = ({ onClick }) => {
+    const [count, setCount] = useState(0);
+ 
+    const loadCartCount = () => {
+        const user = getCurrentUser();
+        if (!user?.customer_id) {
+            const guestCart = JSON.parse(localStorage.getItem("guest_cart") ?? "[]");
+            setCount(guestCart.reduce((s, i) => s + i.quantity, 0));
+            return;
+        }
+ 
+        import("../services/productAndCartService.js").then(({ fetchCart }) => {
+            fetchCart(user.customer_id)
+                .then(items => setCount(items.reduce((s, i) => s + i.quantity, 0)))
+                .catch(console.error);
+        });
+    };
+
+    useEffect(() => {
+        loadCartCount();
+
+        window.addEventListener("cartUpdated", loadCartCount);
+        return () => window.removeEventListener("cartUpdated", loadCartCount);
+    }, []);
+   
+ 
+    return (
+        <button className="cart-btn" onClick={onClick}>
+            🛒 Cart
+            {count > 0 && <span className="cart-count">{count > 99 ? "99+" : count}</span>}
+        </button>
+    );
+};
+
 // Polaroid card and row
 
-const PolaroidCard = ({ title, creator, img}) => {
+export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity}) => {
 
     const [isLiked, setIsLiked] = useState(false);
 
@@ -174,13 +106,41 @@ const PolaroidCard = ({ title, creator, img}) => {
         setIsPinned(!isPinned);
     };
 
+    const handleAddToCart = async () => {
+        const user = getCurrentUser();
+
+        try {
+
+            if (!user) {
+                addToGuestCart({
+                    id:             productId,
+                    title,
+                    img,
+                    price,
+                    stock_quantity,
+                    description: "",
+                });
+            }
+            else {
+                await addToCart(user.customer_id, productId);
+            }
+
+            window.dispatchEvent(new Event("cartUpdated"));
+            
+        } 
+        catch (err) {
+            console.error("Supabase Add to Cart Error:", err);
+            alert(`${err.message}`);
+        }
+    };
+
     return (
         <div className="polaroid-container">
             <div className="polaroid-frame">
 
 
-                <div className="polaroid-image-container">
-                    <img src={img} alt={title} className="polaroid-img" />
+                <div className="polaroid-image-container" style={customStyle}>
+                    {img && <img src={img} alt={title} className="polaroid-img"/>}
                 </div>
 
                 <PennantSvg className={`polaroid-pennant ${isPinned ? "pinned" : ""}`} onClick={togglePin}/>
@@ -201,74 +161,50 @@ const PolaroidCard = ({ title, creator, img}) => {
 
                 </div>
             </div>
+
+            <div className="polaroid-buy-container">
+                <span className="reveal-price">{price}</span>
+                <button className="reveal-cart-btn" onClick={handleAddToCart}>
+                    Add to Cart
+                </button>
+            </div>
         </div>
     );
 };
 
-const CheckMoreCard = () => (
-    <div className="polaroid-container">
+const CheckMoreCard = ({linkedFilter}) => {
+    const navigate = useNavigate();
+
+    return <div className="polaroid-container" onClick={() => navigate("/discover", {state: { feed: linkedFilter}})}>
         <div className="polaroid-frame check-more-frame">
             <p className="check-more-text">Check More</p>
             <div className="check-more-arrow">→</div>
         </div>
-    </div>
-);
+    </div>;
+};
 
-const PolaroidRow = ({ title, items }) => {
+const PolaroidRow = ({ title, sort, linkedFilter }) => {
 
-    const scrollRef = useRef(null);
+    const [items, setItems]     = useState([]);
+    const [loading, setLoading] = useState(true);
+    const scrollRef             = useRef(null);
 
     useEffect(() => {
-        const el = scrollRef.current;
-        if (!el) return;
+        fetchProducts({ sort, limit: 5 })
+            .then(setItems)
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, [sort]);
 
-        let target = el.scrollLeft;
-        let animFrame = null;
-
-        const lerp = (start, end, t) => start + (end - start) * t;
-
-        const animate = () => {
-            const current = el.scrollLeft;
-            const diff = target - current;
-
-            if (Math.abs(diff) < 0.5) {
-                el.scrollLeft = target;
-                return;
-            }
-
-            el.scrollLeft = lerp(current, target, 0.12);
-            animFrame = requestAnimationFrame(animate);
-        };
-
-        const handleWheel = (e) => {
-            e.preventDefault();
-            target += e.deltaY * 2;  // multiply for speed, tune to taste
-            target = Math.max(0, Math.min(target, el.scrollWidth - el.clientWidth));
-
-            cancelAnimationFrame(animFrame);
-            animFrame = requestAnimationFrame(animate);
-        };
-
-        el.addEventListener("wheel", handleWheel, { passive: false });
-        return () => {
-            el.removeEventListener("wheel", handleWheel);
-            cancelAnimationFrame(animFrame);
-        };
-    }, []);
 
     return (
         <div className="polaroid-row-container">
             <h2 className="row-title">{title}</h2>
             <div className="polaroid-grid" ref={scrollRef}>
-                {items.map((item) => (
-                    <PolaroidCard
-                        key={item.id}
-                        title={item.title}
-                        creator={item.creator}
-                        img={item.img}
-                    />
+                {loading ? <p>Loading…</p> : items.map((item) => (
+                    <PolaroidCard key={item.id} title={item.title} creator={item.creator} img={item.img} price={item.price} productId={item.id} stock_quantity={item.stock_quantity}/>
                 ))}
-                <CheckMoreCard />
+                {!loading && <CheckMoreCard linkedFilter={linkedFilter} />}
                 <div className="grid-end-spacer" />
             </div>
         </div>
@@ -282,6 +218,29 @@ const PolaroidRow = ({ title, items }) => {
 export default function HomePage() {
 
     const [activeTab, setActiveTab] = useState("home");
+    const [displayName, setDisplayName] = useState("Guest");
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const navigate = useNavigate();
+    const handleNavigation = (id, path) => {
+        if (id !== activeTab) {
+            navigate(path);
+        }
+    };
+
+    const handleLogout = async () => {
+        await logout();
+        navigate("/login");
+       
+    };
+
+    useEffect(() => {
+        const user = getCurrentUser();
+        if (user && user.username) {
+            setIsLoggedIn(true);
+            setDisplayName(user.username);
+        }
+    }, []);
+
 
   return (
       <div className="container">
@@ -293,24 +252,30 @@ export default function HomePage() {
           <div className="button-column">
               {
                   buttonData.map((btn) => (
-                      <SideBarButton key={btn.id} label={btn.label} icons={btn.icons} isActive={activeTab === btn.id} onClick={() => setActiveTab(btn.id)} />
+                      <SideBarButton key={btn.id} label={btn.label} icons={btn.icons} isActive={activeTab === btn.id} onClick={() => handleNavigation(btn.id, btn.path)} />
                   ))
               }
           </div>
         </div>
-        <img src={zipperImg} className="zipper" alt="" />
+
         <div className="content-area">
             <div className="greeting-container">
                 <h1 className="greeting-text">
-                    Hi <span className="username-highlight">Ritiam</span>, check these out
+                    Hi <span className="username-highlight">{displayName}</span>, check these out
                 </h1>
+                <div className="header-actions">
+                <CartButton onClick={() => navigate("/cart")} />
+                {isLoggedIn && <button className="logout-btn" onClick={handleLogout}>
+                    Logout
+                </button>}
+                </div>
             </div>
             <div className="feed-column">
-                <PolaroidRow title="For Your Recent Tastes" items={RECENT_TASTE} />
-                <PolaroidRow title="Some Recommendations From Us" items={MIGHT_LIKE} />
-                <PolaroidRow title="Everyone's New Favorites" items={TRENDING} />
-                <PolaroidRow title="From Who You Follow" items={YOU_FOLLOW} />
-                <PolaroidRow title="Cheaper Than Ever" items={DISCOUNT} />
+                <PolaroidRow title="For Your Recent Tastes" sort="recent_taste" linkedFilter="recent_taste"/>
+                <PolaroidRow title="Some Recommendations From Us" sort="recommended" linkedFilter="recommended"/>
+                <PolaroidRow title="Everyone's New Favorites" sort="top_rated" linkedFilter="top_rated"/>
+                <PolaroidRow title="From Who You Follow" sort="followed" linkedFilter="followed"/>
+                <PolaroidRow title="Cheaper Than Ever" sort="discount" linkedFilter="discount"/>
             </div>
         </div>
       </div>

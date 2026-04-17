@@ -1,9 +1,3 @@
-:root {
-    --t: auto; --b: auto; --l: auto; --r: auto;
-    --hover-t: auto; --hover-b: auto; --hover-l: auto; --hover-r: auto;
-    --z: auto; --rot: auto;
-}
-
 html, body {
     margin: 0;
     padding: 0;
@@ -11,7 +5,10 @@ html, body {
 }
 
 .greeting-container {
-    padding: 60px 0 20px 40px;
+    padding: 60px 60px 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .greeting-text {
@@ -41,10 +38,9 @@ html, body {
 .sidebar {
     flex: 0 0 220px;
     background-color: var(--black);
-
     display: flex;
     flex-direction: column;
-    padding: 20px 40px 0 20px;
+    padding: 20px 60px 0 20px;
     box-sizing: border-box;
 }
 
@@ -61,14 +57,11 @@ html, body {
     flex: 0 0 15%;
 }
 
-/* Sidebar Buttons */
-
 .button-column {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: start;
-
 }
 
 .sidebar-btn-container {
@@ -80,24 +73,19 @@ html, body {
     justify-content: center;
 }
 
-
 .btn-text {
     position: absolute;
     z-index: 2;
     pointer-events: none;
-
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-
     color: var(--offwhite);
     font-family: "Playfair Display", serif;
     font-size: 1.7rem;
     letter-spacing: 1.5px;
     white-space: nowrap;
 }
-
-
 
 .sidebar-btn {
     width: 100%;
@@ -106,7 +94,6 @@ html, body {
     color: var(--offwhite);
     border: 3px solid var(--offwhite);
     border-radius: 10px;
-
     cursor: pointer;
     position: relative;
     transition: all 0.3s ease;
@@ -117,45 +104,15 @@ html, body {
     transform: scale(1.02);
 }
 
-.btn-icon {
-    position: absolute;
-    width: 40px;
-    height: auto;
-    pointer-events: none;
-
-
-    top: var(--t);
-    bottom: var(--b);
-    left: var(--l);
-    right: var(--r);
-    z-index: var(--z);
-    transform: rotate(var(--rot));
-
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-
-.sidebar-btn-container:hover .btn-icon {
-    top: var(--hover-t);
-    bottom: var(--hover-b);
-    left: var(--hover-l);
-    right: var(--hover-r);
-}
-
 .btn-brush-stroke {
     position: absolute;
-
     width: 180%;
     height: auto;
     z-index: 0;
     pointer-events: none;
-
-
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-
-
     animation: brushAppear 0.4s ease-out forwards;
 }
 
@@ -170,26 +127,10 @@ html, body {
     }
 }
 
-
 .sidebar-btn-container.active .btn-text {
     color: var(--black);
     transition: color 0.3s ease;
 }
-
-/* Zipper and Content Area */
-
-.zipper {
-    position: absolute;
-    left: 240px;
-    top: 0;
-
-    transform: translateY(400%) translateX(-50%) rotate(90deg);
-    height: 10vh;
-    width: auto;
-    z-index: 10;
-    pointer-events: none;
-}
-
 
 .content-area {
     flex: 1;
@@ -197,8 +138,9 @@ html, body {
     padding: 20px 0 0 50px;
     height: 100vh;
     overflow-y: auto;
+    overflow-x: hidden;
     box-sizing: border-box;
-
+    border-radius: 20px 20px 0 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -207,7 +149,66 @@ html, body {
     display: none;
 }
 
-/* Polaroid Card */
+.cart-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background-color: var(--blue);
+    color: var(--offwhite);
+    border: none;
+    border-radius: 10px;
+    font-family: "Playfair Display", serif;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.cart-btn:hover {
+    background-color: var(--black);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.cart-count {
+    background-color: var(--offwhite);
+    color: var(--black);
+    font-family: "inter", sans-serif;
+    font-size: 0.7rem;
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 20px;
+    min-width: 18px;
+    text-align: center;
+}
+
+.logout-btn {
+    margin-right: 50px;
+    padding: 10px 20px;
+    background-color: var(--blue);
+    color: var(--offwhite);
+    border: none;
+    border-radius: 10px;
+    font-family: "Playfair Display", serif;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.logout-btn:hover {
+    background-color: var(--black);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
 
 .polaroid-grid {
     display: flex;
@@ -215,11 +216,7 @@ html, body {
     gap: 20px;
     justify-content: flex-start;
     width: 100%;
-
-    overflow-x: auto;
-    overflow-y: hidden;
     padding: 30px 80px 10px 120px;
-
     scrollbar-width: none;
 }
 
@@ -229,8 +226,8 @@ html, body {
     flex-shrink: 0;
 }
 
-
 .polaroid-container {
+    position: relative;
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -245,9 +242,12 @@ html, body {
     width: 200px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     border-radius: 6px;
-
     position: relative;
     overflow: hidden;
+}
+
+.polaroid-container:hover .polaroid-frame {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0);
 }
 
 .polaroid-pennant {
@@ -259,8 +259,7 @@ html, body {
     z-index: 5;
     overflow: visible;
     pointer-events: all;
-
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s;
 }
 
 .polaroid-container:hover .polaroid-pennant {
@@ -273,8 +272,8 @@ html, body {
 
 .polaroid-pennant.pinned {
     top: -30px !important;
+    fill: var(--green);
 }
-
 
 .polaroid-image-container {
     position: relative;
@@ -333,9 +332,8 @@ html, body {
     display: flex;
     align-items: center;
     gap: 3px;
-
     user-select: none;
-    -webkit-user-select: none; 
+    -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
 }
@@ -344,17 +342,71 @@ html, body {
     color: var(--blue);
 }
 
+.polaroid-buy-container {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
+    background-color: var(--offwhite);
+    border-radius: 0 0 6px 6px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    padding: 12px 12px 12px 12px;
+    transform: translateY(0%);
+    transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.polaroid-buy-container::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 35px;
+    width: 100%;
+    border-bottom: 5px dotted var(--pink);
+}
+
+.polaroid-container:hover .polaroid-buy-container {
+    transform: translateY(60%);
+    pointer-events: all;
+}
+
+.reveal-price {
+    font-family: "inter", sans-serif;
+    font-size: 1rem;
+    font-weight: bold;
+    color: var(--black);
+}
+
+.reveal-cart-btn {
+    background-color: var(--blue);
+    color: var(--offwhite);
+    border: none;
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-family: "inter", sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background-color 0.2s ease;
+}
+
+.reveal-cart-btn:hover {
+    background-color: var(--green);
+}
+
 @keyframes heartPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.3); }
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.3); }
     100% { transform: scale(1); }
 }
 
 .heart-pop {
     animation: heartPop 0.3s ease-out;
 }
-
-/* Check More Card*/
 
 .check-more-frame {
     display: flex;
@@ -365,7 +417,6 @@ html, body {
     cursor: pointer;
     background-color: var(--blue);
     transition: all 0.3s ease;
-
 }
 
 .check-more-frame:hover {
@@ -392,9 +443,6 @@ html, body {
     transform: translateX(6px);
 }
 
-
-/* Polaroid Rows and Columns */
-
 .feed-column {
     display: flex;
     flex-direction: column;
@@ -406,8 +454,6 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    overflow: hidden;
-
 }
 
 .row-title {

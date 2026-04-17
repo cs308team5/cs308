@@ -2,8 +2,18 @@ import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom"
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import CartPage from "./pages/CartPage";
+import CheckoutPage from "./pages/CheckoutPage";
+import TestPage from "./pages/TestPage";
+import DiscoverPage from "./pages/DiscoverPage.jsx";
+import InvoicePage from "./pages/InvoicePage.jsx";
+
 
 const router = createBrowserRouter([
+  {
+    path: "/test",
+    element: <TestPage />,
+  },
   {
     path: "/",
     element: <Navigate to="/home" replace />,
@@ -13,12 +23,28 @@ const router = createBrowserRouter([
     element: <HomePage />,
   },
   {
+    path: "/discover",
+    element: <DiscoverPage />,
+  },
+  {
     path: "/login",
     element: <LoginPage />,
   },
   {
     path: "/register",
     element: <RegisterPage />,
+  },
+  {
+    path: "/cart",
+    element: <CartPage />,
+  },
+  {
+    path: "/checkout",
+    element: <CheckoutPage />,
+  },
+  {
+    path: "/invoice",
+    element: <InvoicePage />,
   },
 ]);
 

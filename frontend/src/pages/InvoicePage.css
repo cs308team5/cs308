@@ -1,0 +1,339 @@
+/* ─────────────────────────────────────────────
+   InvoicePage.css  —  matches CartPage & CheckoutPage style
+───────────────────────────────────────────── */
+
+.invoice-container {
+  padding: 40px;
+  background: #f7f7f5;
+  min-height: 100vh;
+}
+
+/* ── SUCCESS BANNER ── */
+.success-banner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  border-radius: 18px;
+  padding: 24px 28px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.success-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--pink);
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.success-banner h1 {
+  margin: 0 0 4px;
+  font-size: 20px;
+  color: var(--black);
+}
+
+.success-banner p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.success-banner strong {
+  color: var(--black);
+}
+
+.print-btn {
+  margin-left: auto;
+  padding: 12px 22px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--black);
+  white-space: nowrap;
+  transition: 0.2s;
+  flex-shrink: 0;
+}
+
+.print-btn:hover {
+  background: #f2f2f2;
+}
+
+/* ── LAYOUT ── */
+.invoice-content {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+.invoice-left {
+  flex: 2;
+}
+
+/* ── CARD (same as checkout) ── */
+.card {
+  background: white;
+  border-radius: 18px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: var(--black);
+}
+
+.card-header p {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+}
+
+.icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: #f2f2f2;
+  flex-shrink: 0;
+}
+
+/* Invoice date pushed to the right */
+.invoice-date {
+  margin-left: auto;
+  text-align: right;
+  font-size: 14px;
+  color: #777;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.invoice-date strong {
+  color: var(--black);
+}
+
+/* ── ORDER ITEMS ── */
+.invoice-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+  transition: 0.2s;
+}
+
+.invoice-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.invoice-item img {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-details h3 {
+  margin: 0 0 4px;
+  color: var(--black);
+  font-size: 15px;
+}
+
+.item-details p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #888;
+}
+
+.qty-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #f2f2f2;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #555;
+  font-weight: 500;
+}
+
+.item-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--black);
+  white-space: nowrap;
+}
+
+/* ── ADDRESS GRID ── */
+.address-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.address-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.address-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.address-field label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.address-field span {
+  font-size: 14px;
+  color: var(--black);
+  font-weight: 500;
+}
+
+/* ── RIGHT PANEL — dark, same as cart/checkout ── */
+.invoice-right {
+  flex: 1;
+  background: linear-gradient(180deg, #111111, #1a1a1a);
+  padding: 30px;
+  border-radius: 24px;
+  color: white;
+  min-height: 460px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+  align-self: flex-start;
+  position: sticky;
+  top: 24px;
+}
+
+.invoice-right h2 {
+  margin-bottom: 20px;
+  color: white;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 12px 0;
+  color: #cbd5e1;
+  font-size: 15px;
+}
+
+hr {
+  border: none;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 15px 0;
+}
+
+.total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 20px;
+  color: white;
+}
+
+/* ── STATUS BADGE ── */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 22px;
+  padding: 10px 16px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  font-size: 14px;
+  color: #86efac; /* green */
+  font-weight: 500;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  flex-shrink: 0;
+}
+
+/* ── CONTINUE BUTTON ── */
+.continue-btn {
+  width: 100%;
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 14px;
+  border: none;
+  background: var(--pink);
+  color: white;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.continue-btn:hover {
+  opacity: 0.9;
+}
+
+/* ── EXTRA NOTES ── */
+.extra {
+  margin-top: 20px;
+  font-size: 13px;
+  color: #9ca3af;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── PRINT STYLES ── */
+@media print {
+  .success-banner .print-btn,
+  .continue-btn {
+    display: none;
+  }
+
+  .invoice-container {
+    padding: 20px;
+    background: white;
+  }
+
+  .invoice-right {
+    background: #111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #eee;
+  }
+}
