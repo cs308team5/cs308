@@ -1,6 +1,5 @@
-import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
 import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { fetchCart } from "../services/productAndCartService.js";
 import { getCurrentUser } from "../services/authService.js";
