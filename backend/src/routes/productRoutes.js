@@ -1,5 +1,6 @@
 import express from "express";
 import { getProducts } from "../controllers/productController.js";
+import { getProductById } from "../controllers/productController.js";
 import { submitRating } from "../controllers/productController.js";
 import pool from "../config/db.js";
 
@@ -30,5 +31,7 @@ router.get("/search", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+
+router.get("/:id", getProductById);
 
 export default router;
