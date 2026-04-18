@@ -33,5 +33,6 @@ router.get("/search", async (req, res) => {
 });
 
 router.get("/:id", getProductById);
+router.post("/:id/rating", submitRating);
 
 export default router;
