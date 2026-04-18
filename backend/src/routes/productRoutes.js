@@ -1,5 +1,6 @@
 import express from "express";
 import { getProducts } from "../controllers/productController.js";
+import { submitRating } from "../controllers/productController.js";
 import pool from "../config/db.js";
 
 const router = express.Router();
