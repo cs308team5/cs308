@@ -87,3 +87,53 @@ export const getProducts = async (req, res) => {
     });
   }
 };
+
+/**
+ * Returns a single product by ID
+ */
+export const getProductById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      "SELECT * FROM products WHERE id = $1",
+      [id]
+    );
+
+    // If product not found
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    const p = result.rows[0];
+
+    // Format response
+    const product = {
+      id: p.id,
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      category: p.category,
+      stock: p.stock_quantity,
+      image_url: p.image_url,
+      additional_attributes: p.additional_attributes,
+      inStock: p.stock_quantity > 0
+    };
+
+    res.status(200).json({
+      success: true,
+      data: product
+    });
+
+  } catch (error) {
+    console.error("Error fetching product by ID:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};
