@@ -1,0 +1,160 @@
+.page {
+  font-family: Arial, sans-serif;
+}
+
+/* NAVBAR */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 1px solid #eee;
+  background: white;
+  color: black;
+}
+
+.nav-center {
+  font-weight: bold;
+  letter-spacing: 3px;
+}
+
+.nav-right {
+  display: flex;
+  gap: 25px;
+}
+
+.nav-right span,
+.nav-left {
+  cursor: pointer;
+}
+
+/* LAYOUT */
+.product-page {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+}
+
+/* IMAGE */
+.image-section {
+  overflow: hidden;
+}
+
+.product-img {
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.product-img:hover {
+  transform: scale(1.05);
+}
+
+/* INFO */
+.info-section {
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: white;
+  color: black;
+}
+
+.meta {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #777;
+}
+
+.title {
+  font-size: 32px;
+}
+
+.price {
+  font-size: 18px;
+}
+
+.rating {
+  font-size: 14px;
+  color: #555;
+}
+
+.out-of-stock {
+  color: red;
+}
+
+/* BUTTON */
+.add-btn {
+  padding: 15px;
+  background: black;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.add-btn:hover {
+  background: #333;
+}
+
+.add-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* SECTION */
+.section {
+  margin-top: 20px;
+}
+
+.section-title {
+  font-size: 12px;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+/* REVIEW FORM */
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.review-form select,
+.review-form textarea {
+  padding: 10px;
+  border: 1px solid #ccc;
+}
+
+.review-form textarea {
+  min-height: 80px;
+}
+
+.review-form button {
+  background: black;
+  color: white;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+}
+
+/* REVIEWS */
+.review-card {
+  border-top: 1px solid #eee;
+  padding: 15px 0;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.no-reviews {
+  color: #777;
+}
+
+/* LOADING */
+.loading {
+  padding: 40px;
+}

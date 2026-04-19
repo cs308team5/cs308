@@ -7,6 +7,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import TestPage from "./pages/TestPage";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
+import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
 
 
 const router = createBrowserRouter([
@@ -46,6 +47,10 @@ const router = createBrowserRouter([
     path: "/invoice",
     element: <InvoicePage />,
   },
+  {
+    path: "/products/:id",
+    element: <ProductDetailsPage />,
+  }
 ]);
 
 export default function App() {
