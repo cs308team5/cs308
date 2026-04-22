@@ -2,6 +2,35 @@ import PDFDocument from "pdfkit";
 import pool from "../config/db.js";
 import { sendEmail } from "../services/emailService.js";
 
+function buildInvoiceBufferFromPayload(order) {
+  const normalizedOrder = {
+    order_id: order.invoiceNumber || `INV-${Date.now()}`,
+    created_at: order.date || new Date().toISOString(),
+    status: "confirmed",
+    total_price: order.total,
+    name: order.shipping?.fullName || "Customer",
+    email: order.shipping?.email,
+    address: [
+      order.shipping?.street,
+      order.shipping?.city,
+      order.shipping?.state,
+      order.shipping?.zip,
+      order.shipping?.country,
+    ]
+      .filter(Boolean)
+      .join(", "),
+    tax_id: null,
+  };
+
+  const normalizedItems = (order.items || []).map((item) => ({
+    product_name: item.name,
+    quantity: Number(item.quantity) || 1,
+    unit_price: Number(item.price) || 0,
+  }));
+
+  return buildInvoiceBuffer(normalizedOrder, normalizedItems);
+}
+
 function buildInvoiceBuffer(order, items) {
   return new Promise((resolve, reject) => {
     const buffers = [];
@@ -214,4 +243,46 @@ console.log("after sendEmail", emailResult);
     stack: error.stack,
   });
 }
+};
+
+export const sendInvoicePreviewEmail = async (req, res) => {
+  const { order } = req.body;
+
+  if (!order?.shipping?.email) {
+    return res.status(400).json({ message: "Recipient email is required." });
+  }
+
+  if (!Array.isArray(order.items) || order.items.length === 0) {
+    return res.status(400).json({ message: "Invoice items are required." });
+  }
+
+  try {
+    const pdfBuffer = await buildInvoiceBufferFromPayload(order);
+
+    const emailResult = await sendEmail({
+      to: order.shipping.email,
+      subject: `Your Invoice ${order.invoiceNumber || ""}`.trim(),
+      text: `Hello ${order.shipping.fullName || "Customer"},\n\nYour invoice is attached to this email.\n\nThank you for your purchase.`,
+      html: `<p>Hello ${order.shipping.fullName || "Customer"},</p><p>Your invoice is attached to this email.</p><p>Thank you for your purchase.</p>`,
+      attachments: [
+        {
+          filename: `${order.invoiceNumber || "invoice"}.pdf`,
+          content: pdfBuffer,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Invoice email sent successfully.",
+      previewUrl: emailResult.previewUrl,
+    });
+  } catch (error) {
+    console.error("Preview invoice email error:", error);
+    return res.status(500).json({
+      message: "Failed to send invoice email.",
+      error: error.message,
+    });
+  }
 };

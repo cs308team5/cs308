@@ -23,31 +23,49 @@ export default function CheckoutPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handlePlaceOrder = async () => {
+    const order = {
+      invoiceNumber: `INV-${Date.now()}`,
+      date: new Date().toLocaleDateString("en-US", {
+        year: "numeric", month: "long", day: "numeric",
+      }),
+      items: cart,
+      shipping: {
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        country: form.country,
+      },
+      subtotal,
+      shippingCost: shipping,
+      tax,
+      total,
+    };
 
-  const handlePlaceOrder = () => {
+    try {
+      const response = await fetch("http://localhost:3000/api/invoice/send-preview", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ order }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to send invoice email.");
+      }
+    } catch (error) {
+      alert(error.message || "Invoice email could not be sent.");
+    }
+
     navigate("/invoice", {
       state: {
-        order: {
-          invoiceNumber: `INV-${Date.now()}`,
-          date: new Date().toLocaleDateString("en-US", {
-            year: "numeric", month: "long", day: "numeric",
-          }),
-          items: cart,
-          shipping: {
-            fullName: form.fullName,
-            email:    form.email,
-            phone:    form.phone,
-            street:   form.street,
-            city:     form.city,
-            state:    form.state,
-            zip:      form.zip,
-            country:  form.country,
-          },
-          subtotal,
-          shippingCost: shipping,
-          tax,
-          total,
-        }
+        order,
       }
     });
   };
