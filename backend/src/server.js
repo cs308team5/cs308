@@ -7,6 +7,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import checkoutRoutes from "./routes/checkoutRoutes.js";
+import commentRoutes from "./routes/commentRoutes.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/checkout", checkoutRoutes);
 app.use("/api/invoice", invoiceRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/comments", commentRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
