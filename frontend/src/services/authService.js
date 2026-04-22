@@ -143,6 +143,7 @@ export async function login(email, password) {
     }
 
     localStorage.setItem("user", JSON.stringify(data));
+    localStorage.removeItem("guest_cart");
 
     return {
       success: true,
