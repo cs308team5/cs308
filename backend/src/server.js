@@ -4,9 +4,9 @@ import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import productRoutes from "./routes/productRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import checkoutRoutes from "./routes/checkoutRoutes.js";
 import invoiceRoutes from "./routes/invoiceRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
+import checkoutRoutes from "./routes/checkoutRoutes.js";
 
 dotenv.config();
 
@@ -29,7 +29,7 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "Server is running" });
 });
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
