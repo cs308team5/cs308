@@ -7,7 +7,7 @@ import CheckoutPage from "./pages/CheckoutPage";
 import TestPage from "./pages/TestPage";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
-
+import AdminPage from "./pages/AdminPage";
 
 const router = createBrowserRouter([
   {
@@ -45,6 +45,10 @@ const router = createBrowserRouter([
   {
     path: "/invoice",
     element: <InvoicePage />,
+  },
+  {
+    path: "/admin",
+    element: <AdminPage />,
   },
 ]);
 
