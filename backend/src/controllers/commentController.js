@@ -36,3 +36,49 @@ export const submitComment = async (req, res) => {
     return res.status(500).json({ message: "Server error." });
   }
 };
+
+// Tüm pending yorumları getir (admin için)
+export const getPendingComments = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.text, c.status, c.created_at,
+              c.product_id, p.name AS product_name,
+              c.user_id
+       FROM comments c
+       JOIN products p ON c.product_id = p.id
+       WHERE c.status = 'pending'
+       ORDER BY c.created_at ASC`
+    );
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("Get pending comments error:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+};
+
+// Yorumu onayla veya reddet (admin için)
+export const updateCommentStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body; // "approved" veya "rejected"
+
+  if (!["approved", "rejected"].includes(status)) {
+    return res.status(400).json({ message: "Status must be 'approved' or 'rejected'." });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE comments SET status = $1 WHERE id = $2
+       RETURNING id, status`,
+      [status, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "Comment not found." });
+    }
+
+    return res.status(200).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("Update comment status error:", error);
+    return res.status(500).json({ message: "Server error." });
+  }
+};
