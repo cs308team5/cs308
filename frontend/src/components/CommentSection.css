@@ -59,8 +59,14 @@
   transition: 0.2s;
 }
 
-.cs-submit-btn:hover    { opacity: 0.9; }
-.cs-submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+.cs-submit-btn:hover {
+  opacity: 0.9;
+}
+
+.cs-submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
 
 .cs-msg {
   font-size: 13px;
@@ -79,7 +85,9 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
-.cs-card:last-child { border-bottom: none; }
+.cs-card:last-child {
+  border-bottom: none;
+}
 
 .cs-card-header {
   display: flex;
