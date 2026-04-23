@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import "./LoginPage.css";
 import { useNavigate } from "react-router-dom";
 import { login } from "../services/authService";
+import "./LoginPage.css";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -25,8 +25,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (response.success) {
-      console.log("Logged in:", response);
-      navigate("/home"); // change if your route is different
+      navigate("/home");
     } else {
       setError(response.message);
     }
@@ -34,21 +33,16 @@ export default function LoginPage() {
 
   return (
     <div className="login-page">
-
-      {/* LOGO */}
       <div className="logo-container">
-        <h1 className="logo brand">dare</h1>
-        <p className="tagline">dare to wear</p>
+        <h1 className="logo brand">THE DARE</h1>
+        <p className="tagline type-eyebrow">dare to wear</p>
       </div>
 
-      {/* POLAROID LOGIN */}
       <div className="polaroid-wrapper">
-
         <div className="tape left"></div>
         <div className="tape right"></div>
 
         <div className="polaroid-card">
-
           <h2 className="caps">Welcome Back</h2>
 
           <label className="caps">Email</label>
@@ -56,18 +50,17 @@ export default function LoginPage() {
             type="email"
             placeholder="your@email.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
           />
 
           <label className="caps">Password</label>
           <input
             type="password"
-            placeholder="••••••••"
+            placeholder="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
           />
 
-          {/* ERROR MESSAGE */}
           {error && <p className="error">{error}</p>}
 
           <div className="row">
@@ -87,7 +80,7 @@ export default function LoginPage() {
           </button>
 
           <p className="register-text">
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <span
               className="register-link"
               onClick={() => navigate("/register")}
@@ -95,17 +88,14 @@ export default function LoginPage() {
               Register
             </span>
           </p>
-
         </div>
       </div>
 
-      {/* STICKY NOTE */}
       <div className="help-note">
         <p><strong>Need help?</strong></p>
         <p>support@dare.com</p>
         <p>+90 XXX XXX XX XX</p>
       </div>
-
     </div>
   );
 }

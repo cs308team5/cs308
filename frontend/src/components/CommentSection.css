@@ -1,16 +1,17 @@
 .cs-container {
-  background: white;
+  background: var(--color-surface);
   border-radius: 18px;
   padding: 35px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   margin-top: 30px;
+  font-family: var(--font-ui);
 }
 
 .cs-title {
   font-family: var(--font-stylish);
   font-size: 1.8rem;
   font-weight: normal;
-  color: var(--black);
+  color: var(--color-text);
   margin: 0 0 25px;
 }
 
@@ -60,7 +61,7 @@
 .rs-star-fill {
   width: 0;
   overflow: hidden;
-  color: #111;
+  color: var(--color-text);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -69,7 +70,7 @@
   font-family: var(--font-reviews);
   margin-left: 10px;
   font-size: 14px;
-  color: #555;
+  color: var(--color-text-muted);
 }
 
 .rs-static-stars {
@@ -81,14 +82,14 @@
   width: 100%;
   box-sizing: border-box;
   padding: 14px;
-  border: 1.5px solid #e5e5e5;
+  border: 1.5px solid var(--color-border);
   border-radius: 12px;
   font-family: var(--font-reviews);
   font-size: 14px;
   resize: vertical;
   transition: 0.2s;
-  color: var(--black);
-  background: white;
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 
 .cs-textarea:focus {
@@ -105,10 +106,10 @@
   width: fit-content;
   padding: 12px 28px;
   background: var(--pink);
-  color: white;
+  color: var(--color-surface);
   border: none;
   border-radius: 12px;
-  font-family: var(--font-reviews);
+  font-family: var(--font-ui);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -120,7 +121,7 @@
 }
 
 .cs-submit-btn:disabled {
-  background: #ccc;
+  background: var(--color-disabled);
   cursor: not-allowed;
 }
 
@@ -140,7 +141,7 @@
 
 .cs-card {
   padding: 18px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .cs-card:last-child {
@@ -164,20 +165,20 @@
   font-family: var(--font-reviews);
   font-weight: 600;
   font-size: 14px;
-  color: var(--black);
+  color: var(--color-text);
 }
 
 .cs-date {
   font-family: var(--font-reviews);
   font-size: 12px;
-  color: #aaa;
+  color: var(--color-text-subtle);
   white-space: nowrap;
 }
 
 .cs-text {
   font-family: var(--font-reviews);
   font-size: 14px;
-  color: #555;
+  color: var(--color-text-muted);
   line-height: 1.6;
   margin: 0;
 }
@@ -185,7 +186,7 @@
 .cs-rating-only {
   font-family: var(--font-reviews);
   font-size: 14px;
-  color: #777;
+  color: var(--color-text-muted);
   margin: 0;
 }
 

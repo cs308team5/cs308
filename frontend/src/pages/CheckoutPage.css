@@ -1,8 +1,7 @@
 .checkout-container {
   padding: 40px;
-  background: #F7F7F5;
+  background: #f7f7f5;
   min-height: 100vh;
-
   overflow-y: auto;
 }
 
@@ -12,31 +11,32 @@
   align-items: flex-start;
 }
 
-/* LEFT */
 .checkout-left {
   flex: 2;
 }
 
-/* CARD (match cart-item style) */
 .card {
   background: white;
   border-radius: 18px;
   padding: 25px;
   margin-bottom: 25px;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
-/* HEADER */
 .card-header {
   display: flex;
   gap: 15px;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 20px;
 }
 
 .card-header h2 {
-  margin: 0;
+  margin: 0 0 6px;
   color: var(--black);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
 .card-header p {
@@ -44,7 +44,6 @@
   color: #777;
 }
 
-/* ICONS (tone them down) */
 .icon {
   width: 45px;
   height: 45px;
@@ -52,11 +51,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 22px;
   background: #f2f2f2;
 }
 
-/* INPUT GROUP */
 .input-group {
   margin-bottom: 15px;
 }
@@ -74,8 +72,9 @@
   padding: 14px;
   border-radius: 12px;
   border: 1px solid #e5e5e5;
-  background: white; /* 🔥 cleaner */
+  background: white;
   transition: 0.2s;
+  box-sizing: border-box;
 }
 
 .input-group input:focus,
@@ -84,7 +83,6 @@
   outline: none;
 }
 
-/* GRIDS */
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -97,7 +95,6 @@
   gap: 15px;
 }
 
-/* SECURE BOX */
 .secure-box {
   margin-top: 15px;
   background: #f5f5f5;
@@ -107,22 +104,31 @@
   color: #555;
 }
 
-/* RIGHT PANEL — MATCH CART */
 .checkout-right {
   flex: 1;
-  background: linear-gradient(180deg, #111111, #1a1a1a); /* 🔥 same as cart */
-  padding: 30px;
+  background: linear-gradient(180deg, #111111, #1a1a1a);
+  padding: 48px 30px 30px;
   border-radius: 24px;
   color: white;
   min-height: 400px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
 }
 
 .checkout-right h2 {
-  margin-bottom: 20px;
+  margin: 0 0 20px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-/* SUMMARY */
+.checkout-summary-label {
+  margin: 0 0 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
 .summary-row {
   display: flex;
   justify-content: space-between;
@@ -138,22 +144,20 @@
   margin-top: 20px;
 }
 
-/* DIVIDER */
 hr {
   border: none;
   height: 1px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   margin: 15px 0;
 }
 
-/* BUTTON — MATCH LOGIN */
 .place-order {
   width: 100%;
   margin-top: 20px;
   padding: 16px;
   border-radius: 14px;
   border: none;
-  background: var(--pink); /* 🔥 consistent */
+  background: var(--pink);
   color: white;
   font-weight: 600;
   cursor: pointer;
@@ -164,21 +168,8 @@ hr {
   opacity: 0.9;
 }
 
-/* EXTRA */
 .extra {
   margin-top: 20px;
   font-size: 13px;
   color: #9ca3af;
-}
-
-.input-group input,
-.input-group select {
-  width: 100%;
-  box-sizing: border-box; /* 🔥 FIX */
-}
-
-.checkout-content {
-  display: flex;
-  gap: 40px;
-  align-items: flex-start; /* 🔥 prevents stretching issues */
 }
