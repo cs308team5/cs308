@@ -297,7 +297,7 @@ export default function HomePage() {
                         value={searchQuery}
                         onSearch={setSearchQuery}
                         onSubmit={handleSearchSubmit}
-                        placeholder="Search the collection"
+                        placeholder="Search by product name or description"
                         className="homepage-search"
                     />
                 </div>

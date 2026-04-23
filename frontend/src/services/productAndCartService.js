@@ -1,5 +1,12 @@
 import { supabase } from "../lib/supabaseClient";
 
+const escapeSearchValue = (value) =>
+  value
+    .replaceAll("\\", "\\\\")
+    .replaceAll(",", "\\,")
+    .replaceAll("(", "\\(")
+    .replaceAll(")", "\\)");
+
 const mapProduct = (row) => {
   const priceValue = Number(row.price ?? 0);
   const stockQuantity = Number(row.stock_quantity ?? 0);
@@ -21,7 +28,10 @@ const mapProduct = (row) => {
 export async function fetchProducts({ category = [], min_price = 0, max_price = 10000, sort = "all", search = "", limit = 1000 } = {}) {
   let query = supabase.from("products").select("*").gte("price", min_price).lte("price", max_price).limit(limit);
 
-  if (search)          query = query.ilike("name", `%${search}%`);
+  if (search) {
+    const escapedSearch = escapeSearchValue(search.trim());
+    query = query.or(`name.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`);
+  }
   if (category.length) query = query.in("category", category);
   if (sort === "discount") query = query.order("price", { ascending: true });
   else                     query = query.order("created_at", { ascending: false });
