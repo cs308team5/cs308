@@ -7,8 +7,16 @@ html, body {
 .greeting-container {
     padding: 60px 60px 20px 40px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
+    gap: 24px;
+}
+
+.greeting-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
 }
 
 .greeting-text {
@@ -208,6 +216,10 @@ html, body {
     align-items: center;
     gap: 12px;
     flex-shrink: 0;
+}
+
+.homepage-search {
+    width: min(100%, 520px);
 }
 
 .polaroid-grid {

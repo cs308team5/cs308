@@ -2,6 +2,7 @@ import "./DiscoverPage.css";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProducts } from "../services/productAndCartService.js";
+import SearchBar from "../components/SearchBar";
 import { CartButton } from "./HomePage";
 import brushStroke from "../assets/homePageAssets/brushStroke.png";
 
@@ -128,6 +129,7 @@ export default function DiscoverPage() {
     categories: [],
     minPrice: "",
     maxPrice: "",
+    search: location.state?.search ?? "",
     sort: normalizeSort(location.state?.feed),
   });
   const [viewMode, setViewMode] = useState("grid");
@@ -157,6 +159,16 @@ export default function DiscoverPage() {
   }, []);
 
   useEffect(() => {
+    if (location.state?.search !== undefined || location.state?.feed !== undefined) {
+      setFilters((current) => ({
+        ...current,
+        ...(location.state?.search !== undefined ? { search: location.state.search } : {}),
+        ...(location.state?.feed !== undefined ? { sort: normalizeSort(location.state.feed) } : {}),
+      }));
+    }
+  }, [location.state]);
+
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError("");
@@ -168,6 +180,7 @@ export default function DiscoverPage() {
       category: filters.categories,
       min_price: Math.min(minPrice, maxPrice),
       max_price: Math.max(minPrice, maxPrice),
+      search: filters.search.trim(),
     })
       .then((data) => {
         if (!cancelled) {
@@ -188,7 +201,7 @@ export default function DiscoverPage() {
     return () => {
       cancelled = true;
     };
-  }, [filters.categories, filters.maxPrice, filters.minPrice]);
+  }, [filters.categories, filters.maxPrice, filters.minPrice, filters.search]);
 
   const availableCategories = useMemo(() => {
     const categories = categorySource
@@ -239,12 +252,14 @@ export default function DiscoverPage() {
     filters.categories.length +
     (filters.minPrice !== "" ? 1 : 0) +
     (filters.maxPrice !== "" ? 1 : 0) +
+    (filters.search.trim() !== "" ? 1 : 0) +
     (filters.sort !== "featured" ? 1 : 0);
   const priceSummary =
     filters.minPrice !== "" || filters.maxPrice !== ""
       ? `$${filters.minPrice || 0} - $${filters.maxPrice || "Any"}`
       : "Any price";
   const activeFilterTags = [
+    ...(filters.search.trim() !== "" ? [{ key: "search", label: `Search: ${filters.search.trim()}` }] : []),
     ...(filters.sort !== "featured" ? [{ key: "sort", label: `Sort: ${filters.sort.replace("_", " ")}` }] : []),
     ...(filters.minPrice !== "" || filters.maxPrice !== "" ? [{ key: "price", label: priceSummary }] : []),
     ...filters.categories.map((category) => ({ key: category, label: category })),
@@ -271,6 +286,7 @@ export default function DiscoverPage() {
       categories: [],
       minPrice: "",
       maxPrice: "",
+      search: "",
       sort: "featured",
     }));
   };
@@ -393,11 +409,19 @@ export default function DiscoverPage() {
 
         <main className="results-grid">
           <div className="listing-toolbar">
-            <div>
+            <div className="toolbar-copy">
               <h1 className="greeting-text">Explore</h1>
               <p className="results-summary">
                 {loading ? "Loading products..." : `${sortedProducts.length} products found`}
               </p>
+              <SearchBar
+                value={filters.search}
+                onSearch={(value) =>
+                  setFilters((current) => ({ ...current, search: value }))
+                }
+                placeholder="Search products, creators, or categories"
+                className="discover-search"
+              />
             </div>
 
             <div className="toolbar-actions">
