@@ -419,7 +419,7 @@ export default function DiscoverPage() {
                 onSearch={(value) =>
                   setFilters((current) => ({ ...current, search: value }))
                 }
-                placeholder="Search products, creators, or categories"
+                placeholder="Search by product name or description"
                 className="discover-search"
               />
             </div>
