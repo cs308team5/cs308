@@ -178,12 +178,13 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
                 <span className="reveal-price">{price}</span>
                 <button
                     className={`reveal-cart-btn ${!inStock ? "disabled" : ""}`}
-                    onClick={handleAddToCart}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart();
+                    }}
                     disabled={!inStock}
                 >
                     {inStock ? "Add to Cart" : "Out of Stock"}
-                <button className="reveal-cart-btn" onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}>
-                    Add to Cart
                 </button>
             </div>
         </div>
