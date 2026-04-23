@@ -7,6 +7,7 @@ import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { faShareNodes } from '@fortawesome/free-solid-svg-icons'
 import { getCurrentUser, logout} from "../services/authService.js";
 import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
+import SearchBar from "../components/SearchBar.jsx";
 
 
 // --------------|
@@ -239,6 +240,7 @@ export default function HomePage() {
     const [activeTab, setActiveTab] = useState("home");
     const [displayName, setDisplayName] = useState("Guest");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
     const handleNavigation = (id, path) => {
         if (id !== activeTab) {
@@ -250,6 +252,14 @@ export default function HomePage() {
         await logout();
         navigate("/login");
        
+    };
+
+    const handleSearchSubmit = (query) => {
+        const trimmedQuery = query.trim();
+
+        navigate("/discover", {
+            state: trimmedQuery ? { search: trimmedQuery } : undefined,
+        });
     };
 
     useEffect(() => {
@@ -279,9 +289,18 @@ export default function HomePage() {
 
         <div className="content-area">
             <div className="greeting-container">
-                <h1 className="greeting-text">
-                    Hi <span className="username-highlight">{displayName}</span>, check these out
-                </h1>
+                <div className="greeting-copy">
+                    <h1 className="greeting-text">
+                        Hi <span className="username-highlight">{displayName}</span>, check these out
+                    </h1>
+                    <SearchBar
+                        value={searchQuery}
+                        onSearch={setSearchQuery}
+                        onSubmit={handleSearchSubmit}
+                        placeholder="Search the collection"
+                        className="homepage-search"
+                    />
+                </div>
                 <div className="header-actions">
                 <CartButton onClick={() => navigate("/cart")} />
                 {isLoggedIn && <button className="logout-btn" onClick={handleLogout}>
