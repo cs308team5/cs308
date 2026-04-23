@@ -16,8 +16,62 @@
 .cs-input-wrap {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 30px;
+}
+
+.rs-star-input {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rs-star-button,
+.rs-static-star {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.rs-star-button:disabled {
+  cursor: not-allowed;
+}
+
+.rs-star-shell,
+.rs-star-fill {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.rs-star-shell {
+  color: #b9b9b9;
+}
+
+.rs-star-fill {
+  width: 0;
+  overflow: hidden;
+  color: #111;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.rs-selected-rating {
+  margin-left: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+.rs-static-stars {
+  display: flex;
+  gap: 3px;
 }
 
 .cs-textarea {
@@ -90,7 +144,14 @@
 .cs-card-header {
   display: flex;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 8px;
+}
+
+.cs-author-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .cs-author {
@@ -102,6 +163,7 @@
 .cs-date {
   font-size: 12px;
   color: #aaa;
+  white-space: nowrap;
 }
 
 .cs-text {
@@ -109,4 +171,25 @@
   color: #555;
   line-height: 1.6;
   margin: 0;
+}
+
+.cs-rating-only {
+  font-size: 14px;
+  color: #777;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .cs-container {
+    padding: 24px 18px;
+  }
+
+  .cs-card-header {
+    flex-direction: column;
+  }
+
+  .rs-selected-rating {
+    width: 100%;
+    margin-left: 0;
+  }
 }
