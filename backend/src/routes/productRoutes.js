@@ -1,6 +1,6 @@
 import express from "express";
-import { getProducts } from "../controllers/productController.js";
-import { getProductById } from "../controllers/productController.js";
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct } from "../controllers/productController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 import { submitRating } from "../controllers/productController.js";
 import pool from "../config/db.js";
 
@@ -34,5 +34,10 @@ router.get("/search", async (req, res) => {
 
 router.get("/:id", getProductById);
 router.post("/:id/rating", submitRating);
+
+// Admin routes (auth korumalı)
+router.post("/", authMiddleware, createProduct);
+router.put("/:id", authMiddleware, updateProduct);
+router.delete("/:id", authMiddleware, deleteProduct);
 
 export default router;
