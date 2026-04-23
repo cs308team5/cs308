@@ -95,6 +95,7 @@ export const CartButton = ({ onClick }) => {
 
 export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity}) => {
     const inStock = Number(stock_quantity) > 0;
+    const navigate = useNavigate();
 
     const [isLiked, setIsLiked] = useState(false);
 
@@ -137,8 +138,13 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
         }
     };
 
+    const handleOpenProduct = () => {
+        if (!productId) return;
+        navigate(`/products/${productId}`);
+    };
+
     return (
-        <div className="polaroid-container">
+        <div className="polaroid-container" onClick={handleOpenProduct} style={{ cursor: "pointer" }}>
             <div className="polaroid-frame">
 
 
@@ -160,7 +166,7 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
                         <FontAwesomeIcon icon={faShareNodes} color="#1B284E" size="lg"/>
                         <div className="like-container">
                             <p className="like-count">123</p>
-                            <FontAwesomeIcon className={isLiked ? "heart-pop" : ""} onClick={toggleLike} style={{cursor: "pointer"}} icon={isLiked? faHeartSolid : faHeartRegular} color={isLiked ? "var(--pink)" : "var(--blue)"} size="lg"/>
+                            <FontAwesomeIcon className={isLiked ? "heart-pop" : ""} onClick={(e) => { e.stopPropagation(); toggleLike(); }} style={{cursor: "pointer"}} icon={isLiked? faHeartSolid : faHeartRegular} color={isLiked ? "var(--pink)" : "var(--blue)"} size="lg"/>
                         </div>
                     </div>
 
@@ -176,6 +182,8 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
                     disabled={!inStock}
                 >
                     {inStock ? "Add to Cart" : "Out of Stock"}
+                <button className="reveal-cart-btn" onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}>
+                    Add to Cart
                 </button>
             </div>
         </div>
