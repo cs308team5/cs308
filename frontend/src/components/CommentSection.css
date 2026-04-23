@@ -13,6 +13,7 @@
   margin: 0 0 25px;
 }
 
+/* INPUT */
 .cs-input-wrap {
   display: flex;
   flex-direction: column;
@@ -127,6 +128,7 @@
   margin: 0;
 }
 
+/* LIST */
 .cs-empty {
   color: #aaa;
   font-size: 14px;

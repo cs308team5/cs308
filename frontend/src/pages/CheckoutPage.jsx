@@ -1,66 +1,73 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { fetchCart } from "../services/productAndCartService.js";
-import { getCurrentUser } from "../services/authService.js";
 import "./CheckoutPage.css";
 
 export default function CheckoutPage() {
-  const user = getCurrentUser();
-  const [cart, setCart] = useState([]);
-  const [cardNumber, setCardNumber] = useState("");
-  const [expiry, setExpiry] = useState("");
-  const [cvv, setCvv] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
-    fetchCart(user.customer_id).then(setCart).catch(console.error);
-  }, []);
+  const { state } = useLocation();
+  const navigate = useNavigate();
 
-  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cart = state?.cart ?? [];
+  const subtotal = state?.subtotal ?? 0;
   const shipping = 15.00;
-  const tax = subtotal * 0.08;
+  const tax = +(subtotal * 0.0835).toFixed(2);
   const total = subtotal + shipping + tax;
 
-  const handlePlaceOrder = async () => {
-    setError("");
-    const [expiryMonth, expiryYear] = expiry.split("/").map((s) => s.trim());
+  const [form, setForm] = useState({
+    fullName: "", email: "", phone: "",
+    street: "", city: "", state: "", zip: "", country: "",
+    cardNumber: "", cardName: "", expiry: "", cvv: "",
+  });
 
-    setSubmitting(true);
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handlePlaceOrder = async () => {
+    const order = {
+      invoiceNumber: `INV-${Date.now()}`,
+      date: new Date().toLocaleDateString("en-US", {
+        year: "numeric", month: "long", day: "numeric",
+      }),
+      items: cart,
+      shipping: {
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        country: form.country,
+      },
+      subtotal,
+      shippingCost: shipping,
+      tax,
+      total,
+    };
+
     try {
-      // hardcoded for now but change it later
-      const res = await fetch("http://localhost:3000/api/payment/process", {
+      const response = await fetch("http://localhost:3000/api/invoice/send-preview", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cardNumber,
-          cvv,
-          expiryMonth,
-          expiryYear,
-          amount: total.toFixed(2),
-          customer_id: user.customer_id,
-          cart_items: cart.map((item) => ({
-            product_id: item.product_id,
-            quantity: item.quantity,
-            price: item.price,
-          })),
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ order }),
       });
 
-      const data = await res.json();
-      if (!data.success) {
-        setError(data.message || "Payment failed.");
-        return;
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to send invoice email.");
       }
-      // alerti silebiliriz belki
-      alert('Order placed!');
-    } catch (err) {
-      setError("Could not connect to server. Please try again.");
-    } finally {
-      setSubmitting(false);
+    } catch (error) {
+      alert(error.message || "Invoice email could not be sent.");
     }
+
+    navigate("/invoice", {
+      state: {
+        order,
+      }
+    });
   };
 
   return (
@@ -145,7 +152,7 @@ export default function CheckoutPage() {
 
             <div className="input-group">
               <label>Card Number</label>
-              <input placeholder="1234 5678 9012 3456" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} />
+              <input name="cardNumber" value={form.cardNumber} onChange={handleChange} placeholder="1234 5678 9012 3456" />
             </div>
 
             <div className="input-group">
@@ -156,12 +163,12 @@ export default function CheckoutPage() {
             <div className="grid-2">
               <div className="input-group">
                 <label>Expiry Date</label>
-                <input placeholder="MM/YY" value={expiry} onChange={(e) => setExpiry(e.target.value)} />
+                <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="MM/YY" />
               </div>
 
               <div className="input-group">
                 <label>CVV</label>
-                <input placeholder="123" value={cvv} onChange={(e) => setCvv(e.target.value)} />
+                <input name="cvv" value={form.cvv} onChange={handleChange} placeholder="123" />
               </div>
             </div>
 
@@ -179,7 +186,6 @@ export default function CheckoutPage() {
           <div className="summary-row">
             <span>Subtotal</span>
             <span>${subtotal.toFixed(2)}</span>
-            <span>${subtotal.toFixed(2)}</span>
           </div>
 
           <div className="summary-row">
@@ -188,7 +194,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="summary-row">
-            <span>Tax (8%)</span>
+            <span>Tax</span>
             <span>${tax.toFixed(2)}</span>
           </div>
 
@@ -199,11 +205,7 @@ export default function CheckoutPage() {
             <span>${total.toFixed(2)}</span>
           </div>
 
-          {error && <p style={{ color: "red", fontSize: "0.9rem" }}>{error}</p>}
-
-          <button className="place-order" onClick={handlePlaceOrder} disabled={submitting}>
-            {submitting ? "Placing Order..." : "Place Order"}
-          </button>
+          <button className="place-order" onClick={handlePlaceOrder}>Place Order</button>
 
           <div className="extra">
             <p>🔒 Secure 256-bit SSL encryption</p>

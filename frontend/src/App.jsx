@@ -8,7 +8,7 @@ import TestPage from "./pages/TestPage";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
 import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
-
+import AdminPage from "./pages/AdminPage";
 
 const router = createBrowserRouter([
   {
@@ -51,6 +51,9 @@ const router = createBrowserRouter([
     path: "/products/:id",
     element: <ProductDetailsPage />,
   }
+    path: "/admin",
+    element: <AdminPage />,
+  },
 ]);
 
 export default function App() {
