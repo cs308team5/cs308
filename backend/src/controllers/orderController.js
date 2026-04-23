@@ -17,6 +17,17 @@ export async function createOrder(customer_id, cart_items, total_price) {
                 `INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES ($1, $2, $3, $4)`,
                 [order_id, item.product_id, item.quantity, item.price]
             );
+
+            const stockResult = await client.query(
+                `UPDATE products SET stock_quantity = stock_quantity - $1
+                 WHERE id = $2 AND stock_quantity >= $1
+                 RETURNING stock_quantity`,
+                [item.quantity, item.product_id]
+            );
+
+            if (stockResult.rowCount === 0) {
+                throw new Error(`Insufficient stock for product ${item.product_id}.`);
+            }
         }
 
         await client.query(
