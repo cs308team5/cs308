@@ -112,7 +112,6 @@ useEffect(() => {
             <div className="content-area discover-split">
 
                 <aside className="filter-panel">
-
                     <h2 className="filter-header">Filters</h2>
 
                     <div className="filter-group">

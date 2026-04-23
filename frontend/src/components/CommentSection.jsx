@@ -262,7 +262,7 @@ export default function CommentSection({ productId, onStatsChange }) {
 
   return (
     <div className="cs-container">
-      <h2 className="cs-title brand">Ratings & Comments</h2>
+      <h2 className="cs-title">Ratings & Comments</h2>
 
       <div className="cs-input-wrap">
         <StarRatingInput

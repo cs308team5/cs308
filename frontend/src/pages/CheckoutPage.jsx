@@ -3,31 +3,41 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./CheckoutPage.css";
 
 export default function CheckoutPage() {
-
   const { state } = useLocation();
   const navigate = useNavigate();
 
   const cart = state?.cart ?? [];
   const subtotal = state?.subtotal ?? 0;
-  const shipping = 15.00;
+  const shipping = 15.0;
   const tax = +(subtotal * 0.0835).toFixed(2);
   const total = subtotal + shipping + tax;
 
   const [form, setForm] = useState({
-    fullName: "", email: "", phone: "",
-    street: "", city: "", state: "", zip: "", country: "",
-    cardNumber: "", cardName: "", expiry: "", cvv: "",
+    fullName: "",
+    email: "",
+    phone: "",
+    street: "",
+    city: "",
+    state: "",
+    zip: "",
+    country: "",
+    cardNumber: "",
+    cardName: "",
+    expiry: "",
+    cvv: "",
   });
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
   };
 
   const handlePlaceOrder = async () => {
     const order = {
       invoiceNumber: `INV-${Date.now()}`,
       date: new Date().toLocaleDateString("en-US", {
-        year: "numeric", month: "long", day: "numeric",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       }),
       items: cart,
       shipping: {
@@ -66,19 +76,14 @@ export default function CheckoutPage() {
     navigate("/invoice", {
       state: {
         order,
-      }
+      },
     });
   };
 
   return (
     <div className="checkout-container">
-
       <div className="checkout-content">
-
-        {/* LEFT SIDE */}
         <div className="checkout-left">
-
-          {/* SHIPPING CARD */}
           <div className="card">
             <div className="card-header">
               <div className="icon purple">📍</div>
@@ -140,7 +145,6 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* PAYMENT CARD */}
           <div className="card">
             <div className="card-header">
               <div className="icon blue">💳</div>
@@ -172,15 +176,12 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <div className="secure-box">
-              🔒 Your payment information is encrypted and secure
-            </div>
+            <div className="secure-box">🔒 Your payment information is encrypted and secure</div>
           </div>
-
         </div>
 
-        {/* RIGHT SIDE */}
         <div className="checkout-right">
+          <p className="checkout-summary-label">Review</p>
           <h2>Order Summary</h2>
 
           <div className="summary-row">
@@ -212,7 +213,6 @@ export default function CheckoutPage() {
             <p>🛡 30-day money-back guarantee</p>
           </div>
         </div>
-
       </div>
     </div>
   );
