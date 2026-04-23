@@ -289,19 +289,30 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-// ─── ADMIN: Ürün Sil ────────────────────────────────────────────
 export const deleteProduct = async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
 
   try {
-    const result = await pool.query(
+    await client.query("BEGIN");
+
+    // Bağlı kayıtları önce sil
+    await client.query("DELETE FROM cart_items WHERE product_id = $1", [id]);
+    await client.query("DELETE FROM order_items WHERE product_id = $1", [id]);
+    await client.query("DELETE FROM ratings WHERE product_id = $1", [id]);
+    await client.query("DELETE FROM comments WHERE product_id = $1", [id]);
+
+    const result = await client.query(
       "DELETE FROM products WHERE id = $1 RETURNING id, name",
       [id]
     );
 
     if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
       return res.status(404).json({ success: false, message: "Product not found." });
     }
+
+    await client.query("COMMIT");
 
     return res.status(200).json({
       success: true,
@@ -309,7 +320,10 @@ export const deleteProduct = async (req, res) => {
       data: result.rows[0]
     });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Delete product error:", error);
     return res.status(500).json({ success: false, message: "Server error." });
+  } finally {
+    client.release();
   }
 };
