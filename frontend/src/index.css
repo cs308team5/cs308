@@ -5,23 +5,35 @@
   --green: #1E5128;
   --blue: #1B284E;
   --sand: #DBD6B8;
+  --font-ui: 'Inter', sans-serif;
+  --font-brand: 'Playfair Display', serif;
+  --font-stylish: 'Playfair Display', serif;
+  --font-reviews: 'Inter', sans-serif;
 }
 
 /* BASE */
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-ui);
   background-color: var(--black);
   color: var(--offwhite);
 }
 
 /* LOGO FONT */
 .brand {
-  font-family: 'Playfair Display', serif;
+  font-family: var(--font-brand);
+}
+
+.stylish {
+  font-family: var(--font-stylish);
 }
 
 /* CLEAN TEXT */
 .text {
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-ui);
+}
+
+.text-reviews {
+  font-family: var(--font-reviews);
 }
 
 /* CAPS STYLE */

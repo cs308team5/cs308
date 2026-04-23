@@ -7,6 +7,7 @@
 }
 
 .cs-title {
+  font-family: var(--font-stylish);
   font-size: 1.8rem;
   font-weight: normal;
   color: var(--black);
@@ -65,6 +66,7 @@
 }
 
 .rs-selected-rating {
+  font-family: var(--font-reviews);
   margin-left: 10px;
   font-size: 14px;
   color: #555;
@@ -81,7 +83,7 @@
   padding: 14px;
   border: 1.5px solid #e5e5e5;
   border-radius: 12px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-reviews);
   font-size: 14px;
   resize: vertical;
   transition: 0.2s;
@@ -106,7 +108,7 @@
   color: white;
   border: none;
   border-radius: 12px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-reviews);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -123,6 +125,7 @@
 }
 
 .cs-msg {
+  font-family: var(--font-reviews);
   font-size: 13px;
   color: var(--green);
   margin: 0;
@@ -130,6 +133,7 @@
 
 /* LIST */
 .cs-empty {
+  font-family: var(--font-reviews);
   color: #aaa;
   font-size: 14px;
 }
@@ -157,18 +161,21 @@
 }
 
 .cs-author {
+  font-family: var(--font-reviews);
   font-weight: 600;
   font-size: 14px;
   color: var(--black);
 }
 
 .cs-date {
+  font-family: var(--font-reviews);
   font-size: 12px;
   color: #aaa;
   white-space: nowrap;
 }
 
 .cs-text {
+  font-family: var(--font-reviews);
   font-size: 14px;
   color: #555;
   line-height: 1.6;
@@ -176,6 +183,7 @@
 }
 
 .cs-rating-only {
+  font-family: var(--font-reviews);
   font-size: 14px;
   color: #777;
   margin: 0;
