@@ -1,5 +1,26 @@
 import pool from "../config/db.js";
 
+function formatDeliveryAddress(shippingAddress) {
+  if (!shippingAddress) {
+    return "";
+  }
+
+  if (typeof shippingAddress === "string") {
+    return shippingAddress.trim();
+  }
+
+  const addressParts = [
+    shippingAddress.address,
+    shippingAddress.street,
+    shippingAddress.city,
+    shippingAddress.state,
+    shippingAddress.zip,
+    shippingAddress.country,
+  ];
+
+  return addressParts.filter(Boolean).join(", ").trim();
+}
+
 export const checkout = async (req, res) => {
   const { cart, shippingAddress, paymentInfo } = req.body;
 
@@ -10,7 +31,9 @@ export const checkout = async (req, res) => {
     });
   }
 
-  if (!shippingAddress || !shippingAddress.address) {
+  const deliveryAddress = formatDeliveryAddress(shippingAddress);
+
+  if (!deliveryAddress) {
     return res.status(400).json({
       success: false,
       message: "Shipping address is required.",
@@ -73,6 +96,14 @@ export const checkout = async (req, res) => {
         ]
       );
     }
+
+    await client.query(
+      `
+      INSERT INTO deliveries (order_id, customer_id, delivery_address)
+      VALUES ($1, $2, $3)
+      `,
+      [orderId, customerId, deliveryAddress]
+    );
 
     await client.query("COMMIT");
 
