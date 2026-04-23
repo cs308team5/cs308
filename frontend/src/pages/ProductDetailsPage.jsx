@@ -8,17 +8,15 @@ export default function ProductDetailsPage() {
   const navigate = useNavigate();
 
   const [product, setProduct] = useState(null);
-  const [ratings, setRatings] = useState([]);
+  const [reviewStats, setReviewStats] = useState({
+    average: 0,
+    count: 0,
+  });
 
   useEffect(() => {
     fetch(`http://localhost:3000/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => setProduct(data.data))
-      .catch((err) => console.error(err));
-
-    fetch(`http://localhost:3000/api/products/${id}/ratings`)
-      .then((res) => res.json())
-      .then((data) => setRatings(data.data || []))
       .catch((err) => console.error(err));
   }, [id]);
 
@@ -39,10 +37,8 @@ export default function ProductDetailsPage() {
 
   if (!product) return <div className="loading">Loading...</div>;
 
-  const avgRating =
-    ratings.length > 0
-      ? (ratings.reduce((sum, current) => sum + current.rating, 0) / ratings.length).toFixed(1)
-      : "No ratings";
+  const averageLabel =
+    reviewStats.count > 0 ? reviewStats.average.toFixed(1) : "No ratings";
 
   return (
     <div className="page">
@@ -75,7 +71,7 @@ export default function ProductDetailsPage() {
 
           <div className="price">{product.price} TL</div>
 
-          <div className="rating">★ {avgRating} ({ratings.length})</div>
+          <div className="rating">★ {averageLabel} ({reviewStats.count})</div>
 
           {!product.inStock && <div className="out-of-stock">OUT OF STOCK</div>}
 
@@ -92,7 +88,10 @@ export default function ProductDetailsPage() {
             <p>{product.description || "No description available."}</p>
           </div>
 
-          <CommentSection productId={product.id} />
+          <CommentSection
+            productId={product.id}
+            onStatsChange={setReviewStats}
+          />
         </div>
       </div>
     </div>
