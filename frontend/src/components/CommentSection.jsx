@@ -3,7 +3,6 @@ import { getCurrentUser } from "../services/authService.js";
 import { supabase } from "../lib/supabaseClient.js";
 import "./CommentSection.css";
 
-/* Interactive Star Input */
 function StarRatingInput({ value, onChange, disabled }) {
   const [hoverValue, setHoverValue] = useState(null);
   const displayValue = hoverValue ?? value;
@@ -18,6 +17,7 @@ function StarRatingInput({ value, onChange, disabled }) {
     <div
       className="rs-star-input"
       onMouseLeave={() => setHoverValue(null)}
+      aria-label="Choose a rating"
     >
       {[1, 2, 3, 4, 5].map((starNumber) => {
         const fill = Math.max(0, Math.min(1, displayValue - (starNumber - 1)));
@@ -28,13 +28,15 @@ function StarRatingInput({ value, onChange, disabled }) {
             type="button"
             className="rs-star-button"
             disabled={disabled}
-            onMouseMove={(e) => setHoverValue(getValueFromPointer(e, starNumber))}
-            onClick={(e) => onChange(getValueFromPointer(e, starNumber))}
+            onMouseMove={(event) => setHoverValue(getValueFromPointer(event, starNumber))}
+            onClick={(event) => onChange(getValueFromPointer(event, starNumber))}
+            aria-label={`Rate ${starNumber} stars`}
           >
             <span className="rs-star-shell">☆</span>
             <span
               className="rs-star-fill"
               style={{ width: `${fill * 100}%` }}
+              aria-hidden="true"
             >
               ★
             </span>
@@ -49,10 +51,9 @@ function StarRatingInput({ value, onChange, disabled }) {
   );
 }
 
-/* Static Stars */
 function StaticStars({ value }) {
   return (
-    <div className="rs-static-stars">
+    <div className="rs-static-stars" aria-label={`Rated ${value} out of 5`}>
       {[1, 2, 3, 4, 5].map((starNumber) => {
         const fill = Math.max(0, Math.min(1, value - (starNumber - 1)));
 
@@ -62,6 +63,7 @@ function StaticStars({ value }) {
             <span
               className="rs-star-fill"
               style={{ width: `${fill * 100}%` }}
+              aria-hidden="true"
             >
               ★
             </span>
@@ -72,14 +74,12 @@ function StaticStars({ value }) {
   );
 }
 
-/* Main Component */
 export default function CommentSection({ productId, onStatsChange }) {
   const user = getCurrentUser();
 
   const [ratings, setRatings] = useState([]);
   const [comments, setComments] = useState([]);
   const [userMap, setUserMap] = useState({});
-
   const [ratingValue, setRatingValue] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -95,7 +95,6 @@ export default function CommentSection({ productId, onStatsChange }) {
           .select("*")
           .eq("product_id", productId)
           .order("created_at", { ascending: false }),
-
         supabase
           .from("comments")
           .select("*")
@@ -104,80 +103,94 @@ export default function CommentSection({ productId, onStatsChange }) {
           .order("created_at", { ascending: false }),
       ]);
 
-      if (!ratingsRes.error) setRatings(ratingsRes.data || []);
-      if (!commentsRes.error) setComments(commentsRes.data || []);
+      if (!ratingsRes.error) {
+        setRatings(ratingsRes.data || []);
+      } else {
+        console.error("Could not load ratings:", ratingsRes.error);
+      }
 
-      /* 👤 Load user names */
+      if (!commentsRes.error) {
+        setComments(commentsRes.data || []);
+      } else {
+        console.error("Could not load comments:", commentsRes.error);
+      }
+
       const userIds = [
-        ...(ratingsRes.data || []).map((r) => r.user_id),
-        ...(commentsRes.data || []).map((c) => c.user_id),
+        ...(ratingsRes.data || []).map((rating) => rating.user_id),
+        ...(commentsRes.data || []).map((comment) => comment.user_id),
       ];
 
-      const uniqueIds = [...new Set(userIds)];
+      const uniqueIds = [...new Set(userIds.filter(Boolean))];
 
-      if (uniqueIds.length > 0) {
-        const { data } = await supabase
-          .from("customers")
-          .select("customer_id, username, name")
-          .in("customer_id", uniqueIds);
-
-        const map = {};
-        (data || []).forEach((u) => {
-          map[u.customer_id] = u.username || u.name || "Customer";
-        });
-
-        setUserMap(map);
+      if (uniqueIds.length === 0) {
+        setUserMap({});
+        return;
       }
+
+      const { data, error } = await supabase
+        .from("customers")
+        .select("customer_id, username, name")
+        .in("customer_id", uniqueIds);
+
+      if (error) {
+        console.error("Could not load usernames:", error);
+        return;
+      }
+
+      const nextMap = {};
+      (data || []).forEach((entry) => {
+        nextMap[entry.customer_id] = entry.username || entry.name || "Customer";
+      });
+
+      setUserMap(nextMap);
     }
 
     loadReviews();
   }, [productId]);
 
-  /* Stats */
   useEffect(() => {
     if (!onStatsChange) return;
 
     const count = ratings.length;
-    const avg =
+    const average =
       count > 0
-        ? ratings.reduce((sum, r) => sum + Number(r.rating || 0), 0) / count
+        ? ratings.reduce((sum, rating) => sum + Number(rating.rating || 0), 0) / count
         : 0;
 
-    onStatsChange({ count, average: avg });
-  }, [ratings]);
+    onStatsChange({ count, average });
+  }, [onStatsChange, ratings]);
 
-  /* Merge reviews */
   const mergedReviews = useMemo(() => {
-    const merged = ratings.map((r) => ({
-      id: r.id,
-      userId: r.user_id,
-      rating: Number(r.rating),
-      comment: r.comment || "",
-      createdAt: r.created_at,
+    const merged = ratings.map((rating) => ({
+      id: rating.id,
+      userId: rating.user_id,
+      rating: Number(rating.rating),
+      comment: rating.comment || "",
+      createdAt: rating.created_at,
     }));
 
-    comments.forEach((c) => {
-      const exists = merged.some((m) => m.userId === c.user_id);
+    comments.forEach((comment) => {
+      const exists = merged.some((entry) => entry.userId === comment.user_id);
+
       if (!exists) {
         merged.push({
-          id: `c-${c.id}`,
-          userId: c.user_id,
+          id: `comment-${comment.id}`,
+          userId: comment.user_id,
           rating: 0,
-          comment: c.text,
-          createdAt: c.created_at,
+          comment: comment.text,
+          createdAt: comment.created_at,
         });
       }
     });
 
     return merged.sort(
-      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
     );
-  }, [ratings, comments]);
+  }, [comments, ratings]);
 
-  /* Submit */
   const handleSubmit = async () => {
     if (!user) {
-      setSubmitMsg("Login required.");
+      setSubmitMsg("Log in to submit a rating.");
       return;
     }
 
@@ -192,63 +205,120 @@ export default function CommentSection({ productId, onStatsChange }) {
     try {
       const userId = user.customer_id ?? user.customerId;
 
-      await supabase.from("ratings").insert({
+      const { error: ratingError } = await supabase.from("ratings").insert({
         user_id: userId,
         product_id: productId,
         rating: ratingValue,
-        comment: commentText || null,
+        comment: commentText.trim() || null,
       });
 
-      if (commentText.trim()) {
-        await supabase.from("comments").insert({
-          user_id: userId,
-          product_id: productId,
-          text: commentText,
-          status: "pending",
-        });
+      if (ratingError) {
+        throw ratingError;
       }
 
-      setSubmitMsg("Submitted!");
+      if (commentText.trim()) {
+        const { error: commentError } = await supabase.from("comments").insert({
+          user_id: userId,
+          product_id: productId,
+          text: commentText.trim(),
+          status: "pending",
+        });
+
+        if (commentError) {
+          throw commentError;
+        }
+      }
+
+      setRatings((current) => [
+        {
+          id: `temp-${Date.now()}`,
+          user_id: userId,
+          rating: ratingValue,
+          comment: commentText.trim() || "",
+          created_at: new Date().toISOString(),
+        },
+        ...current.filter((entry) => entry.user_id !== userId),
+      ]);
+
+      setUserMap((current) => ({
+        ...current,
+        [userId]: user.username || user.name || "Customer",
+      }));
+
       setRatingValue(0);
       setCommentText("");
-
-    } catch (err) {
+      setSubmitMsg(
+        commentText.trim()
+          ? "Your rating was submitted. Your comment is pending approval."
+          : "Your rating was submitted."
+      );
+    } catch (error) {
+      console.error("Error submitting review:", error);
       setSubmitMsg("Error submitting.");
-      console.error(err);
+    } finally {
+      setSubmitting(false);
     }
-
-    setSubmitting(false);
   };
 
   return (
     <div className="cs-container">
-      <h2>Ratings & Comments</h2>
+      <h2 className="cs-title brand">Ratings & Comments</h2>
 
-      <StarRatingInput
-        value={ratingValue}
-        onChange={setRatingValue}
-        disabled={!user || submitting}
-      />
+      <div className="cs-input-wrap">
+        <StarRatingInput
+          value={ratingValue}
+          onChange={setRatingValue}
+          disabled={!user || submitting}
+        />
 
-      <textarea
-        value={commentText}
-        onChange={(e) => setCommentText(e.target.value)}
-        placeholder="Write comment..."
-        disabled={!user || submitting}
-      />
+        <textarea
+          className="cs-textarea"
+          value={commentText}
+          onChange={(event) => setCommentText(event.target.value)}
+          placeholder={user ? "Write comment..." : "Log in to write a comment"}
+          disabled={!user || submitting}
+          rows={4}
+        />
 
-      <button onClick={handleSubmit} disabled={submitting}>
-        Submit
-      </button>
+        <button
+          type="button"
+          className="cs-submit-btn"
+          onClick={handleSubmit}
+          disabled={!user || submitting || ratingValue <= 0}
+        >
+          {submitting ? "Submitting..." : "Submit"}
+        </button>
 
-      {submitMsg && <p>{submitMsg}</p>}
+        {submitMsg && <p className="cs-msg">{submitMsg}</p>}
+      </div>
 
-      <div>
-        {mergedReviews.map((r) => (
-          <div key={r.id}>
-            <strong>{userMap[r.userId] || "User"}</strong>
-            {r.rating > 0 && <StaticStars value={r.rating} />}
-            <p>{r.comment || "Rated only"}</p>
+      <div className="cs-list">
+        {mergedReviews.length === 0 && (
+          <p className="cs-empty">No reviews yet.</p>
+        )}
+
+        {mergedReviews.map((review) => (
+          <div key={review.id} className="cs-card">
+            <div className="cs-card-header">
+              <div className="cs-author-block">
+                <span className="cs-author">{userMap[review.userId] || "Customer"}</span>
+                {review.rating > 0 && <StaticStars value={review.rating} />}
+              </div>
+
+              <span className="cs-date">
+                {new Date(review.createdAt).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+            </div>
+
+            {review.comment ? (
+              <p className="cs-text">{review.comment}</p>
+            ) : (
+              <p className="cs-rating-only">Rated only</p>
+            )}
           </div>
         ))}
       </div>
