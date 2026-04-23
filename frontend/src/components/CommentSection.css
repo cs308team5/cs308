@@ -1,0 +1,112 @@
+.cs-container {
+  background: white;
+  border-radius: 18px;
+  padding: 35px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  margin-top: 30px;
+}
+
+.cs-title {
+  font-size: 1.8rem;
+  font-weight: normal;
+  color: var(--black);
+  margin: 0 0 25px;
+}
+
+.cs-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.cs-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px;
+  border: 1.5px solid #e5e5e5;
+  border-radius: 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  transition: 0.2s;
+  color: var(--black);
+  background: white;
+}
+
+.cs-textarea:focus {
+  border-color: var(--pink);
+  outline: none;
+}
+
+.cs-textarea:disabled {
+  background: #f5f5f5;
+  color: #aaa;
+}
+
+.cs-submit-btn {
+  width: fit-content;
+  padding: 12px 28px;
+  background: var(--pink);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.cs-submit-btn:hover {
+  opacity: 0.9;
+}
+
+.cs-submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cs-msg {
+  font-size: 13px;
+  color: var(--green);
+  margin: 0;
+}
+
+.cs-empty {
+  color: #aaa;
+  font-size: 14px;
+}
+
+.cs-card {
+  padding: 18px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.cs-card:last-child {
+  border-bottom: none;
+}
+
+.cs-card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cs-author {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--black);
+}
+
+.cs-date {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.cs-text {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+}
