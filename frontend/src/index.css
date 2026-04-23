@@ -1,33 +1,60 @@
 :root {
+  /* Brand colors */
   --black: #121212;
   --offwhite: #f0eee7;
   --pink: #C870A0;
   --green: #1E5128;
   --blue: #1B284E;
   --sand: #DBD6B8;
-}
+  --font-ui: 'Inter', sans-serif;
+  --font-brand: 'Playfair Display', serif;
+  --font-stylish: 'Playfair Display', serif;
+  --font-reviews: 'Inter', sans-serif;
+  --pink: #c870a0;
+  --green: #1e5128;
+  --blue: #1b284e;
+  --sand: #dbd6b8;
 
-/* BASE */
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: var(--black);
-  color: var(--offwhite);
-}
+  /* Semantic colors */
+  --color-page-bg: var(--offwhite);
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f7f5;
+  --color-text: var(--black);
+  --color-text-muted: #666666;
+  --color-text-subtle: #888888;
+  --color-inverse-bg: var(--black);
+  --color-inverse-text: var(--offwhite);
+  --color-paper: var(--offwhite);
+  --color-paper-shadow: rgba(0, 0, 0, 0.6);
+  --color-input-fill: #e6e3db;
+  --color-tape: #e8e5dc;
+  --color-border: #e5e5e5;
+  --color-border-soft: #f0f0f0;
+  --color-disabled: #cccccc;
+  --color-danger: #b42318;
+  --color-danger-soft: #ffcccc;
+  --color-warning: #ffe44d;
 
-/* LOGO FONT */
-.brand {
-  font-family: 'Playfair Display', serif;
-}
+  /* Typography */
+  --font-ui: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-support: "Inter", Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --font-brand: Arial, "Helvetica Neue", Helvetica, sans-serif;
 
-/* CLEAN TEXT */
-.text {
-  font-family: 'Inter', sans-serif;
-}
-
-/* CAPS STYLE */
-.caps {
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
+  /* Shared sizing */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 18px;
+  --text-lg: 32px;
+  --space-1: 8px;
+  --space-2: 12px;
+  --space-3: 20px;
+  --space-4: 40px;
+  --space-5: 60px;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --shadow-floating: 0 25px 60px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 8px 25px rgba(0, 0, 0, 0.08);
 }
 
 html, body {
@@ -36,9 +63,113 @@ html, body {
   overflow-y: auto !important;
 }
 
+body {
+  font-family: var(--font-ui);
+  background-color: var(--black);
+  color: var(--offwhite);
+  margin: 0;
+  font-family: var(--font-ui);
+  background-color: var(--color-page-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 #root {
   height: auto !important;
   min-height: 100vh;
   overflow: visible !important;
   display: block !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.brand {
+  font-family: var(--font-brand);
+}
+
+.stylish {
+  font-family: var(--font-stylish);
+}
+
+.text {
+  font-family: var(--font-ui);
+}
+
+.text-reviews {
+  font-family: var(--font-reviews);
+.text-support {
+  font-family: var(--font-support);
+}
+
+.caps {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.surface-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+#root {
+  height: auto !important;
+  min-height: 100vh;
+  overflow: visible !important;
+  display: block !important;
+.primary-button {
+  background: var(--color-text);
+  color: var(--color-surface);
+  border: none;
+}
+
+.type-eyebrow {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin: 0 0 12px;
+}
+
+.type-section-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin: 0 0 10px;
+}
+
+.type-page-title {
+  font-family: var(--font-ui);
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.type-panel-title {
+  font-family: var(--font-ui);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.type-body-muted {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 0;
 }

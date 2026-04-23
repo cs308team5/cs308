@@ -28,7 +28,17 @@ function isCardExpired(month, year) {
 }
 
 export const processPayment = async (req, res) => {
-    const { cardNumber, cvv, expiryMonth, expiryYear, amount, customer_id, cart_items } = req.body;
+    const {
+        cardNumber,
+        cvv,
+        expiryMonth,
+        expiryYear,
+        amount,
+        customer_id,
+        cart_items,
+        delivery_address,
+        shippingAddress,
+    } = req.body;
 
     // 1. Alan kontrolü
     if (!cardNumber || !cvv || !expiryMonth || !expiryYear || !amount) {
@@ -93,7 +103,12 @@ export const processPayment = async (req, res) => {
     // 8. ödeme onaylandıysa order ı kaydet
     if (customer_id && cart_items?.length) {
         try {
-            const { order_id } = await createOrder(customer_id, cart_items, amount);
+            const { order_id } = await createOrder(
+                customer_id,
+                cart_items,
+                amount,
+                delivery_address ?? shippingAddress
+            );
             return res.status(200).json({
                 success: true,
                 message: "Payment approved.",

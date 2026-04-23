@@ -7,6 +7,7 @@ import { faHeart as faHeartSolid } from '@fortawesome/free-solid-svg-icons'
 import { faShareNodes } from '@fortawesome/free-solid-svg-icons'
 import { getCurrentUser, logout} from "../services/authService.js";
 import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
+import SearchBar from "../components/SearchBar.jsx";
 
 
 // --------------|
@@ -94,6 +95,8 @@ export const CartButton = ({ onClick }) => {
 // Polaroid card and row
 
 export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity}) => {
+    const inStock = Number(stock_quantity) > 0;
+    const navigate = useNavigate();
 
     const [isLiked, setIsLiked] = useState(false);
 
@@ -107,6 +110,8 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
     };
 
     const handleAddToCart = async () => {
+        if (!inStock) return;
+
         const user = getCurrentUser();
 
         try {
@@ -134,8 +139,13 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
         }
     };
 
+    const handleOpenProduct = () => {
+        if (!productId) return;
+        navigate(`/products/${productId}`);
+    };
+
     return (
-        <div className="polaroid-container">
+        <div className="polaroid-container" onClick={handleOpenProduct} style={{ cursor: "pointer" }}>
             <div className="polaroid-frame">
 
 
@@ -149,12 +159,15 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
                     <div className="polaroid-content-text">
                         <p className="product-name">{title}</p>
                         <p className="creator-name">{creator}</p>
+                        <p className={`stock-status ${inStock ? "in-stock" : "out-of-stock"}`}>
+                            {inStock ? "In Stock" : "Out of Stock"}
+                        </p>
                     </div>
                     <div className="polaroid-content-utility">
                         <FontAwesomeIcon icon={faShareNodes} color="#1B284E" size="lg"/>
                         <div className="like-container">
                             <p className="like-count">123</p>
-                            <FontAwesomeIcon className={isLiked ? "heart-pop" : ""} onClick={toggleLike} style={{cursor: "pointer"}} icon={isLiked? faHeartSolid : faHeartRegular} color={isLiked ? "var(--pink)" : "var(--blue)"} size="lg"/>
+                            <FontAwesomeIcon className={isLiked ? "heart-pop" : ""} onClick={(e) => { e.stopPropagation(); toggleLike(); }} style={{cursor: "pointer"}} icon={isLiked? faHeartSolid : faHeartRegular} color={isLiked ? "var(--pink)" : "var(--blue)"} size="lg"/>
                         </div>
                     </div>
 
@@ -164,8 +177,15 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
 
             <div className="polaroid-buy-container">
                 <span className="reveal-price">{price}</span>
-                <button className="reveal-cart-btn" onClick={handleAddToCart}>
-                    Add to Cart
+                <button
+                    className={`reveal-cart-btn ${!inStock ? "disabled" : ""}`}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart();
+                    }}
+                    disabled={!inStock}
+                >
+                    {inStock ? "Add to Cart" : "Out of Stock"}
                 </button>
             </div>
         </div>
@@ -220,6 +240,7 @@ export default function HomePage() {
     const [activeTab, setActiveTab] = useState("home");
     const [displayName, setDisplayName] = useState("Guest");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
     const handleNavigation = (id, path) => {
         if (id !== activeTab) {
@@ -231,6 +252,14 @@ export default function HomePage() {
         await logout();
         navigate("/login");
        
+    };
+
+    const handleSearchSubmit = (query) => {
+        const trimmedQuery = query.trim();
+
+        navigate("/discover", {
+            state: trimmedQuery ? { search: trimmedQuery } : undefined,
+        });
     };
 
     useEffect(() => {
@@ -260,9 +289,18 @@ export default function HomePage() {
 
         <div className="content-area">
             <div className="greeting-container">
-                <h1 className="greeting-text">
-                    Hi <span className="username-highlight">{displayName}</span>, check these out
-                </h1>
+                <div className="greeting-copy">
+                    <h1 className="greeting-text">
+                        Hi <span className="username-highlight">{displayName}</span>, check these out
+                    </h1>
+                    <SearchBar
+                        value={searchQuery}
+                        onSearch={setSearchQuery}
+                        onSubmit={handleSearchSubmit}
+                        placeholder="Search by product name or description"
+                        className="homepage-search"
+                    />
+                </div>
                 <div className="header-actions">
                 <CartButton onClick={() => navigate("/cart")} />
                 {isLoggedIn && <button className="logout-btn" onClick={handleLogout}>

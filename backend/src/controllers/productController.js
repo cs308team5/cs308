@@ -208,3 +208,122 @@ export const submitRating = async (req, res) => {
     });
   }
 };
+
+// ─── ADMIN: Ürün Ekle ───────────────────────────────────────────
+export const createProduct = async (req, res) => {
+  const {
+    name, description, price, category,
+    image_url, stock_quantity, model,
+    serial_number, warranty_status, distributor_information,
+    additional_attributes
+  } = req.body;
+
+  if (!name || !price || !category) {
+    return res.status(400).json({ success: false, message: "name, price and category are required." });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO products
+        (name, description, price, category, image_url, stock_quantity,
+         model, serial_number, warranty_status, distributor_information, additional_attributes)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING *`,
+      [
+        name, description ?? null, price, category,
+        image_url ?? null, stock_quantity ?? 0,
+        model ?? null, serial_number ?? null,
+        warranty_status ?? null, distributor_information ?? null,
+        additional_attributes ? JSON.stringify(additional_attributes) : null
+      ]
+    );
+
+    return res.status(201).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("Create product error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+// ─── ADMIN: Ürün Güncelle ────────────────────────────────────────
+export const updateProduct = async (req, res) => {
+  const { id } = req.params;
+  const fields = req.body;
+
+  const allowed = [
+    "name", "description", "price", "category", "image_url",
+    "stock_quantity", "model", "serial_number",
+    "warranty_status", "distributor_information", "additional_attributes"
+  ];
+
+  const updates = [];
+  const values = [];
+
+  allowed.forEach((key) => {
+    if (fields[key] !== undefined) {
+      values.push(key === "additional_attributes" ? JSON.stringify(fields[key]) : fields[key]);
+      updates.push(`${key} = $${values.length}`);
+    }
+  });
+
+  if (updates.length === 0) {
+    return res.status(400).json({ success: false, message: "No valid fields to update." });
+  }
+
+  values.push(id);
+
+  try {
+    const result = await pool.query(
+      `UPDATE products SET ${updates.join(", ")} WHERE id = $${values.length} RETURNING *`,
+      values
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Product not found." });
+    }
+
+    return res.status(200).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("Update product error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+export const deleteProduct = async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    // Bağlı kayıtları önce sil
+    await client.query("DELETE FROM cart_items WHERE product_id = $1", [id]);
+    await client.query("DELETE FROM order_items WHERE product_id = $1", [id]);
+    await client.query("DELETE FROM ratings WHERE product_id = $1", [id]);
+    await client.query("DELETE FROM comments WHERE product_id = $1", [id]);
+
+    const result = await client.query(
+      "DELETE FROM products WHERE id = $1 RETURNING id, name",
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, message: "Product not found." });
+    }
+
+    await client.query("COMMIT");
+
+    return res.status(200).json({
+      success: true,
+      message: `Product "${result.rows[0].name}" deleted.`,
+      data: result.rows[0]
+    });
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Delete product error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
+  } finally {
+    client.release();
+  }
+};
