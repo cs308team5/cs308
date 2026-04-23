@@ -94,6 +94,7 @@ export const CartButton = ({ onClick }) => {
 // Polaroid card and row
 
 export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity}) => {
+    const navigate = useNavigate();
 
     const [isLiked, setIsLiked] = useState(false);
 
@@ -134,8 +135,13 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
         }
     };
 
+    const handleOpenProduct = () => {
+        if (!productId) return;
+        navigate(`/products/${productId}`);
+    };
+
     return (
-        <div className="polaroid-container">
+        <div className="polaroid-container" onClick={handleOpenProduct} style={{ cursor: "pointer" }}>
             <div className="polaroid-frame">
 
 
@@ -154,7 +160,7 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
                         <FontAwesomeIcon icon={faShareNodes} color="#1B284E" size="lg"/>
                         <div className="like-container">
                             <p className="like-count">123</p>
-                            <FontAwesomeIcon className={isLiked ? "heart-pop" : ""} onClick={toggleLike} style={{cursor: "pointer"}} icon={isLiked? faHeartSolid : faHeartRegular} color={isLiked ? "var(--pink)" : "var(--blue)"} size="lg"/>
+                            <FontAwesomeIcon className={isLiked ? "heart-pop" : ""} onClick={(e) => { e.stopPropagation(); toggleLike(); }} style={{cursor: "pointer"}} icon={isLiked? faHeartSolid : faHeartRegular} color={isLiked ? "var(--pink)" : "var(--blue)"} size="lg"/>
                         </div>
                     </div>
 
@@ -164,7 +170,7 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
 
             <div className="polaroid-buy-container">
                 <span className="reveal-price">{price}</span>
-                <button className="reveal-cart-btn" onClick={handleAddToCart}>
+                <button className="reveal-cart-btn" onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}>
                     Add to Cart
                 </button>
             </div>
