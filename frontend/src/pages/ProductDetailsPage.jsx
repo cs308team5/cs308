@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CommentSection from "../components/CommentSection";
+import {
+  addToCart,
+  fetchCart,
+  getGuestCart,
+  removeFromCart,
+  saveGuestCart,
+  updateCartQuantity,
+} from "../services/productAndCartService";
+import { getCurrentUser } from "../services/authService";
 import "./ProductDetailsPage.css";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const user = getCurrentUser();
 
   const [product, setProduct] = useState(null);
+  const [cartItem, setCartItem] = useState(null);
   const [reviewStats, setReviewStats] = useState({
     average: 0,
     count: 0,
@@ -20,25 +31,145 @@ export default function ProductDetailsPage() {
       .catch((err) => console.error(err));
   }, [id]);
 
-  const handleAddToCart = async () => {
-    await fetch("http://localhost:3000/api/cart", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        product_id: id,
-        quantity: 1,
-      }),
-    });
+  useEffect(() => {
+    const syncCartItem = async () => {
+      if (!id) return;
 
-    alert("Added to cart");
-  };
+      try {
+        if (!user) {
+          const guestItem =
+            getGuestCart().find((item) => String(item.product_id) === String(id)) ??
+            null;
+          setCartItem(guestItem);
+          return;
+        }
+
+        const cart = await fetchCart(user.customer_id);
+        const existingItem =
+          cart.find((item) => String(item.product_id) === String(id)) ?? null;
+        setCartItem(existingItem);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    syncCartItem();
+  }, [id, user]);
 
   if (!product) return <div className="loading">Loading...</div>;
 
   const averageLabel =
     reviewStats.count > 0 ? reviewStats.average.toFixed(1) : "No ratings";
+  const cartQuantity = cartItem?.quantity ?? 0;
+  const stockQuantity = Number(product.stock ?? cartItem?.stock_quantity ?? 0);
+  const isOutOfStock = !product.inStock || stockQuantity <= 0;
+  const isAtMaxStock = stockQuantity > 0 && cartQuantity >= stockQuantity;
+
+  const addGuestItem = () => {
+    const guestCart = getGuestCart();
+    const existingItem = guestCart.find(
+      (item) => String(item.product_id) === String(id),
+    );
+
+    if (existingItem) {
+      if (existingItem.quantity >= stockQuantity) return;
+
+      const updatedCart = guestCart.map((item) =>
+        String(item.product_id) === String(id)
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      );
+      saveGuestCart(updatedCart);
+      setCartItem(
+        updatedCart.find((item) => String(item.product_id) === String(id)) ?? null,
+      );
+      return;
+    }
+
+    const newItem = {
+      product_id: id,
+      quantity: 1,
+      name: product.name,
+      description: product.description ?? "",
+      price: Number(product.price),
+      image: product.image_url,
+      stock_quantity: stockQuantity,
+    };
+
+    const updatedCart = [...guestCart, newItem];
+    saveGuestCart(updatedCart);
+    setCartItem(newItem);
+  };
+
+  const handleAddToCart = async () => {
+    if (isOutOfStock) return;
+
+    try {
+      if (!user) {
+        addGuestItem();
+        return;
+      }
+
+      await addToCart(user.customer_id, id);
+      if (cartItem) {
+        setCartItem({ ...cartItem, quantity: cartItem.quantity + 1 });
+      } else {
+        const cart = await fetchCart(user.customer_id);
+        const existingItem =
+          cart.find((item) => String(item.product_id) === String(id)) ?? null;
+        setCartItem(existingItem);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleQuantityChange = async (change) => {
+    if (!cartItem) return;
+
+    const nextQuantity = cartItem.quantity + change;
+
+    try {
+      if (!user) {
+        const guestCart = getGuestCart();
+
+        if (nextQuantity <= 0) {
+          const updatedCart = guestCart.filter(
+            (item) => String(item.product_id) !== String(id),
+          );
+          saveGuestCart(updatedCart);
+          setCartItem(null);
+          return;
+        }
+
+        if (nextQuantity > stockQuantity) return;
+
+        const updatedCart = guestCart.map((item) =>
+          String(item.product_id) === String(id)
+            ? { ...item, quantity: nextQuantity }
+            : item,
+        );
+        saveGuestCart(updatedCart);
+        setCartItem(
+          updatedCart.find((item) => String(item.product_id) === String(id)) ?? null,
+        );
+        return;
+      }
+
+      if (nextQuantity <= 0) {
+        await removeFromCart(cartItem.id);
+        setCartItem(null);
+        return;
+      }
+
+      if (nextQuantity > stockQuantity) return;
+
+      await updateCartQuantity(cartItem.id, nextQuantity);
+      setCartItem({ ...cartItem, quantity: nextQuantity });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="page">
@@ -73,15 +204,38 @@ export default function ProductDetailsPage() {
 
           <div className="rating">★ {averageLabel} ({reviewStats.count})</div>
 
-          {!product.inStock && <div className="out-of-stock">OUT OF STOCK</div>}
+          <div className={isOutOfStock ? "out-of-stock" : "in-stock"}>
+            {isOutOfStock ? "OUT OF STOCK" : "IN STOCK"}
+          </div>
 
-          <button
-            className="add-btn"
-            onClick={handleAddToCart}
-            disabled={!product.inStock}
-          >
-            {product.inStock ? "ADD TO CART" : "UNAVAILABLE"}
-          </button>
+          {cartQuantity > 0 ? (
+            <div className="cart-quantity-control">
+              <button
+                type="button"
+                className="quantity-btn"
+                onClick={() => handleQuantityChange(-1)}
+              >
+                -
+              </button>
+              <span className="quantity-value">{cartQuantity}</span>
+              <button
+                type="button"
+                className={`quantity-btn ${isAtMaxStock ? "is-disabled" : ""}`}
+                onClick={() => handleQuantityChange(1)}
+                disabled={isAtMaxStock}
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              className="add-btn"
+              onClick={handleAddToCart}
+              disabled={isOutOfStock}
+            >
+              {isOutOfStock ? "OUT OF STOCK" : "ADD TO CART"}
+            </button>
+          )}
 
           <div className="section">
             <div className="section-title">DESCRIPTION</div>

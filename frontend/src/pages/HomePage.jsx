@@ -94,6 +94,7 @@ export const CartButton = ({ onClick }) => {
 // Polaroid card and row
 
 export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity}) => {
+    const inStock = Number(stock_quantity) > 0;
     const navigate = useNavigate();
 
     const [isLiked, setIsLiked] = useState(false);
@@ -108,6 +109,8 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
     };
 
     const handleAddToCart = async () => {
+        if (!inStock) return;
+
         const user = getCurrentUser();
 
         try {
@@ -155,6 +158,9 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
                     <div className="polaroid-content-text">
                         <p className="product-name">{title}</p>
                         <p className="creator-name">{creator}</p>
+                        <p className={`stock-status ${inStock ? "in-stock" : "out-of-stock"}`}>
+                            {inStock ? "In Stock" : "Out of Stock"}
+                        </p>
                     </div>
                     <div className="polaroid-content-utility">
                         <FontAwesomeIcon icon={faShareNodes} color="#1B284E" size="lg"/>
@@ -170,6 +176,12 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
 
             <div className="polaroid-buy-container">
                 <span className="reveal-price">{price}</span>
+                <button
+                    className={`reveal-cart-btn ${!inStock ? "disabled" : ""}`}
+                    onClick={handleAddToCart}
+                    disabled={!inStock}
+                >
+                    {inStock ? "Add to Cart" : "Out of Stock"}
                 <button className="reveal-cart-btn" onClick={(e) => { e.stopPropagation(); handleAddToCart(); }}>
                     Add to Cart
                 </button>
