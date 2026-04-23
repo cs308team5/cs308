@@ -319,6 +319,22 @@ html, body {
     color: #777;
 }
 
+.stock-status {
+    margin: 4px 0 0 0;
+    font-family: "inter", sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.stock-status.in-stock {
+    color: var(--green);
+}
+
+.stock-status.out-of-stock {
+    color: #b42318;
+}
+
 .polaroid-content-utility {
     position: relative;
     margin: 10px 0 0 0;
@@ -396,6 +412,18 @@ html, body {
 
 .reveal-cart-btn:hover {
     background-color: var(--green);
+}
+
+.reveal-cart-btn.disabled,
+.reveal-cart-btn:disabled {
+    background-color: #a0aabf;
+    color: var(--offwhite);
+    cursor: not-allowed;
+}
+
+.reveal-cart-btn.disabled:hover,
+.reveal-cart-btn:disabled:hover {
+    background-color: #a0aabf;
 }
 
 @keyframes heartPop {
