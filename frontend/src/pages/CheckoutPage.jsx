@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getCurrentUser } from "../services/authService.js";
 import "./CheckoutPage.css";
 
 export default function CheckoutPage() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const user = getCurrentUser();
 
   const cart = state?.cart ?? [];
   const subtotal = state?.subtotal ?? 0;
@@ -32,6 +34,45 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    if (!form.email.trim()) {
+      alert("Recipient email is required.");
+      return;
+    }
+
+    const [expiryMonth, expiryYear] = form.expiry.split("/").map(s => s.trim());
+
+    const paymentPayload = {
+      cardNumber: form.cardNumber,
+      cvv: form.cvv,
+      expiryMonth,
+      expiryYear,
+      amount: total,
+      customer_id: user?.customer_id ?? null,
+      cart_items: cart.map(item => ({
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+    };
+
+    let paymentRes;
+    try {
+      const res = await fetch("http://localhost:3000/api/payment/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentPayload),
+      });
+      paymentRes = await res.json();
+    } catch (err) {
+      alert("Payment request failed. Please try again.");
+      return;
+    }
+
+    if (!paymentRes.success) {
+      alert(paymentRes.message || "Payment declined.");
+      return;
+    }
+
     const order = {
       invoiceNumber: `INV-${Date.now()}`,
       date: new Date().toLocaleDateString("en-US", {
@@ -71,6 +112,7 @@ export default function CheckoutPage() {
       }
     } catch (error) {
       alert(error.message || "Invoice email could not be sent.");
+      return;
     }
 
     navigate("/invoice", {
