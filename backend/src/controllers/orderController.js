@@ -42,24 +42,11 @@ export async function createOrder(customer_id, cart_items, total_price, delivery
 
         const formattedDeliveryAddress = formatDeliveryAddress(deliveryAddress);
 
-        if (formattedDeliveryAddress) {
-            await client.query(
-                `INSERT INTO deliveries (order_id, customer_id, delivery_address)
-                 VALUES ($1, $2, $3)`,
-                [order_id, customer_id, formattedDeliveryAddress]
-            );
-
-            const stockResult = await client.query(
-                `UPDATE products SET stock_quantity = stock_quantity - $1
-                 WHERE id = $2 AND stock_quantity >= $1
-                 RETURNING stock_quantity`,
-                [item.quantity, item.product_id]
-            );
-
-            if (stockResult.rowCount === 0) {
-                throw new Error(`Insufficient stock for product ${item.product_id}.`);
-            }
-        }
+        await client.query(
+            `INSERT INTO deliveries (order_id, customer_id, delivery_address)
+             VALUES ($1, $2, $3)`,
+            [order_id, customer_id, formattedDeliveryAddress || null]
+        );
 
         await client.query(
             `DELETE FROM cart_items WHERE customer_id = $1`,
