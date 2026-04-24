@@ -53,6 +53,13 @@ export default function CheckoutPage() {
         quantity: item.quantity,
         price: item.price,
       })),
+      shippingAddress: {
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        country: form.country,
+      },
     };
 
     let paymentRes;
