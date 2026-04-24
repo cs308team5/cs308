@@ -28,12 +28,14 @@ export default function AdminPage() {
     const navigate = useNavigate();
     const user = getCurrentUser();
     const token = user?.token ?? null;
+    const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
 
     const [activeTab, setActiveTab] = useState("comments");
 
     // ── Comments state ──
     const [comments, setComments] = useState([]);
     const [commentsLoading, setCommentsLoading] = useState(true);
+    const [commentActionId, setCommentActionId] = useState(null);
 
     // ── Products state ──
     const [products, setProducts] = useState([]);
@@ -51,19 +53,31 @@ export default function AdminPage() {
     };
 
     // ── Fetch comments ──
-    useEffect(() => { fetchPending(); }, []);
+    useEffect(() => { fetchPending(); }, [token]);
 
     const fetchPending = async () => {
+        if (!token) {
+            setComments([]);
+            setCommentsLoading(false);
+            return;
+        }
+
         setCommentsLoading(true);
         try {
             const res = await fetch("/api/comments/pending", { headers: { Authorization: `Bearer ${token}` } });
             const data = await res.json();
+            if (!res.ok) {
+                showMsg(data.message || "Could not load comments.", "error");
+                setComments([]);
+                return;
+            }
             if (data.success) setComments(data.data);
         } catch { showMsg("Could not load comments.", "error"); }
         finally { setCommentsLoading(false); }
     };
 
     const handleDecision = async (id, status) => {
+        setCommentActionId(id);
         try {
             const res = await fetch(`/api/comments/${id}/status`, {
                 method: "PATCH",
@@ -71,11 +85,16 @@ export default function AdminPage() {
                 body: JSON.stringify({ status }),
             });
             const data = await res.json();
+            if (!res.ok) {
+                showMsg(data.message || "Action failed.", "error");
+                return;
+            }
             if (data.success) {
                 setComments(prev => prev.filter(c => c.id !== id));
                 showMsg(`Comment ${status} successfully.`);
             }
         } catch { showMsg("Action failed.", "error"); }
+        finally { setCommentActionId(null); }
     };
 
     // ── Fetch products ──
@@ -117,6 +136,10 @@ export default function AdminPage() {
             showMsg("Name, price and category are required.", "error");
             return;
         }
+        if (!token) {
+            showMsg("Please log in again as an admin.", "error");
+            return;
+        }
         const method = editingId ? "PUT" : "POST";
         const url = editingId ? `/api/products/${editingId}` : "/api/products";
         const payload = { ...form, price: Number(form.price), stock_quantity: Number(form.stock_quantity) };
@@ -140,6 +163,10 @@ export default function AdminPage() {
 
     const handleDeleteProduct = async (id, name) => {
         if (!window.confirm(`Delete "${name}"?`)) return;
+        if (!token) {
+            showMsg("Please log in again as an admin.", "error");
+            return;
+        }
         try {
             const res = await fetch(`/api/products/${id}`, {
                 method: "DELETE",
@@ -152,6 +179,20 @@ export default function AdminPage() {
             }
         } catch { showMsg("Delete failed.", "error"); }
     };
+
+    if (!token || !isAdmin) {
+        return (
+            <div className="container">
+                <div className="content-area">
+                    <div className="admin-guard-card">
+                        <h2 className="brand">Admin access required</h2>
+                        <p className="admin-empty">Please log in with an admin account to manage comments and products.</p>
+                        <button className="admin-btn add-product" onClick={() => navigate("/login")}>Go to Login</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="container">
@@ -180,7 +221,7 @@ export default function AdminPage() {
                             className={`admin-tab ${activeTab === "comments" ? "active" : ""}`}
                             onClick={() => setActiveTab("comments")}
                         >
-                            Pending Comments
+                            Pending Comments ({comments.length})
                         </button>
                         <button
                             className={`admin-tab ${activeTab === "products" ? "active" : ""}`}
@@ -209,10 +250,23 @@ export default function AdminPage() {
                                         })}
                                     </span>
                                 </div>
+                                <p className="admin-comment-author">By {c.author_name || `User #${c.user_id}`}</p>
                                 <p className="admin-card-text">{c.text}</p>
                                 <div className="admin-actions">
-                                    <button className="admin-btn approve" onClick={() => handleDecision(c.id, "approved")}>Approve</button>
-                                    <button className="admin-btn reject" onClick={() => handleDecision(c.id, "rejected")}>Reject</button>
+                                    <button
+                                        className="admin-btn approve"
+                                        disabled={commentActionId === c.id}
+                                        onClick={() => handleDecision(c.id, "approved")}
+                                    >
+                                        {commentActionId === c.id ? "Saving..." : "Approve"}
+                                    </button>
+                                    <button
+                                        className="admin-btn reject"
+                                        disabled={commentActionId === c.id}
+                                        onClick={() => handleDecision(c.id, "rejected")}
+                                    >
+                                        {commentActionId === c.id ? "Saving..." : "Reject"}
+                                    </button>
                                 </div>
                             </div>
                         ))}

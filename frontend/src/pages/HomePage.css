@@ -218,6 +218,25 @@ html, body {
     flex-shrink: 0;
 }
 
+.admin-comments-btn {
+    padding: 10px 20px;
+    background-color: var(--black);
+    color: var(--offwhite);
+    border: none;
+    border-radius: 10px;
+    font-family: "Playfair Display", serif;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.admin-comments-btn:hover {
+    background-color: var(--blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
 .homepage-search {
     width: min(100%, 520px);
 }

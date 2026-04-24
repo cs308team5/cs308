@@ -9,6 +9,22 @@ import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
 import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
 import AdminPage from "./pages/AdminPage";
+import { getCurrentUser } from "./services/authService.js";
+
+function AdminRoute() {
+  const user = getCurrentUser();
+  const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
+
+  if (!user?.token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/home" replace />;
+  }
+
+  return <AdminPage />;
+}
 
 const router = createBrowserRouter([
   {
@@ -53,7 +69,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <AdminPage />,
+    element: <AdminRoute />,
   },
 ]);
 
