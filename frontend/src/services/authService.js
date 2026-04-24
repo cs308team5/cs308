@@ -1,5 +1,3 @@
-import { supabase } from "../lib/supabaseClient";
-
 export async function register({ fullName, username, email, password }) {
   try {
     const cleanFullName = fullName?.trim();
@@ -13,98 +11,32 @@ export async function register({ fullName, username, email, password }) {
       };
     }
 
-    // Duplicate username control
-    const { data: existingUsername, error: usernameCheckError } = await supabase
-      .from("customers")
-      .select("customer_id")
-      .eq("username", cleanUsername)
-      .maybeSingle();
-
-    if (usernameCheckError) {
-      console.error("Username check error:", usernameCheckError);
-      return {
-        success: false,
-        message: "Could not check username. Please try again.",
-      };
-    }
-
-    if (existingUsername) {
-      return {
-        success: false,
-        message: "Username is already taken.",
-      };
-    }
-
-    // Duplicate email control
-    const { data: existingEmail, error: emailCheckError } = await supabase
-      .from("customers")
-      .select("customer_id")
-      .eq("email", cleanEmail)
-      .maybeSingle();
-
-    if (emailCheckError) {
-      console.error("Email check error:", emailCheckError);
-      return {
-        success: false,
-        message: "Could not check email. Please try again.",
-      };
-    }
-
-    if (existingEmail) {
-      return {
-        success: false,
-        message: "Email is already registered.",
-      };
-    }
-
-    const { data, error } = await supabase.from("customers").insert([
-      {
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         name: cleanFullName,
         username: cleanUsername,
         email: cleanEmail,
-        password_hash: password,
-      },
-    ]);
+        password,
+      }),
+    });
 
-    if (error) {
-      console.error("Supabase registration error!:", {
-        message: error.message,
-        code: error.code,
-        status: error.status,
-        details: error.details,
-        hint: error.hint,
-      });
+    const data = await response.json();
 
-      if (error.code === "23505") {
-        if (error.message?.toLowerCase().includes("username")) {
-          return {
-            success: false,
-            message: "This username is already taken.",
-          };
-        }
-        if (error.message?.toLowerCase().includes("email")) {
-          return {
-            success: false,
-            message: "This email is already registered.",
-          };
-        }
-
-        return {
-          success: false,
-          message: "Username or email already exists.",
-        };
-      }
-
+    if (!response.ok) {
       return {
         success: false,
-        message: error.message || "Registration failed.",
+        message: data.message || "Registration failed.",
       };
     }
 
     return {
       success: true,
       message: "Account created successfully.",
-      data,
+      data: data.customer,
     };
   } catch (err) {
     console.error("Registration catch error:", err);
@@ -117,38 +49,42 @@ export async function register({ fullName, username, email, password }) {
 
 export async function login(email, password) {
   try {
-    const { data, error } = await supabase.from("customers").select("*").eq("email", email).single();
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email?.trim().toLowerCase(),
+        password,
+      }),
+    });
 
-    if (error) {
-      console.error("Supabase login error:", error);
+    const data = await response.json();
+
+    if (!response.ok || !data.customer || !data.token) {
       return {
         success: false,
-        message: "Email or password is incorrect.",
+        message: data.message || "Email or password is incorrect.",
       };
     }
 
-    if (!data) {
-      return {
-        success: false,
-        message: "Email or password is incorrect.",
-      };
-    }
+    const normalizedUser = {
+      ...data.customer,
+      token: data.token,
+      customer_id: data.customer.customer_id ?? data.customer.customerId,
+      customerId: data.customer.customerId ?? data.customer.customer_id,
+      isAdmin: Boolean(data.customer.isAdmin ?? data.customer.is_admin),
+      is_admin: Boolean(data.customer.isAdmin ?? data.customer.is_admin),
+    };
 
-    
-    if (data.password_hash !== password) {
-      return {
-        success: false,
-        message: "Email or password is incorrect.",
-      };
-    }
-
-    localStorage.setItem("user", JSON.stringify(data));
+    localStorage.setItem("user", JSON.stringify(normalizedUser));
     localStorage.removeItem("guest_cart");
 
     return {
       success: true,
       message: "Logged in successfully.",
-      data,
+      data: normalizedUser,
     };
   } catch (err) {
     console.error("Login catch error:", err);

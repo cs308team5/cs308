@@ -240,6 +240,7 @@ export default function HomePage() {
     const [activeTab, setActiveTab] = useState("home");
     const [displayName, setDisplayName] = useState("Guest");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
     const handleNavigation = (id, path) => {
@@ -264,9 +265,10 @@ export default function HomePage() {
 
     useEffect(() => {
         const user = getCurrentUser();
-        if (user && user.username) {
+        if (user) {
             setIsLoggedIn(true);
-            setDisplayName(user.username);
+            setDisplayName(user.username || user.name || "User");
+            setIsAdmin(Boolean(user.isAdmin ?? user.is_admin));
         }
     }, []);
 
@@ -302,6 +304,11 @@ export default function HomePage() {
                     />
                 </div>
                 <div className="header-actions">
+                {isAdmin && (
+                    <button className="admin-comments-btn" onClick={() => navigate("/admin")}>
+                        Moderate Comments
+                    </button>
+                )}
                 <CartButton onClick={() => navigate("/cart")} />
                 {isLoggedIn && <button className="logout-btn" onClick={handleLogout}>
                     Logout
