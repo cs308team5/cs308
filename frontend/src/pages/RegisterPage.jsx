@@ -108,17 +108,17 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="login-page">
-      <div className="logo-container">
+    <div className="login-page register-page">
+      <div className="logo-container register-logo-container">
         <h1 className="logo brand">THE DARE</h1>
         <p className="tagline type-eyebrow">dare to wear</p>
       </div>
 
-      <div className="polaroid-wrapper">
+      <div className="polaroid-wrapper register-polaroid-wrapper">
         <div className="tape left"></div>
         <div className="tape right"></div>
 
-        <div className="polaroid-card">
+        <div className="polaroid-card register-polaroid-card">
           <h2 className="caps">Create Account</h2>
 
           <label className="caps">Full Name</label>
