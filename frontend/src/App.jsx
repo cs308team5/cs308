@@ -11,6 +11,7 @@ import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
 import AdminPage from "./pages/AdminPage";
 import { getCurrentUser } from "./services/authService.js";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
+import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
 
 function AdminRoute() {
   const user = getCurrentUser();
@@ -79,6 +80,10 @@ const router = createBrowserRouter([
     element: <InvoicePage />,
   },
   {
+    path: "/orders",
+    element: <OrderTrackingPage />,
+  },
+  {
     path: "/products/:id",
     element: <ProductDetailsPage />,
   },
@@ -86,8 +91,9 @@ const router = createBrowserRouter([
     path: "/admin",
     element: <AdminRoute />,
   },
-  { path: "/my-orders", 
-    element: <MyOrdersPage /> 
+  {
+    path: "/my-orders",
+    element: <MyOrdersPage />
   },
 ]);
 
