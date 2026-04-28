@@ -34,6 +34,12 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    if (!user?.token) {
+      alert("Please log in to complete checkout.");
+      navigate("/login");
+      return;
+    }
+
     if (!form.email.trim()) {
       alert("Recipient email is required.");
       return;
@@ -52,7 +58,6 @@ export default function CheckoutPage() {
       expiryMonth,
       expiryYear,
       amount: total,
-      customer_id: user?.customer_id ?? null,
       cart_items: cart.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
@@ -71,7 +76,10 @@ export default function CheckoutPage() {
     try {
       const res = await fetch("http://localhost:3000/api/payment/process", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
         body: JSON.stringify(paymentPayload),
       });
       paymentRes = await res.json();
