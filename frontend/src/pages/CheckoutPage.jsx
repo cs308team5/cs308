@@ -29,14 +29,61 @@ export default function CheckoutPage() {
     cvv: "",
   });
 
+  const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+  const formatCardNumber = (value) =>
+    value
+      .replace(/\D/g, "")
+      .slice(0, 16)
+      .replace(/(.{4})/g, "$1 ")
+      .trim();
+
+  const formatExpiry = (value) => {
+    const digits = value.replace(/\D/g, "").slice(0, 4);
+
+    if (digits.length <= 2) {
+      return digits;
+    }
+
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  };
+
   const handleChange = (event) => {
-    setForm({ ...form, [event.target.name]: event.target.value });
+    const { name, value } = event.target;
+
+    if (name === "cardNumber") {
+      setForm({ ...form, cardNumber: formatCardNumber(value) });
+      return;
+    }
+
+    if (name === "expiry") {
+      setForm({ ...form, expiry: formatExpiry(value) });
+      return;
+    }
+
+    if (name === "cvv") {
+      setForm({ ...form, cvv: value.replace(/\D/g, "").slice(0, 4) });
+      return;
+    }
+
+    setForm({ ...form, [name]: value });
   };
 
   const handlePlaceOrder = async () => {
+    if (!cart.length) {
+      alert("Your cart is empty.");
+      navigate("/cart");
+      return;
+    }
+
     if (!user?.token) {
       alert("Please log in to complete checkout.");
       navigate("/login");
+      return;
+    }
+
+    if (!form.fullName.trim()) {
+      alert("Full name is required.");
       return;
     }
 
@@ -45,15 +92,84 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!form.street.trim() && !form.city.trim() && !form.country.trim() && !form.zip.trim()) {
-      alert("Please fill in your shipping address.");
+    if (!validateEmail(form.email.trim())) {
+      alert("Please enter a valid email address.");
       return;
     }
 
-    const [expiryMonth, expiryYear] = form.expiry.split("/").map(s => s.trim());
+    if (!form.phone.trim()) {
+      alert("Phone number is required.");
+      return;
+    }
+
+    if (!form.street.trim()) {
+      alert("Street address is required.");
+      return;
+    }
+
+    if (!form.city.trim()) {
+      alert("City is required.");
+      return;
+    }
+
+    if (!form.state.trim()) {
+      alert("State is required.");
+      return;
+    }
+
+    if (!form.zip.trim()) {
+      alert("ZIP code is required.");
+      return;
+    }
+
+    if (!form.country.trim() || form.country === "Select country") {
+      alert("Country is required.");
+      return;
+    }
+
+    if (form.cardNumber.replace(/\s/g, "").length !== 16) {
+      alert("Please enter a valid 16-digit card number.");
+      return;
+    }
+
+    if (!form.cardName.trim()) {
+      alert("Cardholder name is required.");
+      return;
+    }
+
+    if (!/^\d{2}\/\d{2}$/.test(form.expiry)) {
+      alert("Please enter a valid expiry date in MM/YY format.");
+      return;
+    }
+
+    const [expiryMonth, expiryYear] = form.expiry
+      .split("/")
+      .map((value) => Number(value.trim()));
+
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1;
+    const currentYear = currentDate.getFullYear() % 100;
+
+    if (expiryMonth < 1 || expiryMonth > 12) {
+      alert("Expiry month must be between 01 and 12.");
+      return;
+    }
+
+    if (
+      expiryYear < currentYear ||
+      (expiryYear === currentYear && expiryMonth <= currentMonth)
+    ) {
+      alert("Card expiry date cannot be in the past.");
+      return;
+    }
+
+    if (!/^\d{3,4}$/.test(form.cvv)) {
+      alert("Please enter a valid CVV.");
+      return;
+    }
 
     const paymentPayload = {
-      cardNumber: form.cardNumber,
+      cardNumber: form.cardNumber.replace(/\s/g, ""),
       cvv: form.cvv,
       expiryMonth,
       expiryYear,
@@ -74,7 +190,7 @@ export default function CheckoutPage() {
 
     let paymentRes;
     try {
-      const res = await fetch("http://localhost:3000/api/payment/process", {
+      const res = await fetch("/api/payment/process", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -93,8 +209,13 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!paymentRes.order_id) {
+      alert("Payment was approved, but the order could not be created.");
+      return;
+    }
+
     const order = {
-      invoiceNumber: `INV-${Date.now()}`,
+      invoiceNumber: paymentRes.order_id,
       date: new Date().toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
@@ -118,17 +239,23 @@ export default function CheckoutPage() {
     };
 
     try {
-      const response = await fetch("http://localhost:3000/api/invoice/send-preview", {
+      const response = await fetch(`/api/invoice/send/${paymentRes.order_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
         },
-        body: JSON.stringify({ order }),
       });
 
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || "Failed to send invoice email.");
+      }
+
+      const data = await response.json();
+
+      if (data.previewUrl) {
+        window.open(data.previewUrl, "_blank", "noopener,noreferrer");
       }
     } catch (error) {
       alert(error.message || "Invoice email could not be sent.");
@@ -158,46 +285,46 @@ export default function CheckoutPage() {
             <div className="grid-2">
               <div className="input-group">
                 <label>Full Name</label>
-                <input name="fullName" value={form.fullName} onChange={handleChange} placeholder="John Doe" />
+                <input name="fullName" value={form.fullName} onChange={handleChange} placeholder="John Doe" required />
               </div>
 
               <div className="input-group">
                 <label>Email</label>
-                <input name="email" value={form.email} onChange={handleChange} placeholder="john@example.com" />
+                <input name="email" value={form.email} onChange={handleChange} placeholder="john@example.com" required />
               </div>
             </div>
 
             <div className="input-group">
               <label>Phone Number</label>
-              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+1 (555) 123-4567" />
+              <input name="phone" value={form.phone} onChange={handleChange} placeholder="+1 (555) 123-4567" required />
             </div>
 
             <div className="input-group">
               <label>Street Address</label>
-              <input name="street" value={form.street} onChange={handleChange} placeholder="123 Main Street, Apt 4B" />
+              <input name="street" value={form.street} onChange={handleChange} placeholder="123 Main Street, Apt 4B" required />
             </div>
 
             <div className="grid-3">
               <div className="input-group">
                 <label>City</label>
-                <input name="city" value={form.city} onChange={handleChange} placeholder="New York" />
+                <input name="city" value={form.city} onChange={handleChange} placeholder="New York" required />
               </div>
 
               <div className="input-group">
                 <label>State</label>
-                <input name="state" value={form.state} onChange={handleChange} placeholder="NY" />
+                <input name="state" value={form.state} onChange={handleChange} placeholder="NY" required />
               </div>
 
               <div className="input-group">
                 <label>ZIP Code</label>
-                <input name="zip" value={form.zip} onChange={handleChange} placeholder="10001" />
+                <input name="zip" value={form.zip} onChange={handleChange} placeholder="10001" required />
               </div>
             </div>
 
             <div className="input-group">
               <label>Country</label>
-              <select name="country" value={form.country} onChange={handleChange}>
-                <option>Select country</option>
+              <select name="country" value={form.country} onChange={handleChange} required>
+                <option value="">Select country</option>
                 <option>United States</option>
                 <option>United Kingdom</option>
                 <option>Germany</option>
@@ -218,23 +345,23 @@ export default function CheckoutPage() {
 
             <div className="input-group">
               <label>Card Number</label>
-              <input name="cardNumber" value={form.cardNumber} onChange={handleChange} placeholder="1234 5678 9012 3456" />
+              <input name="cardNumber" value={form.cardNumber} onChange={handleChange} placeholder="1234 5678 9012 3456" maxLength="19" required />
             </div>
 
             <div className="input-group">
               <label>Cardholder Name</label>
-              <input name="cardName" value={form.cardName} onChange={handleChange} placeholder="Name as it appears on card" />
+              <input name="cardName" value={form.cardName} onChange={handleChange} placeholder="Name as it appears on card" required />
             </div>
 
             <div className="grid-2">
               <div className="input-group">
                 <label>Expiry Date</label>
-                <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="MM/YY" />
+                <input name="expiry" value={form.expiry} onChange={handleChange} placeholder="MM/YY" maxLength="5" required />
               </div>
 
               <div className="input-group">
                 <label>CVV</label>
-                <input name="cvv" value={form.cvv} onChange={handleChange} placeholder="123" />
+                <input name="cvv" value={form.cvv} onChange={handleChange} placeholder="123" maxLength="4" required />
               </div>
             </div>
 
