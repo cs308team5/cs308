@@ -205,7 +205,7 @@ export default function ProductDetailsPage() {
           <div className="rating">★ {averageLabel} ({reviewStats.count})</div>
 
           <div className={isOutOfStock ? "out-of-stock" : "in-stock"}>
-            {isOutOfStock ? "OUT OF STOCK" : "IN STOCK"}
+            STOCK: {stockQuantity}
           </div>
 
           {cartQuantity > 0 ? (
