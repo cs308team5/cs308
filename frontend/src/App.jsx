@@ -27,6 +27,16 @@ function AdminRoute() {
   return <AdminPage />;
 }
 
+function ProtectedRoute({ children }) {
+  const user = getCurrentUser();
+
+  if (!user?.token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
 const router = createBrowserRouter([
   {
     path: "/test",
@@ -58,7 +68,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/checkout",
-    element: <CheckoutPage />,
+    element: (
+      <ProtectedRoute>
+        <CheckoutPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/invoice",

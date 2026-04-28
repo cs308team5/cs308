@@ -34,11 +34,18 @@ export const processPayment = async (req, res) => {
         expiryMonth,
         expiryYear,
         amount,
-        customer_id,
         cart_items,
         delivery_address,
         shippingAddress,
     } = req.body;
+    const customerId = req.customer?.customerId ?? req.customer?.customer_id;
+
+    if (!customerId) {
+        return res.status(401).json({
+            success: false,
+            message: "Unauthorized.",
+        });
+    }
 
     // 1. Alan kontrolü
     if (!cardNumber || !cvv || !expiryMonth || !expiryYear || !amount) {
@@ -101,10 +108,10 @@ export const processPayment = async (req, res) => {
     }
 
     // 8. ödeme onaylandıysa order ı kaydet
-    if (customer_id && cart_items?.length) {
+    if (cart_items?.length) {
         try {
             const { order_id } = await createOrder(
-                customer_id,
+                customerId,
                 cart_items,
                 amount,
                 delivery_address ?? shippingAddress
