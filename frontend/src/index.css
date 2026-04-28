@@ -103,6 +103,8 @@ textarea {
 
 .text-reviews {
   font-family: var(--font-reviews);
+}
+
 .text-support {
   font-family: var(--font-support);
 }
@@ -123,6 +125,8 @@ textarea {
   min-height: 100vh;
   overflow: visible !important;
   display: block !important;
+}
+
 .primary-button {
   background: var(--color-text);
   color: var(--color-surface);
