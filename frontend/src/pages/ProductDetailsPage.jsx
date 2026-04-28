@@ -23,6 +23,7 @@ export default function ProductDetailsPage() {
     average: 0,
     count: 0,
   });
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
     fetch(`http://localhost:3000/api/products/${id}`)
@@ -240,6 +241,59 @@ export default function ProductDetailsPage() {
           <div className="section">
             <div className="section-title">DESCRIPTION</div>
             <p>{product.description || "No description available."}</p>
+          </div>
+
+          <div className="section">
+            <div
+              className="section-title dropdown-header"
+              onClick={() => setDetailsOpen(!detailsOpen)}
+            >
+              DETAILS <span>{detailsOpen ? "▲" : "▼"}</span>
+            </div>
+
+            {detailsOpen && (
+              <div className="details-content">
+                {product.category && (
+                  <div className="detail-row">
+                    <span className="detail-label">Category</span>
+                    <span>{product.category}</span>
+                  </div>
+                )}
+                {product.model && (
+                  <div className="detail-row">
+                    <span className="detail-label">Model</span>
+                    <span>{product.model}</span>
+                  </div>
+                )}
+                {product.serial_number && (
+                  <div className="detail-row">
+                    <span className="detail-label">Serial No</span>
+                    <span>{product.serial_number}</span>
+                  </div>
+                )}
+                {product.warranty_status && (
+                  <div className="detail-row">
+                    <span className="detail-label">Warranty</span>
+                    <span>{product.warranty_status}</span>
+                  </div>
+                )}
+                {product.distributor_information && (
+                  <div className="detail-row">
+                    <span className="detail-label">Distributor</span>
+                    <span>{product.distributor_information}</span>
+                  </div>
+                )}
+                {product.additional_attributes &&
+                  Object.entries(product.additional_attributes).map(([key, value]) => (
+                    <div className="detail-row" key={key}>
+                      <span className="detail-label">
+                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                      </span>
+                      <span>{value}</span>
+                    </div>
+                  ))}
+              </div>
+            )}
           </div>
 
           <CommentSection
