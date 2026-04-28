@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
-import { faHeart as faHeartSolid, faShareNodes } from "@fortawesome/free-solid-svg-icons";
+import { faCartShopping, faHeart as faHeartSolid, faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { getCurrentUser, logout } from "../services/authService.js";
 import { addToCart, addToGuestCart, fetchProducts } from "../services/productAndCartService.js";
 import SearchBar from "../components/SearchBar.jsx";
@@ -62,6 +62,7 @@ export const CartButton = ({ onClick }) => {
 
   return (
     <button className="cart-btn" onClick={onClick}>
+      <FontAwesomeIcon icon={faCartShopping} />
       Cart
       {count > 0 && <span className="cart-count">{count > 99 ? "99+" : count}</span>}
     </button>

@@ -255,6 +255,10 @@
     margin-top: 18px;
 }
 
+.discover-search-wrap .search-container {
+    max-width: none;
+}
+
 .toolbar-actions {
     display: flex;
     align-items: center;
