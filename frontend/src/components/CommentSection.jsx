@@ -3,6 +3,51 @@ import { getCurrentUser } from "../services/authService.js";
 import { supabase } from "../lib/supabaseClient.js";
 import "./CommentSection.css";
 
+const STAR_PATH =
+  "M12 1.8l3.09 6.26 6.91 1-5 4.87 1.18 6.89L12 17.77 5.82 20.82 7 13.93 2 9.06l6.91-1L12 1.8z";
+
+function StarIcon({ variant }) {
+  if (variant === "full") {
+    return (
+      <svg viewBox="0 0 24 24" className="rs-star-svg" aria-hidden="true">
+        <path d={STAR_PATH} className="rs-star-full" />
+      </svg>
+    );
+  }
+
+  if (variant === "half") {
+    return (
+      <svg viewBox="0 0 24 24" className="rs-star-svg" aria-hidden="true">
+        <defs>
+          <clipPath id="half-star-fill">
+            <rect x="0" y="0" width="12" height="24" />
+          </clipPath>
+        </defs>
+        <path d={STAR_PATH} className="rs-star-empty" />
+        <path d={STAR_PATH} className="rs-star-full" clipPath="url(#half-star-fill)" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" className="rs-star-svg" aria-hidden="true">
+      <path d={STAR_PATH} className="rs-star-empty" />
+    </svg>
+  );
+}
+
+function getStarVariant(value, starNumber) {
+  if (value >= starNumber) {
+    return "full";
+  }
+
+  if (value >= starNumber - 0.5) {
+    return "half";
+  }
+
+  return "empty";
+}
+
 function StarRatingInput({ value, onChange, disabled }) {
   const [hoverValue, setHoverValue] = useState(null);
   const displayValue = hoverValue ?? value;
@@ -19,30 +64,21 @@ function StarRatingInput({ value, onChange, disabled }) {
       onMouseLeave={() => setHoverValue(null)}
       aria-label="Choose a rating"
     >
-      {[1, 2, 3, 4, 5].map((starNumber) => {
-        const fill = Math.max(0, Math.min(1, displayValue - (starNumber - 1)));
-
-        return (
-          <button
-            key={starNumber}
-            type="button"
-            className="rs-star-button"
-            disabled={disabled}
-            onMouseMove={(event) => setHoverValue(getValueFromPointer(event, starNumber))}
-            onClick={(event) => onChange(getValueFromPointer(event, starNumber))}
-            aria-label={`Rate ${starNumber} stars`}
-          >
-            <span className="rs-star-shell">☆</span>
-            <span
-              className="rs-star-fill"
-              style={{ width: `${fill * 100}%` }}
-              aria-hidden="true"
-            >
-              ★
-            </span>
-          </button>
-        );
-      })}
+      {[1, 2, 3, 4, 5].map((starNumber) => (
+        <button
+          key={starNumber}
+          type="button"
+          className="rs-star-button"
+          disabled={disabled}
+          onMouseMove={(event) =>
+            setHoverValue(getValueFromPointer(event, starNumber))
+          }
+          onClick={(event) => onChange(getValueFromPointer(event, starNumber))}
+          aria-label={`Rate ${starNumber} stars`}
+        >
+          <StarIcon variant={getStarVariant(displayValue, starNumber)} />
+        </button>
+      ))}
 
       <span className="rs-selected-rating">
         {value > 0 ? `${value.toFixed(1)} / 5` : "Select rating"}
@@ -54,28 +90,18 @@ function StarRatingInput({ value, onChange, disabled }) {
 function StaticStars({ value }) {
   return (
     <div className="rs-static-stars" aria-label={`Rated ${value} out of 5`}>
-      {[1, 2, 3, 4, 5].map((starNumber) => {
-        const fill = Math.max(0, Math.min(1, value - (starNumber - 1)));
-
-        return (
-          <span key={starNumber} className="rs-static-star">
-            <span className="rs-star-shell">☆</span>
-            <span
-              className="rs-star-fill"
-              style={{ width: `${fill * 100}%` }}
-              aria-hidden="true"
-            >
-              ★
-            </span>
-          </span>
-        );
-      })}
+      {[1, 2, 3, 4, 5].map((starNumber) => (
+        <span key={starNumber} className="rs-static-star">
+          <StarIcon variant={getStarVariant(value, starNumber)} />
+        </span>
+      ))}
     </div>
   );
 }
 
 export default function CommentSection({ productId, onStatsChange }) {
   const user = getCurrentUser();
+  const userId = user?.customer_id ?? user?.customerId;
 
   const [ratings, setRatings] = useState([]);
   const [comments, setComments] = useState([]);
@@ -84,6 +110,8 @@ export default function CommentSection({ productId, onStatsChange }) {
   const [commentText, setCommentText] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitMsg, setSubmitMsg] = useState("");
+  const [canReview, setCanReview] = useState(false);
+  const [eligibilityLoaded, setEligibilityLoaded] = useState(false);
 
   useEffect(() => {
     if (!productId) return;
@@ -149,6 +177,34 @@ export default function CommentSection({ productId, onStatsChange }) {
   }, [productId]);
 
   useEffect(() => {
+    async function loadEligibility() {
+      if (!productId || !user?.token) {
+        setCanReview(false);
+        setEligibilityLoaded(Boolean(!user));
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/products/${productId}/review-eligibility`, {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+
+        const data = await response.json();
+        setCanReview(Boolean(response.ok && data.eligible));
+      } catch (error) {
+        console.error("Could not check review eligibility:", error);
+        setCanReview(false);
+      } finally {
+        setEligibilityLoaded(true);
+      }
+    }
+
+    loadEligibility();
+  }, [productId, user]);
+
+  useEffect(() => {
     if (!onStatsChange) return;
 
     const count = ratings.length;
@@ -161,13 +217,21 @@ export default function CommentSection({ productId, onStatsChange }) {
   }, [onStatsChange, ratings]);
 
   const mergedReviews = useMemo(() => {
-    const merged = ratings.map((rating) => ({
-      id: rating.id,
-      userId: rating.user_id,
-      rating: Number(rating.rating),
-      comment: rating.comment || "",
-      createdAt: rating.created_at,
-    }));
+    const approvedCommentsByUser = new Map(
+      comments.map((comment) => [comment.user_id, comment]),
+    );
+
+    const merged = ratings.map((rating) => {
+      const approvedComment = approvedCommentsByUser.get(rating.user_id);
+
+      return {
+        id: rating.id,
+        userId: rating.user_id,
+        rating: Number(rating.rating),
+        comment: approvedComment?.text || "",
+        createdAt: approvedComment?.created_at || rating.created_at,
+      };
+    });
 
     comments.forEach((comment) => {
       const exists = merged.some((entry) => entry.userId === comment.user_id);
@@ -184,13 +248,19 @@ export default function CommentSection({ productId, onStatsChange }) {
     });
 
     return merged.sort(
-      (left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
     );
   }, [comments, ratings]);
 
   const handleSubmit = async () => {
-    if (!user) {
+    if (!user?.token || !userId) {
       setSubmitMsg("Log in to submit a rating.");
+      return;
+    }
+
+    if (!canReview) {
+      setSubmitMsg("Only customers who purchased this product can rate or comment.");
       return;
     }
 
@@ -203,39 +273,49 @@ export default function CommentSection({ productId, onStatsChange }) {
     setSubmitMsg("");
 
     try {
-      const userId = user.customer_id ?? user.customerId;
-
-      const { error: ratingError } = await supabase.from("ratings").insert({
-        user_id: userId,
-        product_id: productId,
-        rating: ratingValue,
-        comment: commentText.trim() || null,
+      const ratingResponse = await fetch(`/api/products/${productId}/rating`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          rating: ratingValue,
+        }),
       });
 
-      if (ratingError) {
-        throw ratingError;
+      const ratingData = await ratingResponse.json();
+
+      if (!ratingResponse.ok) {
+        throw new Error(ratingData.message || "Could not submit rating.");
       }
 
       if (commentText.trim()) {
-        const { error: commentError } = await supabase.from("comments").insert({
-          user_id: userId,
-          product_id: productId,
-          text: commentText.trim(),
-          status: "pending",
+        const commentResponse = await fetch("/api/comments", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${user.token}`,
+          },
+          body: JSON.stringify({
+            productId,
+            text: commentText.trim(),
+          }),
         });
 
-        if (commentError) {
-          throw commentError;
+        const commentData = await commentResponse.json();
+
+        if (!commentResponse.ok) {
+          throw new Error(commentData.message || "Could not submit comment.");
         }
       }
 
       setRatings((current) => [
         {
-          id: `temp-${Date.now()}`,
+          id: ratingData.data?.id ?? `temp-${Date.now()}`,
           user_id: userId,
           rating: ratingValue,
-          comment: commentText.trim() || "",
-          created_at: new Date().toISOString(),
+          created_at: ratingData.data?.created_at ?? new Date().toISOString(),
         },
         ...current.filter((entry) => entry.user_id !== userId),
       ]);
@@ -250,15 +330,23 @@ export default function CommentSection({ productId, onStatsChange }) {
       setSubmitMsg(
         commentText.trim()
           ? "Your rating was submitted. Your comment is pending approval."
-          : "Your rating was submitted."
+          : "Your rating was submitted.",
       );
     } catch (error) {
       console.error("Error submitting review:", error);
-      setSubmitMsg("Error submitting.");
+      setSubmitMsg(error.message || "Error submitting.");
     } finally {
       setSubmitting(false);
     }
   };
+
+  const placeholderText = !user
+    ? "Log in to write a comment"
+    : canReview
+      ? "Write comment..."
+      : "Only customers who purchased this product can comment";
+
+  const reviewDisabled = !user || !canReview || submitting;
 
   return (
     <div className="cs-container">
@@ -268,15 +356,15 @@ export default function CommentSection({ productId, onStatsChange }) {
         <StarRatingInput
           value={ratingValue}
           onChange={setRatingValue}
-          disabled={!user || submitting}
+          disabled={reviewDisabled}
         />
 
         <textarea
           className="cs-textarea"
           value={commentText}
           onChange={(event) => setCommentText(event.target.value)}
-          placeholder={user ? "Write comment..." : "Log in to write a comment"}
-          disabled={!user || submitting}
+          placeholder={placeholderText}
+          disabled={reviewDisabled}
           rows={4}
         />
 
@@ -284,18 +372,22 @@ export default function CommentSection({ productId, onStatsChange }) {
           type="button"
           className="cs-submit-btn"
           onClick={handleSubmit}
-          disabled={!user || submitting || ratingValue <= 0}
+          disabled={reviewDisabled || ratingValue <= 0}
         >
           {submitting ? "Submitting..." : "Submit"}
         </button>
 
+        {!user && <p className="cs-msg cs-msg-muted">Log in to rate or comment.</p>}
+        {user && eligibilityLoaded && !canReview && (
+          <p className="cs-msg cs-msg-muted">
+            Only customers who purchased this product can rate or comment.
+          </p>
+        )}
         {submitMsg && <p className="cs-msg">{submitMsg}</p>}
       </div>
 
       <div className="cs-list">
-        {mergedReviews.length === 0 && (
-          <p className="cs-empty">No reviews yet.</p>
-        )}
+        {mergedReviews.length === 0 && <p className="cs-empty">No reviews yet.</p>}
 
         {mergedReviews.map((review) => (
           <div key={review.id} className="cs-card">

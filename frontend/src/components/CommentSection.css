@@ -47,23 +47,22 @@
   cursor: not-allowed;
 }
 
-.rs-star-shell,
-.rs-star-fill {
-  position: absolute;
-  inset: 0;
+.rs-star-svg {
+  width: 100%;
+  height: 100%;
   display: block;
 }
 
-.rs-star-shell {
-  color: #b9b9b9;
+.rs-star-empty {
+  fill: #ffffff;
+  stroke: #b9b9b9;
+  stroke-width: 1.5;
 }
 
-.rs-star-fill {
-  width: 0;
-  overflow: hidden;
-  color: var(--color-text);
-  white-space: nowrap;
-  pointer-events: none;
+.rs-star-full {
+  fill: var(--color-text);
+  stroke: var(--color-text);
+  stroke-width: 1.5;
 }
 
 .rs-selected-rating {
@@ -130,6 +129,10 @@
   font-size: 13px;
   color: var(--green);
   margin: 0;
+}
+
+.cs-msg-muted {
+  color: var(--color-text-muted);
 }
 
 /* LIST */
