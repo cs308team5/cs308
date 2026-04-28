@@ -58,6 +58,7 @@ export default function CheckoutPage() {
       expiryMonth,
       expiryYear,
       amount: total,
+      customer_id: user.customer_id,
       cart_items: cart.map(item => ({
         product_id: item.product_id,
         quantity: item.quantity,
