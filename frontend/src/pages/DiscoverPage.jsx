@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProducts } from "../services/productAndCartService.js";
 import { CartButton } from "./HomePage";
+import SearchBar from "../components/SearchBar.jsx";
 import brushStroke from "../assets/homePageAssets/brushStroke.png";
 
 const buttonData = [
@@ -135,6 +136,7 @@ export default function DiscoverPage() {
   const [categorySource, setCategorySource] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState(location.state?.query ?? "");
 
   useEffect(() => {
     let cancelled = false;
@@ -168,6 +170,7 @@ export default function DiscoverPage() {
       category: filters.categories,
       min_price: Math.min(minPrice, maxPrice),
       max_price: Math.max(minPrice, maxPrice),
+      search: searchQuery,
     })
       .then((data) => {
         if (!cancelled) {
@@ -188,7 +191,7 @@ export default function DiscoverPage() {
     return () => {
       cancelled = true;
     };
-  }, [filters.categories, filters.maxPrice, filters.minPrice]);
+  }, [filters.categories, filters.maxPrice, filters.minPrice, searchQuery]);
 
   const availableCategories = useMemo(() => {
     const categories = categorySource
@@ -276,10 +279,11 @@ export default function DiscoverPage() {
   };
 
   return (
-    <div className="container">
+    <div className="app-shell">
       <div className="sidebar">
         <div className="logo-area">
-          <h2 className="logo-text">Dare</h2>
+          <p className="type-eyebrow shell-kicker">Editorial retail</p>
+          <h2 className="logo-text">THE DARE</h2>
         </div>
 
         <div className="button-column">
@@ -394,10 +398,14 @@ export default function DiscoverPage() {
         <main className="results-grid">
           <div className="listing-toolbar">
             <div>
+              <p className="type-eyebrow discover-eyebrow">Discover more</p>
               <h1 className="greeting-text">Explore</h1>
               <p className="results-summary">
                 {loading ? "Loading products..." : `${sortedProducts.length} products found`}
               </p>
+              <div className="discover-search-wrap">
+                <SearchBar onSearch={setSearchQuery} value={searchQuery} placeholder="Search all products..." />
+              </div>
             </div>
 
             <div className="toolbar-actions">

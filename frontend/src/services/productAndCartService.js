@@ -98,7 +98,8 @@ export async function addToCart(userId, productId) {
     body: JSON.stringify({ userId, productId }),
   });
 
-  const data = await response.json();
+  const raw = await response.text();
+  const data = raw ? JSON.parse(raw) : {};
 
   if (!response.ok) {
     throw new Error(data.message || "Failed to add to cart");

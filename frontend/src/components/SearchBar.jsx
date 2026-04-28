@@ -1,11 +1,12 @@
 import "./SearchBar.css";
 
-export default function SearchBar({ onSearch }) {
+export default function SearchBar({ onSearch, value = "", placeholder = "Search products..." }) {
   return (
     <div className="search-container">
       <input
         type="text"
-        placeholder="Search products..."
+        placeholder={placeholder}
+        value={value}
         onChange={(e) => onSearch(e.target.value)}
         className="search-input"
       />
