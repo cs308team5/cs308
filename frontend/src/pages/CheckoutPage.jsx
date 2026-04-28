@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../services/authService.js";
 import "./CheckoutPage.css";
@@ -28,6 +28,8 @@ export default function CheckoutPage() {
     expiry: "",
     cvv: "",
   });
+  const isSubmittingRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -70,75 +72,100 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    if (isSubmittingRef.current) {
+      return;
+    }
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+
+    const releaseSubmitLock = () => {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+    };
+
     if (!cart.length) {
       alert("Your cart is empty.");
       navigate("/cart");
+      releaseSubmitLock();
       return;
     }
 
     if (!user?.token) {
       alert("Please log in to complete checkout.");
       navigate("/login");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.fullName.trim()) {
       alert("Full name is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.email.trim()) {
       alert("Recipient email is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!validateEmail(form.email.trim())) {
       alert("Please enter a valid email address.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.phone.trim()) {
       alert("Phone number is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.street.trim()) {
       alert("Street address is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.city.trim()) {
       alert("City is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.state.trim()) {
       alert("State is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.zip.trim()) {
       alert("ZIP code is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.country.trim() || form.country === "Select country") {
       alert("Country is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (form.cardNumber.replace(/\s/g, "").length !== 16) {
       alert("Please enter a valid 16-digit card number.");
+      releaseSubmitLock();
       return;
     }
 
     if (!form.cardName.trim()) {
       alert("Cardholder name is required.");
+      releaseSubmitLock();
       return;
     }
 
     if (!/^\d{2}\/\d{2}$/.test(form.expiry)) {
       alert("Please enter a valid expiry date in MM/YY format.");
+      releaseSubmitLock();
       return;
     }
 
@@ -152,6 +179,7 @@ export default function CheckoutPage() {
 
     if (expiryMonth < 1 || expiryMonth > 12) {
       alert("Expiry month must be between 01 and 12.");
+      releaseSubmitLock();
       return;
     }
 
@@ -160,13 +188,38 @@ export default function CheckoutPage() {
       (expiryYear === currentYear && expiryMonth <= currentMonth)
     ) {
       alert("Card expiry date cannot be in the past.");
+      releaseSubmitLock();
       return;
     }
 
     if (!/^\d{3,4}$/.test(form.cvv)) {
       alert("Please enter a valid CVV.");
+      releaseSubmitLock();
       return;
     }
+
+    const checkoutInvoiceOrder = {
+      date: new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+      items: cart,
+      shipping: {
+        fullName: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        country: form.country,
+      },
+      subtotal,
+      shippingCost: shipping,
+      tax,
+      total,
+    };
 
     const paymentPayload = {
       cardNumber: form.cardNumber.replace(/\s/g, ""),
@@ -174,6 +227,7 @@ export default function CheckoutPage() {
       expiryMonth,
       expiryYear,
       amount: total,
+      recipientEmail: form.email.trim(),
       customer_id: user.customer_id,
       cart_items: cart.map(item => ({
         product_id: item.product_id,
@@ -202,65 +256,29 @@ export default function CheckoutPage() {
       paymentRes = await res.json();
     } catch (err) {
       alert("Payment request failed. Please try again.");
+      releaseSubmitLock();
       return;
     }
 
     if (!paymentRes.success) {
       alert(paymentRes.message || "Payment declined.");
+      releaseSubmitLock();
       return;
     }
 
     if (!paymentRes.order_id) {
       alert("Payment was approved, but the order could not be created.");
+      releaseSubmitLock();
       return;
     }
 
     const order = {
       invoiceNumber: paymentRes.order_id,
-      date: new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }),
-      items: cart,
-      shipping: {
-        fullName: form.fullName,
-        email: form.email,
-        phone: form.phone,
-        street: form.street,
-        city: form.city,
-        state: form.state,
-        zip: form.zip,
-        country: form.country,
-      },
-      subtotal,
-      shippingCost: shipping,
-      tax,
-      total,
+      ...checkoutInvoiceOrder,
     };
 
-    try {
-      const response = await fetch(`/api/invoice/send/${paymentRes.order_id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || "Failed to send invoice email.");
-      }
-
-      const data = await response.json();
-
-      if (data.previewUrl) {
-        window.open(data.previewUrl, "_blank", "noopener,noreferrer");
-      }
-    } catch (error) {
-      alert(error.message || "Invoice email could not be sent.");
-      return;
+    if (paymentRes.invoiceEmailSent === false) {
+      alert(paymentRes.invoiceEmailError || "Invoice email could not be sent.");
     }
 
     navigate("/invoice", {
@@ -268,6 +286,7 @@ export default function CheckoutPage() {
         order,
       },
     });
+    releaseSubmitLock();
   };
 
   return (
@@ -396,7 +415,9 @@ export default function CheckoutPage() {
             <span>${total.toFixed(2)}</span>
           </div>
 
-          <button className="place-order" onClick={handlePlaceOrder}>Place Order</button>
+          <button className="place-order" onClick={handlePlaceOrder} disabled={isSubmitting}>
+            {isSubmitting ? "Processing..." : "Place Order"}
+          </button>
 
           <div className="extra">
             <p>🔒 Secure 256-bit SSL encryption</p>

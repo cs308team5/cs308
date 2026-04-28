@@ -1,5 +1,6 @@
 import pool from "../config/db.js";
 import { createOrder } from "./orderController.js";
+import { sendInvoiceEmailForOrder } from "./invoiceController.js";
 
 // Test kart numaraları
 const ALWAYS_DECLINE = "4000000000000002";
@@ -37,6 +38,7 @@ export const processPayment = async (req, res) => {
         cart_items,
         delivery_address,
         shippingAddress,
+        recipientEmail,
     } = req.body;
     const customerId = req.customer?.customerId ?? req.customer?.customer_id;
 
@@ -116,12 +118,27 @@ export const processPayment = async (req, res) => {
                 amount,
                 delivery_address ?? shippingAddress
             );
+
+            let invoiceEmailSent = true;
+            let invoiceEmailError = null;
+            try {
+                await sendInvoiceEmailForOrder(order_id, customerId, {
+                    recipientEmail,
+                });
+            } catch (emailError) {
+                invoiceEmailSent = false;
+                invoiceEmailError = emailError.message;
+                console.error("Invoice email send failed after checkout:", emailError);
+            }
+
             return res.status(200).json({
                 success: true,
                 message: "Payment approved.",
                 transactionId,
                 amount,
                 order_id,
+                invoiceEmailSent,
+                ...(invoiceEmailError ? { invoiceEmailError } : {}),
             });
         } catch (error) {
             console.error("Order creation failed:", error);
