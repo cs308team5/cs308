@@ -106,5 +106,19 @@ compare: SCRUM-xx-feature-stuff
 # Important
 ## Always branch from development, never create branches directly from main or commit directly to main.
 
+---
+
+# Testing
+
+The backend now includes an automated unit test process using the Node.js built-in test runner.
+
+Run it from the backend folder:
+
+```bash
+npm test
+```
+
+Detailed notes for the progress demo are in [docs/testing-process.md](C:\Users\sudet\Desktop\cs308\docs\testing-process.md).
+
 
 

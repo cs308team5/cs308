@@ -39,6 +39,11 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!form.street.trim() && !form.city.trim() && !form.country.trim() && !form.zip.trim()) {
+      alert("Please fill in your shipping address.");
+      return;
+    }
+
     const [expiryMonth, expiryYear] = form.expiry.split("/").map(s => s.trim());
 
     const paymentPayload = {
@@ -53,7 +58,7 @@ export default function CheckoutPage() {
         quantity: item.quantity,
         price: item.price,
       })),
-      shippingAddress: {
+      delivery_address: {
         street: form.street,
         city: form.city,
         state: form.state,
