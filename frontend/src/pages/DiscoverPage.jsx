@@ -17,7 +17,7 @@ const buttonData = [
 const fallbackCategories = ["Footwear", "Jackets", "Accessories"];
 
 const normalizeSort = (value) => {
-  if (["a-z", "z-a", "price_asc", "price_desc"].includes(value)) {
+  if (["a-z", "z-a", "price_asc", "price_desc", "popularity"].includes(value)) {
     return value;
   }
 
@@ -46,6 +46,10 @@ const SideBarButton = ({ label, isActive, onClick }) => (
 
 const ProductGridCard = ({ product, onOpen }) => {
   const stock = getStockStatus(product.stock_quantity);
+  const hasRatings = product.ratingCount > 0;
+  const popularityLabel = hasRatings
+    ? `★ ${product.popularityScore.toFixed(1)} (${product.ratingCount})`
+    : "★ No ratings";
 
   return (
     <article className="listing-card">
@@ -65,6 +69,7 @@ const ProductGridCard = ({ product, onOpen }) => {
 
         <h3 className="listing-title">{product.title}</h3>
         {product.creator && <p className="listing-meta">{product.creator}</p>}
+        <p className="listing-meta">{popularityLabel}</p>
         <p className="listing-description">{product.description || "No description available for this product yet."}</p>
 
         <div className="listing-card-footer">
@@ -80,6 +85,10 @@ const ProductGridCard = ({ product, onOpen }) => {
 
 const ProductListRow = ({ product, onOpen }) => {
   const stock = getStockStatus(product.stock_quantity);
+  const hasRatings = product.ratingCount > 0;
+  const popularityLabel = hasRatings
+    ? `★ ${product.popularityScore.toFixed(1)} (${product.ratingCount})`
+    : "★ No ratings";
 
   return (
     <article className="listing-row">
@@ -102,6 +111,7 @@ const ProductListRow = ({ product, onOpen }) => {
               )}
             </div>
             <h3 className="listing-title">{product.title}</h3>
+            <p className="listing-meta">{popularityLabel}</p>
           </div>
 
           <span className={`stock-badge ${stock.tone}`}>{stock.label}</span>
@@ -256,6 +266,18 @@ export default function DiscoverPage() {
       return nextProducts.sort((left, right) => right.priceValue - left.priceValue);
     }
 
+    if (filters.sort === "popularity") {
+      return nextProducts.sort((left, right) => {
+        if (right.popularityScore !== left.popularityScore) {
+          return right.popularityScore - left.popularityScore;
+        }
+        if (right.ratingCount !== left.ratingCount) {
+          return right.ratingCount - left.ratingCount;
+        }
+        return right.priceValue - left.priceValue;
+      });
+    }
+
     return nextProducts;
   }, [filters.sort, products]);
 
@@ -363,6 +385,7 @@ export default function DiscoverPage() {
               <option value="z-a">Name: Z to A</option>
               <option value="price_asc">Price: Low to High</option>
               <option value="price_desc">Price: High to Low</option>
+              <option value="popularity">Popularity</option>
             </select>
           </div>
 

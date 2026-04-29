@@ -22,6 +22,8 @@ const mapProduct = (row) => {
     inStock: stockQuantity > 0,
     category: row.category ?? "uncategorized",
     img: row.image_url ?? null,
+    popularityScore: 0,
+    ratingCount: 0,
   };
 };
 
@@ -38,7 +40,49 @@ export async function fetchProducts({ category = [], min_price = 0, max_price = 
 
   const { data, error } = await query;
   if (error) throw error;
-  return data.map(mapProduct);
+
+  const mappedProducts = data.map(mapProduct);
+  const productIds = mappedProducts.map((product) => product.id);
+
+  if (productIds.length === 0) {
+    return mappedProducts;
+  }
+
+  const { data: ratingsData, error: ratingsError } = await supabase
+    .from("ratings")
+    .select("product_id, rating")
+    .in("product_id", productIds);
+
+  if (!ratingsError && Array.isArray(ratingsData)) {
+    const ratingMap = ratingsData.reduce((acc, row) => {
+      const productId = row.product_id;
+      const numericRating = Number(row.rating);
+
+      if (!productId || !Number.isFinite(numericRating)) {
+        return acc;
+      }
+
+      if (!acc[productId]) {
+        acc[productId] = { total: 0, count: 0 };
+      }
+
+      acc[productId].total += numericRating;
+      acc[productId].count += 1;
+      return acc;
+    }, {});
+
+    mappedProducts.forEach((product) => {
+      const stats = ratingMap[product.id];
+      if (!stats || stats.count === 0) {
+        return;
+      }
+
+      product.ratingCount = stats.count;
+      product.popularityScore = Number((stats.total / stats.count).toFixed(2));
+    });
+  }
+
+  return mappedProducts;
 }
 
 
