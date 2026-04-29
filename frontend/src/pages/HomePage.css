@@ -47,6 +47,7 @@
     align-items: center;
     justify-content: flex-start;
     cursor: pointer;
+    overflow: visible;
 }
 
 .sidebar-btn {
@@ -80,9 +81,10 @@
 
 .btn-brush-stroke {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    left: -10px;
+    top: 2px;
+    width: calc(100% + 22px);
+    height: calc(100% - 4px);
     object-fit: cover;
     border-radius: 14px;
     opacity: 0.95;
@@ -176,6 +178,12 @@
     width: 100%;
 }
 
+.homepage-search.search-container {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(27, 40, 78, 0.18);
+    box-shadow: 0 18px 34px rgba(18, 18, 18, 0.1);
+}
+
 .header-actions {
     display: flex;
     align-items: center;
@@ -237,7 +245,7 @@
     display: flex;
     flex-direction: column;
     gap: 18px;
-    min-height: 456px;
+    min-height: 440px;
 }
 
 .row-heading {
@@ -261,7 +269,7 @@
 .polaroid-grid {
     display: flex;
     gap: 22px;
-    padding: 0 48px 64px;
+    padding: 0 48px 34px;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
@@ -285,8 +293,8 @@
 
 .polaroid-container {
     position: relative;
-    flex: 0 0 220px;
-    height: 392px;
+    flex: 0 0 216px;
+    height: 356px;
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     overflow: visible;
 }
@@ -301,25 +309,29 @@
     top: 0;
     left: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
     width: 200px;
-    height: 336px;
-    padding: 15px;
-    background: var(--offwhite);
+    height: 300px;
+    padding: 14px;
+    background: #fffdf8;
+    border: 1px solid rgba(18, 18, 18, 0.06);
     border-radius: 6px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.16);
-    transition: height 0.32s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.24s ease;
+    box-shadow: 0 12px 28px rgba(18, 18, 18, 0.16);
+    transition: box-shadow 0.24s ease, transform 0.24s ease;
 }
 
 .polaroid-container:hover .polaroid-frame {
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0);
-    height: 392px;
+    box-shadow: 0 22px 36px rgba(18, 18, 18, 0.2);
+    transform: translateY(-2px);
+    height: 352px;
 }
 
 .polaroid-image-container {
     width: 100%;
-    aspect-ratio: 1 / 0.9;
+    aspect-ratio: 1 / 1.28;
     overflow: hidden;
-    background: #eeeeee;
+    background: #f3efe7;
 }
 
 .polaroid-img {
@@ -350,23 +362,30 @@
 .polaroid-content {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 10px;
-    margin-top: 5px;
-    min-height: 86px;
+    margin-top: 20px;
+    min-height: 56px;
+    padding-bottom: 8px;
+    flex: 1;
+}
+
+.polaroid-container:hover .polaroid-content {
+    padding-bottom: 54px;
 }
 
 .polaroid-content-text {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 3px;
+    justify-content: flex-start;
+    gap: 12px;
     min-width: 0;
 }
 
 .product-name {
     margin: 0;
     font-family: "Playfair Display", serif;
-    font-size: 1.1rem;
+    font-size: 1.08rem;
     font-weight: 700;
     color: var(--color-text);
     line-height: 1.1;
@@ -376,11 +395,12 @@
     margin: 0;
     color: var(--color-text-muted);
     font-size: 0.72rem;
+    min-height: 0.85rem;
 }
 
 .card-stock {
     margin: 0;
-    font-size: 0.74rem;
+    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
@@ -399,7 +419,7 @@
     flex-direction: column;
     align-items: flex-end;
     justify-content: space-between;
-    margin-top: 8px;
+    margin-top: 2px;
     gap: 10px;
 }
 
@@ -412,23 +432,23 @@
 .like-count {
     margin: 0;
     color: var(--blue);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .polaroid-buy-container {
     position: absolute;
-    left: 15px;
-    right: 15px;
-    bottom: 12px;
+    left: 14px;
+    right: 14px;
+    bottom: 8px;
     height: 42px;
-    padding: 8px 12px 10px;
-    background: var(--offwhite);
+    padding: 8px 10px 8px;
+    background: #fffdf8;
     border-radius: 0;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 12px;
-    transform: translateY(16px);
+    transform: translateY(18px);
     opacity: 0;
     z-index: 3;
     pointer-events: none;
@@ -439,9 +459,9 @@
     content: "";
     position: absolute;
     left: 0;
-    top: 4px;
+    top: 6px;
     width: 100%;
-    border-bottom: 5px dotted var(--pink);
+    border-bottom: 4px dotted var(--pink);
 }
 
 .polaroid-container:hover .polaroid-buy-container {
@@ -452,18 +472,18 @@
 
 .reveal-price {
     color: var(--color-text);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
 }
 
 .reveal-cart-btn {
-    min-height: 34px;
-    padding: 0 12px;
+    min-height: 32px;
+    padding: 0 11px;
     border: none;
     border-radius: 6px;
     background: var(--blue);
     color: var(--color-inverse-text);
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 700;
     cursor: pointer;
     transition: background-color 0.2s ease;
@@ -492,7 +512,7 @@
 
 .check-more-frame {
     display: flex;
-    height: 336px;
+    height: 300px;
     align-items: center;
     justify-content: center;
     flex-direction: column;
@@ -516,6 +536,10 @@
 
 .check-more-frame:hover .check-more-arrow {
     transform: translateX(6px);
+}
+
+.polaroid-container:hover .check-more-frame {
+    height: 352px;
 }
 
 @media (max-width: 1100px) {

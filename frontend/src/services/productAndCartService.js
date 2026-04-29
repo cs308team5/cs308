@@ -15,7 +15,7 @@ const mapProduct = (row) => {
     id: row.id,
     title: row.name,
     description: row.description ?? "",
-    creator: row.additional_attributes?.creator ?? "@unknown",
+    creator: row.additional_attributes?.creator ?? "",
     price: `$${priceValue.toFixed(2)}`,
     priceValue,
     stock_quantity: stockQuantity,

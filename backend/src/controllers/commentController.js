@@ -57,13 +57,13 @@ export const getPendingComments = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT c.id, c.text, c.status, c.created_at,
-              c.product_id, p.name AS product_name,
+              c.product_id, COALESCE(p.name, 'Unknown product') AS product_name,
               c.user_id,
               COALESCE(cu.username, cu.name, 'Customer') AS author_name
        FROM comments c
-       JOIN products p ON c.product_id = p.id
+       LEFT JOIN products p ON c.product_id = p.id
        LEFT JOIN customers cu ON c.user_id = cu.customer_id
-       WHERE c.status = 'pending'
+       WHERE LOWER(TRIM(c.status)) = 'pending'
        ORDER BY c.created_at ASC`
     );
     return res.status(200).json({ success: true, data: result.rows });

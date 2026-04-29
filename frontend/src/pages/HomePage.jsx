@@ -129,9 +129,9 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
         <div className="polaroid-content">
           <div className="polaroid-content-text">
             <p className="product-name">{title}</p>
-            <p className="creator-name">{creator}</p>
+            {creator && <p className="creator-name">{creator}</p>}
             <p className={`card-stock ${inStock ? "in-stock" : "out-of-stock"}`}>
-              {inStock ? `${stock_quantity} in stock` : "Out of stock"}
+              {inStock ? "In stock" : "Out of stock"}
             </p>
           </div>
           <div className="polaroid-content-utility">
@@ -178,17 +178,17 @@ const CheckMoreCard = ({ linkedFilter }) => {
   );
 };
 
-const PolaroidRow = ({ title, sort, linkedFilter }) => {
+const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    fetchProducts({ sort, limit: 5 })
+    fetchProducts({ sort, limit: 5, search: searchQuery })
       .then(setItems)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [sort]);
+  }, [searchQuery, sort]);
 
   return (
     <section className="polaroid-row-container">
@@ -199,6 +199,8 @@ const PolaroidRow = ({ title, sort, linkedFilter }) => {
       <div className="polaroid-grid" ref={scrollRef}>
         {loading ? (
           <p className="row-loading">Loading...</p>
+        ) : items.length === 0 ? (
+          <p className="row-loading">No products match this search yet.</p>
         ) : (
           items.map((item) => (
             <PolaroidCard
@@ -212,7 +214,7 @@ const PolaroidRow = ({ title, sort, linkedFilter }) => {
             />
           ))
         )}
-        {!loading && <CheckMoreCard linkedFilter={linkedFilter} />}
+        {!loading && items.length > 0 && <CheckMoreCard linkedFilter={linkedFilter} />}
         <div className="grid-end-spacer" />
       </div>
     </section>
@@ -224,6 +226,7 @@ export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
   const navigate = useNavigate();
   const activeTab = "home";
 
@@ -255,6 +258,22 @@ export default function HomePage() {
     }
   }, []);
 
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (!trimmedQuery) {
+      setSearchSuggestions([]);
+      return;
+    }
+
+    fetchProducts({ search: trimmedQuery, limit: 6 })
+      .then((items) => {
+        const uniqueTitles = [...new Set(items.map((item) => item.title))];
+        setSearchSuggestions(uniqueTitles);
+      })
+      .catch(() => setSearchSuggestions([]));
+  }, [searchQuery]);
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -285,6 +304,7 @@ export default function HomePage() {
                 value={searchQuery}
                 onSearch={setSearchQuery}
                 onSubmit={handleSearchSubmit}
+                suggestions={searchSuggestions}
                 placeholder="Search by product name or description"
                 className="homepage-search"
               />
@@ -298,20 +318,24 @@ export default function HomePage() {
               </button>
             )}
             <CartButton onClick={() => navigate("/cart")} />
-            {isLoggedIn && (
+            {isLoggedIn ? (
               <button className="logout-btn" onClick={handleLogout}>
                 Logout
+              </button>
+            ) : (
+              <button className="logout-btn" onClick={() => navigate("/login")}>
+                Login
               </button>
             )}
           </div>
         </div>
 
         <div className="feed-column">
-          <PolaroidRow title="For Your Recent Tastes" sort="recent_taste" linkedFilter="recent_taste" />
-          <PolaroidRow title="Some Recommendations From Us" sort="recommended" linkedFilter="recommended" />
-          <PolaroidRow title="Everyone's New Favorites" sort="top_rated" linkedFilter="top_rated" />
-          <PolaroidRow title="From Who You Follow" sort="followed" linkedFilter="followed" />
-          <PolaroidRow title="Cheaper Than Ever" sort="discount" linkedFilter="discount" />
+          <PolaroidRow title="For Your Recent Tastes" sort="recent_taste" linkedFilter="recent_taste" searchQuery={searchQuery} />
+          <PolaroidRow title="Some Recommendations From Us" sort="recommended" linkedFilter="recommended" searchQuery={searchQuery} />
+          <PolaroidRow title="Everyone's New Favorites" sort="top_rated" linkedFilter="top_rated" searchQuery={searchQuery} />
+          <PolaroidRow title="From Who You Follow" sort="followed" linkedFilter="followed" searchQuery={searchQuery} />
+          <PolaroidRow title="Cheaper Than Ever" sort="discount" linkedFilter="discount" searchQuery={searchQuery} />
         </div>
       </main>
     </div>
