@@ -1,8 +1,9 @@
-export function createMockReq({ body = {}, params = {}, query = {} } = {}) {
+export function createMockReq({ body = {}, params = {}, query = {}, customer = undefined } = {}) {
   return {
     body,
     params,
     query,
+    customer,
   };
 }
 

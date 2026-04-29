@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import pool from "../src/config/db.js";
 import {
   getProductById,
+  getReviewEligibility,
   getProducts,
   submitRating,
 } from "../src/controllers/productController.js";
@@ -257,30 +258,32 @@ describe("productController.submitRating", () => {
   test("returns 400 when rating is missing", async () => {
     const req = createMockReq({
       params: { id: "p1" },
-      body: { user_id: "u1" },
+      body: {},
+      customer: { customerId: "u1" },
     });
     const res = createMockRes();
 
     await submitRating(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body.message, "Rating must be between 1 and 5");
+    assert.equal(res.body.message, "Rating must be between 0.5 and 5 in 0.5 increments");
   });
 
   test("returns 400 when rating is above the allowed range", async () => {
     const req = createMockReq({
       params: { id: "p1" },
-      body: { rating: 6, user_id: "u1" },
+      body: { rating: 6 },
+      customer: { customerId: "u1" },
     });
     const res = createMockRes();
 
     await submitRating(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body.message, "Rating must be between 1 and 5");
+    assert.equal(res.body.message, "Rating must be between 0.5 and 5 in 0.5 increments");
   });
 
-  test("returns 400 when user_id is missing", async () => {
+  test("returns 401 when user identity is missing", async () => {
     const req = createMockReq({
       params: { id: "p1" },
       body: { rating: 5 },
@@ -289,8 +292,8 @@ describe("productController.submitRating", () => {
 
     await submitRating(req, res);
 
-    assert.equal(res.statusCode, 400);
-    assert.equal(res.body.message, "User ID is required");
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.body.message, "Authentication required");
   });
 
   test("returns 404 when the product does not exist", async () => {
@@ -298,7 +301,8 @@ describe("productController.submitRating", () => {
 
     const req = createMockReq({
       params: { id: "p1" },
-      body: { rating: 5, user_id: "u1" },
+      body: { rating: 5 },
+      customer: { customerId: "u1" },
     });
     const res = createMockRes();
 
@@ -315,13 +319,17 @@ describe("productController.submitRating", () => {
       if (call === 1) {
         return { rows: [{ id: "p1" }] };
       }
+      if (call === 2) {
+        return { rows: [{ purchased: true }] };
+      }
 
       return { rows: [{ id: "existing-rating" }] };
     };
 
     const req = createMockReq({
       params: { id: "p1" },
-      body: { rating: 5, user_id: "u1" },
+      body: { rating: 5 },
+      customer: { customerId: "u1" },
     });
     const res = createMockRes();
 
@@ -340,17 +348,22 @@ describe("productController.submitRating", () => {
       }
 
       if (call === 2) {
+        return { rows: [{ purchased: true }] };
+      }
+
+      if (call === 3) {
         return { rows: [] };
       }
 
       return {
-        rows: [{ id: "rating-1", user_id: "u1", product_id: "p1", rating: 4 }],
+        rows: [{ id: "rating-1", user_id: "u1", product_id: "p1", rating: 3.5 }],
       };
     };
 
     const req = createMockReq({
       params: { id: "p1" },
-      body: { rating: 4, user_id: "u1" },
+      body: { rating: 3.5 },
+      customer: { customerId: "u1" },
     });
     const res = createMockRes();
 
@@ -358,7 +371,31 @@ describe("productController.submitRating", () => {
 
     assert.equal(res.statusCode, 201);
     assert.equal(res.body.message, "Rating submitted successfully");
-    assert.equal(res.body.data.rating, 4);
+    assert.equal(res.body.data.rating, 3.5);
+  });
+
+  test("returns 403 when the customer has not purchased the product", async () => {
+    let call = 0;
+    pool.query = async () => {
+      call += 1;
+      if (call === 1) {
+        return { rows: [{ id: "p1" }] };
+      }
+
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { rating: 4 },
+      customer: { customerId: "u1" },
+    });
+    const res = createMockRes();
+
+    await submitRating(req, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.message, "Only customers who purchased this product can rate it");
   });
 
   test("returns 500 when rating submission fails", async () => {
@@ -368,7 +405,8 @@ describe("productController.submitRating", () => {
 
     const req = createMockReq({
       params: { id: "p1" },
-      body: { rating: 4, user_id: "u1" },
+      body: { rating: 4 },
+      customer: { customerId: "u1" },
     });
     const res = createMockRes();
 
@@ -376,5 +414,59 @@ describe("productController.submitRating", () => {
 
     assert.equal(res.statusCode, 500);
     assert.equal(res.body.message, "Server error");
+  });
+});
+
+describe("productController.getReviewEligibility", () => {
+  const originalQuery = pool.query;
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    pool.query = originalQuery;
+    console.error = originalConsoleError;
+  });
+
+  test("returns 401 when the customer is missing", async () => {
+    const req = createMockReq({ params: { id: "p1" } });
+    const res = createMockRes();
+
+    await getReviewEligibility(req, res);
+
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.body.eligible, false);
+  });
+
+  test("returns eligible true when the product was purchased", async () => {
+    pool.query = async () => ({ rows: [{ purchased: true }] });
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      customer: { customerId: "u1" },
+    });
+    const res = createMockRes();
+
+    await getReviewEligibility(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.eligible, true);
+  });
+
+  test("returns eligible false when the product was not purchased", async () => {
+    pool.query = async () => ({ rows: [] });
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      customer: { customerId: "u1" },
+    });
+    const res = createMockRes();
+
+    await getReviewEligibility(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.eligible, false);
   });
 });
