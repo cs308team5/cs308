@@ -90,7 +90,7 @@ export default function CartPage() {
 
             <div className="item-right">
               <button className="remove" onClick={() => removeItem(item.id)}>
-                🗑
+                Remove
               </button>
               <h3>${(item.price * item.quantity).toFixed(2)}</h3>
             </div>

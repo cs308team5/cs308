@@ -1,5 +1,16 @@
 @import "./HomePage.css";
 
+.admin-content {
+    display: block;
+    min-height: 100vh;
+    overflow-y: auto;
+}
+
+.admin-panel {
+    min-height: 100%;
+    padding-bottom: 40px;
+}
+
 /* ── Header ── */
 .admin-header {
     padding: 40px 60px 20px 40px;

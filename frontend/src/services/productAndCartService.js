@@ -15,7 +15,7 @@ const mapProduct = (row) => {
     id: row.id,
     title: row.name,
     description: row.description ?? "",
-    creator: row.additional_attributes?.creator ?? "@unknown",
+    creator: row.additional_attributes?.creator ?? "",
     price: `$${priceValue.toFixed(2)}`,
     priceValue,
     stock_quantity: stockQuantity,
@@ -108,7 +108,8 @@ export async function addToCart(userId, productId) {
     body: JSON.stringify({ userId, productId }),
   });
 
-  const data = await response.json();
+  const raw = await response.text();
+  const data = raw ? JSON.parse(raw) : {};
 
   if (!response.ok) {
     throw new Error(data.message || "Failed to add to cart");

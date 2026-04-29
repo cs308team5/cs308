@@ -2,7 +2,8 @@ import "./DiscoverPage.css";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProducts } from "../services/productAndCartService.js";
-import SearchBar from "../components/SearchBar";
+import { getCurrentUser, logout } from "../services/authService.js";
+import SearchBar from "../components/SearchBar.jsx";
 import { CartButton } from "./HomePage";
 import brushStroke from "../assets/homePageAssets/brushStroke.png";
 
@@ -30,10 +31,6 @@ const normalizeSort = (value) => {
 const getStockStatus = (stockQuantity) => {
   if (stockQuantity <= 0) {
     return { label: "Out of stock", tone: "out" };
-  }
-
-  if (stockQuantity <= 5) {
-    return { label: `Low stock (${stockQuantity})`, tone: "low" };
   }
 
   return { label: "In stock", tone: "in" };
@@ -67,7 +64,7 @@ const ProductGridCard = ({ product, onOpen }) => {
         </div>
 
         <h3 className="listing-title">{product.title}</h3>
-        <p className="listing-meta">{product.creator}</p>
+        {product.creator && <p className="listing-meta">{product.creator}</p>}
         <p className="listing-description">{product.description || "No description available for this product yet."}</p>
 
         <div className="listing-card-footer">
@@ -97,8 +94,12 @@ const ProductListRow = ({ product, onOpen }) => {
           <div>
             <div className="listing-row-meta">
               <span className="listing-category">{product.category}</span>
-              <span className="listing-meta-separator">/</span>
-              <span className="listing-meta">{product.creator}</span>
+              {product.creator && (
+                <>
+                  <span className="listing-meta-separator">/</span>
+                  <span className="listing-meta">{product.creator}</span>
+                </>
+              )}
             </div>
             <h3 className="listing-title">{product.title}</h3>
           </div>
@@ -137,6 +138,17 @@ export default function DiscoverPage() {
   const [categorySource, setCategorySource] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
+  useEffect(() => {
+    const user = getCurrentUser();
+    setIsLoggedIn(Boolean(user?.token));
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -292,10 +304,11 @@ export default function DiscoverPage() {
   };
 
   return (
-    <div className="container">
+    <div className="app-shell">
       <div className="sidebar">
         <div className="logo-area">
-          <h2 className="logo-text">Dare</h2>
+          <p className="type-eyebrow shell-kicker">dare to wear</p>
+          <h2 className="logo-text">THE DARE</h2>
         </div>
 
         <div className="button-column">
@@ -410,6 +423,7 @@ export default function DiscoverPage() {
         <main className="results-grid">
           <div className="listing-toolbar">
             <div className="toolbar-copy">
+              <p className="type-eyebrow discover-eyebrow">Discover more</p>
               <h1 className="greeting-text">Explore</h1>
               <p className="results-summary">
                 {loading ? "Loading products..." : `${sortedProducts.length} products found`}
@@ -441,6 +455,15 @@ export default function DiscoverPage() {
               </div>
 
               <CartButton onClick={() => navigate("/cart")} />
+              {isLoggedIn ? (
+                <button className="listing-action" onClick={handleLogout}>
+                  Logout
+                </button>
+              ) : (
+                <button className="listing-action" onClick={() => navigate("/login")}>
+                  Login
+                </button>
+              )}
             </div>
           </div>
 

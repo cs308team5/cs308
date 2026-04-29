@@ -5,9 +5,9 @@
   gap: 10px;
   padding: 10px 14px;
   border-radius: 999px;
-  background: rgba(240, 238, 231, 0.96);
-  border: 1px solid rgba(27, 40, 78, 0.14);
-  box-shadow: 0 14px 30px rgba(18, 18, 18, 0.12);
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid rgba(27, 40, 78, 0.16);
+  box-shadow: 0 14px 30px rgba(18, 18, 18, 0.1);
   box-sizing: border-box;
 }
 

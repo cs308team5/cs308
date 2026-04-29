@@ -47,6 +47,14 @@ export default function AdminPage() {
     const [msg, setMsg] = useState("");
     const [msgType, setMsgType] = useState("success");
 
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "auto" });
+        const content = document.querySelector(".admin-content");
+        if (content) {
+            content.scrollTop = 0;
+        }
+    }, []);
+
     const showMsg = (text, type = "success") => {
         setMsg(text); setMsgType(type);
         setTimeout(() => setMsg(""), 3000);
@@ -182,22 +190,22 @@ export default function AdminPage() {
 
     if (!token || !isAdmin) {
         return (
-            <div className="container">
-                <div className="content-area">
+            <div className="app-shell">
+                <main className="content-area admin-content">
                     <div className="admin-guard-card">
                         <h2 className="brand">Admin access required</h2>
                         <p className="admin-empty">Please log in with an admin account to manage comments and products.</p>
                         <button className="admin-btn add-product" onClick={() => navigate("/login")}>Go to Login</button>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
 
     return (
-        <div className="container">
+        <div className="app-shell">
             {/* SIDEBAR */}
-            <div className="sidebar">
+            <aside className="sidebar">
                 <div className="logo-area">
                     <h2 className="logo-text brand">Dare</h2>
                 </div>
@@ -211,147 +219,145 @@ export default function AdminPage() {
                         />
                     ))}
                 </div>
-            </div>
+            </aside>
 
             {/* CONTENT */}
-            <div className="content-area">
-                <div className="admin-header">
-                    <div className="admin-tabs">
-                        <button
-                            className={`admin-tab ${activeTab === "comments" ? "active" : ""}`}
-                            onClick={() => setActiveTab("comments")}
-                        >
-                            Pending Comments ({comments.length})
-                        </button>
-                        <button
-                            className={`admin-tab ${activeTab === "products" ? "active" : ""}`}
-                            onClick={() => setActiveTab("products")}
-                        >
-                            Product Management
-                        </button>
-                    </div>
-                    {msg && <p className={`admin-msg ${msgType}`}>{msg}</p>}
-                </div>
-
-                {/* COMMENTS TAB */}
-                {activeTab === "comments" && (
-                    <div className="admin-list">
-                        {commentsLoading && <p className="admin-empty">Loading...</p>}
-                        {!commentsLoading && comments.length === 0 && (
-                            <p className="admin-empty">No pending comments ✓</p>
-                        )}
-                        {comments.map(c => (
-                            <div className="admin-card" key={c.id}>
-                                <div className="admin-card-meta">
-                                    <span className="admin-product-name brand">{c.product_name}</span>
-                                    <span className="admin-date">
-                                        {new Date(c.created_at).toLocaleDateString("en-US", {
-                                            year: "numeric", month: "short", day: "numeric"
-                                        })}
-                                    </span>
-                                </div>
-                                <p className="admin-comment-author">By {c.author_name || `User #${c.user_id}`}</p>
-                                <p className="admin-card-text">{c.text}</p>
-                                <div className="admin-actions">
-                                    <button
-                                        className="admin-btn approve"
-                                        disabled={commentActionId === c.id}
-                                        onClick={() => handleDecision(c.id, "approved")}
-                                    >
-                                        {commentActionId === c.id ? "Saving..." : "Approve"}
-                                    </button>
-                                    <button
-                                        className="admin-btn reject"
-                                        disabled={commentActionId === c.id}
-                                        onClick={() => handleDecision(c.id, "rejected")}
-                                    >
-                                        {commentActionId === c.id ? "Saving..." : "Reject"}
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* PRODUCTS TAB */}
-                {activeTab === "products" && (
-                    <div className="admin-list">
-                        <div className="admin-products-header">
-                            <button className="admin-btn add-product" onClick={openAddForm}>+ Add Product</button>
+            <main className="content-area admin-content">
+                <div className="admin-panel">
+                    <div className="admin-header">
+                        <div className="admin-tabs">
+                            <button
+                                className={`admin-tab ${activeTab === "comments" ? "active" : ""}`}
+                                onClick={() => setActiveTab("comments")}
+                            >
+                                Pending Comments ({comments.length})
+                            </button>
+                            <button
+                                className={`admin-tab ${activeTab === "products" ? "active" : ""}`}
+                                onClick={() => setActiveTab("products")}
+                            >
+                                Product Management
+                            </button>
                         </div>
+                        {msg && <p className={`admin-msg ${msgType}`}>{msg}</p>}
+                    </div>
 
-                        {/* ADD / EDIT FORM */}
-                        {showForm && (
-                            <div className="admin-card product-form">
-                                <h3 className="form-title brand">{editingId ? "Edit Product" : "Add New Product"}</h3>
-                                <div className="form-grid">
-                                    {[
-                                        { name: "name", placeholder: "Product Name *" },
-                                        { name: "category", placeholder: "Category *" },
-                                        { name: "price", placeholder: "Price *", type: "number" },
-                                        { name: "stock_quantity", placeholder: "Stock Quantity", type: "number" },
-                                        { name: "image_url", placeholder: "Image URL" },
-                                        { name: "model", placeholder: "Model" },
-                                        { name: "serial_number", placeholder: "Serial Number" },
-                                        { name: "warranty_status", placeholder: "Warranty Status" },
-                                        { name: "distributor_information", placeholder: "Distributor Info" },
-                                    ].map(f => (
-                                        <input
-                                            key={f.name}
-                                            className="form-input"
-                                            name={f.name}
-                                            type={f.type ?? "text"}
-                                            placeholder={f.placeholder}
-                                            value={form[f.name]}
-                                            onChange={handleFormChange}
-                                        />
-                                    ))}
-                                    <textarea
-                                        className="form-input form-textarea"
-                                        name="description"
-                                        placeholder="Description"
-                                        value={form.description}
-                                        onChange={handleFormChange}
-                                    />
-                                </div>
-                                <div className="admin-actions">
-                                    <button className="admin-btn approve" onClick={handleSubmitProduct}>
-                                        {editingId ? "Update" : "Add"}
-                                    </button>
-                                    <button className="admin-btn reject" onClick={() => setShowForm(false)}>Cancel</button>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* PRODUCT LIST */}
-                        {productsLoading && <p className="admin-empty">Loading...</p>}
-                        {!productsLoading && products.length === 0 && (
-                            <p className="admin-empty">No products found.</p>
-                        )}
-                        {products.map(p => (
-                            <div className="admin-card product-card" key={p.id}>
-                                <div className="product-card-left">
-                                    {p.image_url && (
-                                        <img src={p.image_url} alt={p.name} className="product-thumb" />
-                                    )}
-                                    <div className="product-card-info">
-                                        <span className="admin-product-name brand">{p.name}</span>
-                                        <span className="product-category">{p.category}</span>
-                                        <span className="product-price">${Number(p.price).toFixed(2)}</span>
-                                        <span className={`product-stock ${p.stock <= 0 ? "out" : ""}`}>
-                                            Stock: {p.stock}
+                    {activeTab === "comments" && (
+                        <div className="admin-list">
+                            {commentsLoading && <p className="admin-empty">Loading...</p>}
+                            {!commentsLoading && comments.length === 0 && (
+                                <p className="admin-empty">No pending comments</p>
+                            )}
+                            {comments.map(c => (
+                                <div className="admin-card" key={c.id}>
+                                    <div className="admin-card-meta">
+                                        <span className="admin-product-name brand">{c.product_name}</span>
+                                        <span className="admin-date">
+                                            {new Date(c.created_at).toLocaleDateString("en-US", {
+                                                year: "numeric", month: "short", day: "numeric"
+                                            })}
                                         </span>
                                     </div>
+                                    <p className="admin-comment-author">By {c.author_name || `User #${c.user_id}`}</p>
+                                    <p className="admin-card-text">{c.text}</p>
+                                    <div className="admin-actions">
+                                        <button
+                                            className="admin-btn approve"
+                                            disabled={commentActionId === c.id}
+                                            onClick={() => handleDecision(c.id, "approved")}
+                                        >
+                                            {commentActionId === c.id ? "Saving..." : "Approve"}
+                                        </button>
+                                        <button
+                                            className="admin-btn reject"
+                                            disabled={commentActionId === c.id}
+                                            onClick={() => handleDecision(c.id, "rejected")}
+                                        >
+                                            {commentActionId === c.id ? "Saving..." : "Reject"}
+                                        </button>
+                                    </div>
                                 </div>
-                                <div className="admin-actions">
-                                    <button className="admin-btn approve" onClick={() => openEditForm(p)}>Edit</button>
-                                    <button className="admin-btn reject" onClick={() => handleDeleteProduct(p.id, p.name)}>Delete</button>
-                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {activeTab === "products" && (
+                        <div className="admin-list">
+                            <div className="admin-products-header">
+                                <button className="admin-btn add-product" onClick={openAddForm}>+ Add Product</button>
                             </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+
+                            {showForm && (
+                                <div className="admin-card product-form">
+                                    <h3 className="form-title brand">{editingId ? "Edit Product" : "Add New Product"}</h3>
+                                    <div className="form-grid">
+                                        {[
+                                            { name: "name", placeholder: "Product Name *" },
+                                            { name: "category", placeholder: "Category *" },
+                                            { name: "price", placeholder: "Price *", type: "number" },
+                                            { name: "stock_quantity", placeholder: "Stock Quantity", type: "number" },
+                                            { name: "image_url", placeholder: "Image URL" },
+                                            { name: "model", placeholder: "Model" },
+                                            { name: "serial_number", placeholder: "Serial Number" },
+                                            { name: "warranty_status", placeholder: "Warranty Status" },
+                                            { name: "distributor_information", placeholder: "Distributor Info" },
+                                        ].map(f => (
+                                            <input
+                                                key={f.name}
+                                                className="form-input"
+                                                name={f.name}
+                                                type={f.type ?? "text"}
+                                                placeholder={f.placeholder}
+                                                value={form[f.name]}
+                                                onChange={handleFormChange}
+                                            />
+                                        ))}
+                                        <textarea
+                                            className="form-input form-textarea"
+                                            name="description"
+                                            placeholder="Description"
+                                            value={form.description}
+                                            onChange={handleFormChange}
+                                        />
+                                    </div>
+                                    <div className="admin-actions">
+                                        <button className="admin-btn approve" onClick={handleSubmitProduct}>
+                                            {editingId ? "Update" : "Add"}
+                                        </button>
+                                        <button className="admin-btn reject" onClick={() => setShowForm(false)}>Cancel</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {productsLoading && <p className="admin-empty">Loading...</p>}
+                            {!productsLoading && products.length === 0 && (
+                                <p className="admin-empty">No products found.</p>
+                            )}
+                            {products.map(p => (
+                                <div className="admin-card product-card" key={p.id}>
+                                    <div className="product-card-left">
+                                        {p.image_url && (
+                                            <img src={p.image_url} alt={p.name} className="product-thumb" />
+                                        )}
+                                        <div className="product-card-info">
+                                            <span className="admin-product-name brand">{p.name}</span>
+                                            <span className="product-category">{p.category}</span>
+                                            <span className="product-price">${Number(p.price).toFixed(2)}</span>
+                                            <span className={`product-stock ${p.stock <= 0 ? "out" : ""}`}>
+                                                Stock: {p.stock}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="admin-actions">
+                                        <button className="admin-btn approve" onClick={() => openEditForm(p)}>Edit</button>
+                                        <button className="admin-btn reject" onClick={() => handleDeleteProduct(p.id, p.name)}>Delete</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </main>
         </div>
     );
 }
