@@ -9,6 +9,34 @@ import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
 import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
 import AdminPage from "./pages/AdminPage";
+import { getCurrentUser } from "./services/authService.js";
+import MyOrdersPage from "./pages/MyOrdersPage.jsx";
+import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
+
+function AdminRoute() {
+  const user = getCurrentUser();
+  const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
+
+  if (!user?.token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/home" replace />;
+  }
+
+  return <AdminPage />;
+}
+
+function ProtectedRoute({ children }) {
+  const user = getCurrentUser();
+
+  if (!user?.token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
 
 const router = createBrowserRouter([
   {
@@ -41,11 +69,19 @@ const router = createBrowserRouter([
   },
   {
     path: "/checkout",
-    element: <CheckoutPage />,
+    element: (
+      <ProtectedRoute>
+        <CheckoutPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: "/invoice",
     element: <InvoicePage />,
+  },
+  {
+    path: "/orders",
+    element: <OrderTrackingPage />,
   },
   {
     path: "/products/:id",
@@ -53,7 +89,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <AdminPage />,
+    element: <AdminRoute />,
+  },
+  {
+    path: "/my-orders",
+    element: <MyOrdersPage />
   },
 ]);
 

@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { faCartShopping, faHeart as faHeartSolid, faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { getCurrentUser, logout } from "../services/authService.js";
-import { addToCart, addToGuestCart, fetchProducts } from "../services/productAndCartService.js";
+import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
 import SearchBar from "../components/SearchBar.jsx";
 
 import brushStroke from "../assets/homePageAssets/brushStroke.png";
@@ -75,14 +75,14 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
   const [isLiked, setIsLiked] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
 
-  const togglePin = (event) => {
-    event.stopPropagation();
-    setIsPinned((current) => !current);
-  };
-
   const toggleLike = (event) => {
     event.stopPropagation();
     setIsLiked((current) => !current);
+  };
+
+  const togglePin = (event) => {
+    event.stopPropagation();
+    setIsPinned((current) => !current);
   };
 
   const handleAddToCart = async (event) => {
@@ -112,8 +112,13 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
     }
   };
 
+  const handleOpenProduct = () => {
+    if (!productId) return;
+    navigate(`/products/${productId}`);
+  };
+
   return (
-    <div className="polaroid-container" onClick={() => navigate(`/products/${productId}`)} style={{ cursor: "pointer" }}>
+    <div className="polaroid-container" onClick={handleOpenProduct} style={{ cursor: "pointer" }}>
       <div className="polaroid-frame">
         <div className="polaroid-image-container" style={customStyle}>
           {img && <img src={img} alt={title} className="polaroid-img" />}
@@ -129,7 +134,6 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
               {inStock ? `${stock_quantity} in stock` : "Out of stock"}
             </p>
           </div>
-
           <div className="polaroid-content-utility">
             <FontAwesomeIcon icon={faShareNodes} color="var(--blue)" size="lg" />
             <div className="like-container">
@@ -145,13 +149,17 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="polaroid-buy-container">
-        <span className="reveal-price">{price}</span>
-        <button className={`reveal-cart-btn ${!inStock ? "disabled" : ""}`} onClick={handleAddToCart} disabled={!inStock}>
-          {inStock ? "Add to Cart" : "Out of Stock"}
-        </button>
+        <div className="polaroid-buy-container">
+          <span className="reveal-price">{price}</span>
+          <button
+            className={`reveal-cart-btn ${!inStock ? "disabled" : ""}`}
+            onClick={handleAddToCart}
+            disabled={!inStock}
+          >
+            {inStock ? "Add to Cart" : "Out of Stock"}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -170,17 +178,17 @@ const CheckMoreCard = ({ linkedFilter }) => {
   );
 };
 
-const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
+const PolaroidRow = ({ title, sort, linkedFilter }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    fetchProducts({ sort, limit: 5, search: searchQuery })
+    fetchProducts({ sort, limit: 5 })
       .then(setItems)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [searchQuery, sort]);
+  }, [sort]);
 
   return (
     <section className="polaroid-row-container">
@@ -188,7 +196,6 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
         <p className="type-eyebrow row-eyebrow">Curated selection</p>
         <h2 className="row-title">{title}</h2>
       </div>
-
       <div className="polaroid-grid" ref={scrollRef}>
         {loading ? (
           <p className="row-loading">Loading...</p>
@@ -215,6 +222,7 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
 export default function HomePage() {
   const [displayName, setDisplayName] = useState("Guest");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
   const activeTab = "home";
@@ -230,11 +238,20 @@ export default function HomePage() {
     navigate("/login");
   };
 
+  const handleSearchSubmit = (query) => {
+    const trimmedQuery = query.trim();
+
+    navigate("/discover", {
+      state: trimmedQuery ? { search: trimmedQuery } : undefined,
+    });
+  };
+
   useEffect(() => {
     const user = getCurrentUser();
-    if (user?.username) {
+    if (user) {
       setIsLoggedIn(true);
-      setDisplayName(user.username);
+      setDisplayName(user.username || user.name || "User");
+      setIsAdmin(Boolean(user.isAdmin ?? user.is_admin));
     }
   }, []);
 
@@ -264,11 +281,22 @@ export default function HomePage() {
               A refined edit of pieces worth opening, saving, and actually buying.
             </p>
             <div className="home-search-wrap">
-              <SearchBar onSearch={setSearchQuery} value={searchQuery} placeholder="Search the current edit..." />
+              <SearchBar
+                value={searchQuery}
+                onSearch={setSearchQuery}
+                onSubmit={handleSearchSubmit}
+                placeholder="Search by product name or description"
+                className="homepage-search"
+              />
             </div>
           </div>
 
           <div className="header-actions">
+            {isAdmin && (
+              <button className="admin-comments-btn" onClick={() => navigate("/admin")}>
+                Moderate Comments
+              </button>
+            )}
             <CartButton onClick={() => navigate("/cart")} />
             {isLoggedIn && (
               <button className="logout-btn" onClick={handleLogout}>
@@ -279,11 +307,11 @@ export default function HomePage() {
         </div>
 
         <div className="feed-column">
-          <PolaroidRow title="For Your Recent Tastes" sort="recent_taste" linkedFilter="recent_taste" searchQuery={searchQuery} />
-          <PolaroidRow title="Some Recommendations From Us" sort="recommended" linkedFilter="recommended" searchQuery={searchQuery} />
-          <PolaroidRow title="Everyone's New Favorites" sort="top_rated" linkedFilter="top_rated" searchQuery={searchQuery} />
-          <PolaroidRow title="From Who You Follow" sort="followed" linkedFilter="followed" searchQuery={searchQuery} />
-          <PolaroidRow title="Cheaper Than Ever" sort="discount" linkedFilter="discount" searchQuery={searchQuery} />
+          <PolaroidRow title="For Your Recent Tastes" sort="recent_taste" linkedFilter="recent_taste" />
+          <PolaroidRow title="Some Recommendations From Us" sort="recommended" linkedFilter="recommended" />
+          <PolaroidRow title="Everyone's New Favorites" sort="top_rated" linkedFilter="top_rated" />
+          <PolaroidRow title="From Who You Follow" sort="followed" linkedFilter="followed" />
+          <PolaroidRow title="Cheaper Than Ever" sort="discount" linkedFilter="discount" />
         </div>
       </main>
     </div>

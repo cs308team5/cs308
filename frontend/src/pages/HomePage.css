@@ -164,12 +164,15 @@
 
 .home-search-wrap {
     margin-top: 22px;
-    max-width: none;
     width: 100%;
 }
 
 .home-search-wrap .search-container {
+    width: 100%;
     max-width: none;
+}
+
+.homepage-search {
     width: 100%;
 }
 
@@ -181,7 +184,8 @@
 }
 
 .cart-btn,
-.logout-btn {
+.logout-btn,
+.admin-comments-btn {
     min-height: 48px;
     padding: 0 20px;
     border-radius: 999px;
@@ -203,7 +207,8 @@
 }
 
 .cart-btn:hover,
-.logout-btn:hover {
+.logout-btn:hover,
+.admin-comments-btn:hover {
     transform: translateY(-1px);
     background: var(--pink);
 }
@@ -283,7 +288,6 @@
     flex: 0 0 220px;
     height: 392px;
     transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    padding-bottom: 0;
     overflow: visible;
 }
 
@@ -462,7 +466,7 @@
     font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .reveal-cart-btn:hover {
@@ -474,7 +478,6 @@
     background: var(--color-disabled);
     color: rgba(18, 18, 18, 0.55);
     cursor: not-allowed;
-    transform: none;
 }
 
 @keyframes heartPop {
@@ -553,9 +556,5 @@
 
     .row-title {
         font-size: 1.6rem;
-    }
-
-    .polaroid-container {
-        flex-basis: 220px;
     }
 }

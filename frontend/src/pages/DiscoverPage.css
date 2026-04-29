@@ -235,10 +235,17 @@
 
 .listing-toolbar {
     display: flex;
-    justify-content: space-between;
     align-items: flex-start;
+    justify-content: space-between;
     gap: 24px;
-    padding: 8px 6px 0;
+    padding-right: 40px;
+}
+
+.toolbar-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
 }
 
 .discover-eyebrow {
@@ -246,23 +253,19 @@
 }
 
 .results-summary {
-    margin: 14px 0 0;
+    margin: 10px 0 0;
     color: var(--color-text-muted);
     font-size: 1rem;
 }
 
-.discover-search-wrap {
-    margin-top: 18px;
-}
-
-.discover-search-wrap .search-container {
-    max-width: none;
+.discover-search {
+    width: min(100%, 540px);
 }
 
 .toolbar-actions {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
 .view-toggle {
@@ -307,9 +310,11 @@
 
 .product-grid-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 22px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 250px));
+    gap: 24px;
     padding-top: 24px;
+    width: 100%;
+    justify-content: flex-start;
 }
 
 .product-list-container {
@@ -332,6 +337,8 @@
     display: flex;
     flex-direction: column;
     min-height: 100%;
+    width: 100%;
+    max-width: 250px;
 }
 
 .listing-image-shell {
@@ -461,6 +468,11 @@
     .listing-row-footer {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .discover-search,
+    .homepage-search {
+        width: 100%;
     }
 
     .listing-row-image {

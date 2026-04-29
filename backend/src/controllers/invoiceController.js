@@ -8,6 +8,8 @@ function buildInvoiceBufferFromPayload(order) {
     created_at: order.date || new Date().toISOString(),
     status: "confirmed",
     total_price: order.total,
+    shipping_amount: Number(order.shippingCost) || 0,
+    tax_amount: Number(order.tax) || 0,
     name: order.shipping?.fullName || "Customer",
     email: order.shipping?.email,
     address: [
@@ -41,7 +43,16 @@ function buildInvoiceBuffer(order, items) {
     doc.on("error", reject);
 
     // --- Header ---
-    doc.fontSize(24).font("Helvetica-Bold").text("INVOICE", { align: "right" });
+    const headerY = doc.y;
+    doc.fontSize(26).font("Helvetica-Bold").text("DARE", 50, headerY, {
+      align: "left",
+      width: 200,
+    });
+    doc.fontSize(26).font("Helvetica-Bold").text("INVOICE", 300, headerY, {
+      align: "right",
+      width: 250,
+    });
+    doc.y = headerY + 40;
     doc.moveDown(0.5);
     doc
       .fontSize(10)
@@ -55,14 +66,22 @@ function buildInvoiceBuffer(order, items) {
     doc.moveDown(1.5);
 
     // --- Bill To ---
-    doc.fontSize(12).font("Helvetica-Bold").text("Bill To:");
+    const billToX = 50;
+    const billToY = doc.y;
+    doc.fontSize(12).font("Helvetica-Bold").text("Bill To:", billToX, billToY);
     doc
       .fontSize(10)
       .font("Helvetica")
-      .text(order.name)
-      .text(order.email)
-      .text(order.address || "N/A")
-      .text(order.tax_id ? `Tax ID: ${order.tax_id}` : "");
+      .text(order.name, billToX)
+      .text(order.email, billToX);
+    doc.text(`Billing Address: ${order.address || "N/A"}`, billToX);
+    doc.text(
+      `Delivery Address: ${order.delivery_address || order.address || "N/A"}`,
+      billToX
+    );
+    if (order.tax_id) {
+      doc.text(`Tax ID: ${order.tax_id}`);
+    }
 
     doc.moveDown(1.5);
 
@@ -103,15 +122,61 @@ function buildInvoiceBuffer(order, items) {
       }
     }
 
-    // --- Divider + Total ---
+    // --- Divider + Totals ---
     doc.moveTo(50, rowY + 5).lineTo(550, rowY + 5).stroke();
     rowY += 15;
+
+    const itemsSubtotal = items.reduce(
+      (sum, item) => sum + Number(item.quantity) * Number(item.unit_price),
+      0
+    );
+    const totalAmount = Number(order.total_price) || 0;
+
+    let shippingAmount = Number(order.shipping_amount);
+    let taxAmount = Number(order.tax_amount);
+
+    if (!Number.isFinite(shippingAmount) || shippingAmount < 0) {
+      shippingAmount = 0;
+    }
+    if (!Number.isFinite(taxAmount) || taxAmount < 0) {
+      taxAmount = 0;
+    }
+
+    // Fallback for records that only have total_price stored.
+    if (shippingAmount === 0 && taxAmount === 0 && totalAmount >= itemsSubtotal) {
+      const extraAmount = totalAmount - itemsSubtotal;
+      const estimatedShipping = Math.min(15, extraAmount);
+      const estimatedTax = Math.max(extraAmount - estimatedShipping, 0);
+      shippingAmount = estimatedShipping;
+      taxAmount = estimatedTax;
+    }
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text("Subtotal:", colUnitPrice, rowY)
+      .text(`$${itemsSubtotal.toFixed(2)}`, colTotal, rowY);
+    rowY += 16;
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text("Shipping:", colUnitPrice, rowY)
+      .text(`$${shippingAmount.toFixed(2)}`, colTotal, rowY);
+    rowY += 16;
+
+    doc
+      .fontSize(10)
+      .font("Helvetica")
+      .text("Tax:", colUnitPrice, rowY)
+      .text(`$${taxAmount.toFixed(2)}`, colTotal, rowY);
+    rowY += 18;
 
     doc
       .fontSize(11)
       .font("Helvetica-Bold")
       .text("Total:", colUnitPrice, rowY)
-      .text(`$${parseFloat(order.total_price).toFixed(2)}`, colTotal, rowY);
+      .text(`$${totalAmount.toFixed(2)}`, colTotal, rowY);
 
     // --- Footer ---
     doc.moveDown(3);
@@ -143,9 +208,11 @@ async function saveInvoiceRecord(orderId, customerId, totalPrice) {
 async function fetchOrderData(orderId, customerId) {
   const orderResult = await pool.query(
     `SELECT o.order_id, o.total_price, o.status, o.created_at,
-              c.name, c.email, c.tax_id, c.address
+              c.name, c.email, c.tax_id, c.address,
+              d.delivery_address
        FROM orders o
        JOIN customers c ON o.customer_id = c.customer_id
+       LEFT JOIN deliveries d ON d.order_id = o.order_id
        WHERE o.order_id = $1 AND o.customer_id = $2`,
     [orderId, customerId]
   );
@@ -200,50 +267,54 @@ export const sendInvoiceEmail = async (req, res) => {
   const customerId = req.customer.customerId;
 
   try {
-    const data = await fetchOrderData(orderId, customerId);
-    if (!data) {
-      return res.status(404).json({ message: "Order not found." });
-    }
-
-    const pdfBuffer = await buildInvoiceBuffer(data.order, data.items);
-    const recipient = data.order.email;
-
-    console.log("before sendEmail");
-
-const emailResult = await sendEmail({
-  to: recipient,
-  subject: `Your Invoice for Order ${data.order.order_id}`,
-  text: `Hello ${data.order.name},\n\nYour invoice for order ${data.order.order_id} is attached to this email.\n\nIf you have any questions, please reply to this message.\n\nThank you for your purchase.`,
-  html: `<p>Hello ${data.order.name},</p>
-         <p>Your invoice for order <strong>${data.order.order_id}</strong> is attached to this email.</p>
-         <p>If you have any questions, please reply to this message.</p>
-         <p>Thank you for your purchase.</p>`,
-  attachments: [
-    {
-      filename: `invoice-${data.order.order_id}.pdf`,
-      content: pdfBuffer,
-      contentType: "application/pdf",
-    },
-  ],
-});
-
-console.log("after sendEmail", emailResult);
-    await saveInvoiceRecord(orderId, customerId, data.order.total_price);
-
+    const emailResult = await sendInvoiceEmailForOrder(orderId, customerId);
     return res.status(200).json({
       success: true,
       message: "Invoice email has been sent successfully. Please check your inbox.",
       previewUrl: emailResult.previewUrl,
     });
-  }catch (error) {
-  console.error("Invoice email error:", error);
-  return res.status(500).json({
-    message: "Failed to send the invoice email.",
-    error: error.message,
-    stack: error.stack,
-  });
-}
+  } catch (error) {
+    console.error("Invoice email error:", error);
+    return res.status(500).json({
+      message: "Failed to send the invoice email.",
+      error: error.message,
+      stack: error.stack,
+    });
+  }
 };
+
+export async function sendInvoiceEmailForOrder(orderId, customerId, options = {}) {
+  const data = await fetchOrderData(orderId, customerId);
+  if (!data) {
+    const notFoundError = new Error("Order not found.");
+    notFoundError.status = 404;
+    throw notFoundError;
+  }
+
+  const pdfBuffer = await buildInvoiceBuffer(data.order, data.items);
+  const recipient = options.recipientEmail?.trim() || data.order.email;
+
+  const emailResult = await sendEmail({
+    to: recipient,
+    subject: "Your Invoice from Dare",
+    text: `Hello ${data.order.name},\n\nThank you for your order.\nYour invoice is attached as a PDF.\n\nIf you need any help with your order, just reply to this email and our team will assist you.\n\nBest regards,\nDare Team`,
+    html: `<p>Hello ${data.order.name},</p>
+         <p>Thank you for your order.</p>
+         <p>Your invoice is attached as a PDF.</p>
+         <p>If you need any help with your order, just reply to this email and our team will assist you.</p>
+         <p>Best regards,<br/>Dare Team</p>`,
+    attachments: [
+      {
+        filename: `invoice-${data.order.order_id}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      },
+    ],
+  });
+
+  await saveInvoiceRecord(orderId, customerId, data.order.total_price);
+  return emailResult;
+}
 
 export const sendInvoicePreviewEmail = async (req, res) => {
   const { order } = req.body;
@@ -261,7 +332,7 @@ export const sendInvoicePreviewEmail = async (req, res) => {
 
     const emailResult = await sendEmail({
       to: order.shipping.email,
-      subject: `Your Invoice ${order.invoiceNumber || ""}`.trim(),
+      subject: "Your Invoice from Dare",
       text: `Hello ${order.shipping.fullName || "Customer"},\n\nYour invoice is attached to this email.\n\nThank you for your purchase.`,
       html: `<p>Hello ${order.shipping.fullName || "Customer"},</p><p>Your invoice is attached to this email.</p><p>Thank you for your purchase.</p>`,
       attachments: [
