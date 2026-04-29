@@ -99,8 +99,8 @@ export const checkout = async (req, res) => {
 
     await client.query(
       `
-      INSERT INTO deliveries (order_id, customer_id, delivery_address)
-      VALUES ($1, $2, $3)
+      INSERT INTO deliveries (order_id, customer_id, delivery_address, status)
+      VALUES ($1, $2, $3, 'processing')
       `,
       [orderId, customerId, deliveryAddress]
     );

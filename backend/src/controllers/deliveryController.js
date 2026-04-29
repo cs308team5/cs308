@@ -1,5 +1,35 @@
 import pool from "../config/db.js";
 
+async function advanceDeliveryStatuses() {
+  try {
+    await pool.query(
+      `UPDATE deliveries d
+       SET status = 'in-transit'
+       FROM orders o
+       WHERE d.order_id = o.order_id
+         AND (d.status = 'processing' OR d.status IS NULL)
+         AND o.created_at <= NOW() - INTERVAL '2 minutes'`
+    );
+
+    await pool.query(
+      `UPDATE deliveries d
+       SET status = 'delivered', is_completed = true
+       FROM orders o
+       WHERE d.order_id = o.order_id
+         AND d.status = 'in-transit'
+         AND o.created_at <= NOW() - INTERVAL '5 minutes'`
+    );
+  } catch (err) {
+    console.error("Delivery progression job error:", err.message);
+  }
+}
+
+export function startDeliveryProgressionJob() {
+  advanceDeliveryStatuses();
+  setInterval(advanceDeliveryStatuses, 60_000);
+  console.log("Delivery progression job started.");
+}
+
 export const updateDeliveryStatus = async (req, res) => {
   const { deliveryId } = req.params;
   const { status } = req.body;
