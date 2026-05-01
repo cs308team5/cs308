@@ -265,6 +265,15 @@ export default function ProductDetailsPage() {
                     <span>{product.model}</span>
                   </div>
                 )}
+                {product.additional_attributes &&
+                  Object.entries(product.additional_attributes).map(([key, value]) => (
+                    <div className="detail-row" key={key}>
+                      <span className="detail-label">
+                        {key.charAt(0).toUpperCase() + key.slice(1)}
+                      </span>
+                      <span>{value}</span>
+                    </div>
+                  ))}
                 {product.serial_number && (
                   <div className="detail-row">
                     <span className="detail-label">Serial No</span>
@@ -277,21 +286,22 @@ export default function ProductDetailsPage() {
                     <span>{product.warranty_status}</span>
                   </div>
                 )}
-                {product.distributor_information && (
-                  <div className="detail-row">
-                    <span className="detail-label">Distributor</span>
-                    <span>{product.distributor_information}</span>
-                  </div>
-                )}
-                {product.additional_attributes &&
-                  Object.entries(product.additional_attributes).map(([key, value]) => (
-                    <div className="detail-row" key={key}>
-                      <span className="detail-label">
-                        {key.charAt(0).toUpperCase() + key.slice(1)}
-                      </span>
-                      <span>{value}</span>
-                    </div>
-                  ))}
+                {product.distributor_information &&
+                  (typeof product.distributor_information === "object"
+                    ? Object.entries(product.distributor_information).map(([key, value]) => (
+                        <div className="detail-row" key={`distributor-${key}`}>
+                          <span className="detail-label">
+                            Distributor {key.charAt(0).toUpperCase() + key.slice(1)}
+                          </span>
+                          <span>{value}</span>
+                        </div>
+                      ))
+                    : (
+                        <div className="detail-row">
+                          <span className="detail-label">Distributor</span>
+                          <span>{product.distributor_information}</span>
+                        </div>
+                      ))}
               </div>
             )}
           </div>
