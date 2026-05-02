@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
@@ -12,6 +12,7 @@ import AdminPage from "./pages/AdminPage";
 import { getCurrentUser } from "./services/authService.js";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
 import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
+import { AppShell } from "./pages/Navbar.jsx";
 
 function AdminRoute() {
   const user = getCurrentUser();
@@ -38,64 +39,61 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function ShellLayout() {
+  return (
+      <AppShell>
+        <Outlet />
+      </AppShell>
+  );
+}
+
+
+function BareLayout() {
+  return <Outlet />;
+}
+
 const router = createBrowserRouter([
-  {
-    path: "/test",
-    element: <TestPage />,
-  },
+
   {
     path: "/",
     element: <Navigate to="/home" replace />,
   },
+
+  // Pages that have the navbar and sidebar
   {
-    path: "/home",
-    element: <HomePage />,
+    element: <ShellLayout />,
+    children: [
+      { path: "/home",          element: <HomePage /> },
+      { path: "/discover",      element: <DiscoverPage /> },
+      { path: "/cart",          element: <CartPage /> },
+      { path: "/products/:id",  element: <ProductDetailsPage /> },
+      { path: "/orders",        element: <OrderTrackingPage /> },
+      { path: "/my-orders",     element: <MyOrdersPage /> },
+      {
+        path: "/checkout",
+        element: (
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+        ),
+      },
+      { path: "/admin", element: <AdminRoute /> },
+    ],
   },
+
+  // Pages that dont have the navbar and sidebar
   {
-    path: "/discover",
-    element: <DiscoverPage />,
-  },
-  {
-    path: "/login",
-    element: <LoginPage />,
-  },
-  {
-    path: "/register",
-    element: <RegisterPage />,
-  },
-  {
-    path: "/cart",
-    element: <CartPage />,
-  },
-  {
-    path: "/checkout",
-    element: (
-      <ProtectedRoute>
-        <CheckoutPage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/invoice",
-    element: <InvoicePage />,
-  },
-  {
-    path: "/orders",
-    element: <OrderTrackingPage />,
-  },
-  {
-    path: "/products/:id",
-    element: <ProductDetailsPage />,
-  },
-  {
-    path: "/admin",
-    element: <AdminRoute />,
-  },
-  {
-    path: "/my-orders",
-    element: <MyOrdersPage />
+    element: <BareLayout />,
+    children: [
+      { path: "/login",    element: <LoginPage /> },
+      { path: "/register", element: <RegisterPage /> },
+      { path: "/invoice",  element: <InvoicePage /> },
+      { path: "/test",     element: <TestPage /> },
+    ],
   },
 ]);
+
+
 
 export default function App() {
   return <RouterProvider router={router} />;
