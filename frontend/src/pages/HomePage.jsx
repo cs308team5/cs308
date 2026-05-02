@@ -14,60 +14,13 @@ const PennantSvg = ({ className, onClick }) => (
   <svg className={className} onClick={onClick} width="60" height="114" viewBox="0 0 60 114" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       d="M0 0 H60 V110.298 C60 112.343 58.3428 114 56.2984 114 C55.4579 114 54.6424 113.714 53.9861 113.189 L30 94 L6.01391 113.189 C5.35758 113.714 4.54208 114 3.70156 114 C1.65725 114 0 112.343 0 110.298 Z"
-      stroke="#f0eee7"
+      stroke="#f3efe7"
       strokeWidth="15"
       paintOrder="stroke fill"
     />
   </svg>
 );
 
-const buttonData = [
-  { id: "home", label: "Home", path: "/home" },
-  { id: "profile", label: "Profile", path: "/home" },
-  { id: "discover", label: "Discover", path: "/discover" },
-  { id: "favorites", label: "Favorites", path: "/home" },
-];
-
-const SideBarButton = ({ label, isActive, onClick }) => (
-  <div className={`sidebar-btn-container ${isActive ? "active" : ""}`} onClick={onClick}>
-    {isActive && <img src={brushStroke} className="btn-brush-stroke" alt="" />}
-    <button className="sidebar-btn" />
-    <span className="btn-text">{label}</span>
-  </div>
-);
-
-export const CartButton = ({ onClick }) => {
-  const [count, setCount] = useState(0);
-
-  const loadCartCount = () => {
-    const user = getCurrentUser();
-    if (!user?.customer_id) {
-      const guestCart = JSON.parse(localStorage.getItem("guest_cart") ?? "[]");
-      setCount(guestCart.reduce((sum, item) => sum + item.quantity, 0));
-      return;
-    }
-
-    import("../services/productAndCartService.js").then(({ fetchCart }) => {
-      fetchCart(user.customer_id)
-        .then((items) => setCount(items.reduce((sum, item) => sum + item.quantity, 0)))
-        .catch(console.error);
-    });
-  };
-
-  useEffect(() => {
-    loadCartCount();
-    window.addEventListener("cartUpdated", loadCartCount);
-    return () => window.removeEventListener("cartUpdated", loadCartCount);
-  }, []);
-
-  return (
-    <button className="cart-btn" onClick={onClick}>
-      <FontAwesomeIcon icon={faCartShopping} />
-      Cart
-      {count > 0 && <span className="cart-count">{count > 99 ? "99+" : count}</span>}
-    </button>
-  );
-};
 
 export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity }) => {
   const navigate = useNavigate();
@@ -223,23 +176,12 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
 
 export default function HomePage() {
   const [displayName, setDisplayName] = useState("Guest");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const navigate = useNavigate();
-  const activeTab = "home";
 
-  const handleNavigation = (id, path) => {
-    if (id !== activeTab) {
-      navigate(path);
-    }
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
 
   const handleSearchSubmit = (query) => {
     const trimmedQuery = query.trim();
@@ -252,7 +194,6 @@ export default function HomePage() {
   useEffect(() => {
     const user = getCurrentUser();
     if (user) {
-      setIsLoggedIn(true);
       setDisplayName(user.username || user.name || "User");
       setIsAdmin(Boolean(user.isAdmin ?? user.is_admin));
     }
@@ -276,18 +217,6 @@ export default function HomePage() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="logo-area">
-          <p className="type-eyebrow shell-kicker">Editorial retail</p>
-          <h2 className="logo-text">THE DARE</h2>
-        </div>
-
-        <div className="button-column">
-          {buttonData.map((btn) => (
-            <SideBarButton key={btn.id} label={btn.label} isActive={activeTab === btn.id} onClick={() => handleNavigation(btn.id, btn.path)} />
-          ))}
-        </div>
-      </aside>
 
       <main className="content-area home-content">
         <div className="home-hero">
@@ -317,16 +246,7 @@ export default function HomePage() {
                 Moderate Comments
               </button>
             )}
-            <CartButton onClick={() => navigate("/cart")} />
-            {isLoggedIn ? (
-              <button className="logout-btn" onClick={handleLogout}>
-                Logout
-              </button>
-            ) : (
-              <button className="logout-btn" onClick={() => navigate("/login")}>
-                Login
-              </button>
-            )}
+
           </div>
         </div>
 

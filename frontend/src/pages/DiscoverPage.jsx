@@ -4,15 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProducts } from "../services/productAndCartService.js";
 import { getCurrentUser, logout } from "../services/authService.js";
 import SearchBar from "../components/SearchBar.jsx";
-import { CartButton } from "./HomePage";
-import brushStroke from "../assets/homePageAssets/brushStroke.png";
 
-const buttonData = [
-  { id: "home", label: "Home", path: "/home" },
-  { id: "profile", label: "Profile", path: "/home" },
-  { id: "discover", label: "Discover", path: "/discover" },
-  { id: "favorites", label: "Favorites", path: "/home" },
-];
 
 const fallbackCategories = ["Footwear", "Jackets", "Accessories"];
 
@@ -36,13 +28,6 @@ const getStockStatus = (stockQuantity) => {
   return { label: "In stock", tone: "in" };
 };
 
-const SideBarButton = ({ label, isActive, onClick }) => (
-  <div className={`sidebar-btn-container ${isActive ? "active" : ""}`} onClick={onClick}>
-    {isActive && <img src={brushStroke} className="btn-brush-stroke" alt="" />}
-    <button className="sidebar-btn" />
-    <span className="btn-text">{label}</span>
-  </div>
-);
 
 const ProductGridCard = ({ product, onOpen }) => {
   const stock = getStockStatus(product.stock_quantity);
@@ -148,17 +133,8 @@ export default function DiscoverPage() {
   const [categorySource, setCategorySource] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
 
-  useEffect(() => {
-    const user = getCurrentUser();
-    setIsLoggedIn(Boolean(user?.token));
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -281,7 +257,7 @@ export default function DiscoverPage() {
     return nextProducts;
   }, [filters.sort, products]);
 
-  const activeTab = "discover";
+
   const activeFilterCount =
     filters.categories.length +
     (filters.minPrice !== "" ? 1 : 0) +
@@ -299,11 +275,6 @@ export default function DiscoverPage() {
     ...filters.categories.map((category) => ({ key: category, label: category })),
   ];
 
-  const handleNavigation = (id, path) => {
-    if (id !== activeTab) {
-      navigate(path);
-    }
-  };
 
   const handleCategoryChange = (category) => {
     setFilters((current) => ({
@@ -327,23 +298,6 @@ export default function DiscoverPage() {
 
   return (
     <div className="app-shell">
-      <div className="sidebar">
-        <div className="logo-area">
-          <p className="type-eyebrow shell-kicker">dare to wear</p>
-          <h2 className="logo-text">THE DARE</h2>
-        </div>
-
-        <div className="button-column">
-          {buttonData.map((btn) => (
-            <SideBarButton
-              key={btn.id}
-              label={btn.label}
-              isActive={activeTab === btn.id}
-              onClick={() => handleNavigation(btn.id, btn.path)}
-            />
-          ))}
-        </div>
-      </div>
 
       <div className="content-area discover-split">
         <aside className="filter-panel">
@@ -477,16 +431,6 @@ export default function DiscoverPage() {
                 </button>
               </div>
 
-              <CartButton onClick={() => navigate("/cart")} />
-              {isLoggedIn ? (
-                <button className="listing-action" onClick={handleLogout}>
-                  Logout
-                </button>
-              ) : (
-                <button className="listing-action" onClick={() => navigate("/login")}>
-                  Login
-                </button>
-              )}
             </div>
           </div>
 
