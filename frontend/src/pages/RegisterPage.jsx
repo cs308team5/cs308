@@ -1,24 +1,21 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { register } from "../services/authService";
 import "./LoginPage.css";
-import { useNavigate } from "react-router-dom";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
 
   const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState(""); // UI'da var, şu an DB'ye gönderilmiyor
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const validateEmail = (value) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-  };
+  const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
   const handleRegister = async () => {
     setError("");
@@ -58,9 +55,7 @@ export default function RegisterPage() {
     const hasPunct = /[!@#$%^&*(),.?":{}|<>_\-\\/[\];'`~+=]/.test(password);
 
     if (!hasUpper && !hasPunct) {
-      setError(
-        "Password must include at least one uppercase letter and one punctuation mark."
-      );
+      setError("Password must include at least one uppercase letter and one punctuation mark.");
       return;
     }
 
@@ -106,40 +101,40 @@ export default function RegisterPage() {
       setTimeout(() => {
         navigate("/login");
       }, 1500);
-    } catch (err) {
+    } catch {
       setLoading(false);
       setError("Something went wrong. Please try again.");
     }
   };
 
   return (
-    <div className="login-page">
-      <div className="logo-container">
-        <h1 className="logo brand">dare</h1>
-        <p className="tagline">dare to wear</p>
+    <div className="login-page register-page">
+      <div className="logo-container register-logo-container">
+        <h1 className="logo brand">THE DARE</h1>
+        <p className="tagline type-eyebrow">dare to wear</p>
       </div>
 
-      <div className="polaroid-wrapper">
+      <div className="polaroid-wrapper register-polaroid-wrapper">
         <div className="tape left"></div>
         <div className="tape right"></div>
 
-        <div className="polaroid-card">
+        <div className="polaroid-card register-polaroid-card">
           <h2 className="caps">Create Account</h2>
 
           <label className="caps">Full Name</label>
           <input
             type="text"
-            placeholder="Your full name"
+            placeholder="your full name"
             value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
+            onChange={(event) => setFullName(event.target.value)}
           />
 
           <label className="caps">Username</label>
           <input
             type="text"
-            placeholder="Choose a username"
+            placeholder="choose a username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(event) => setUsername(event.target.value)}
           />
 
           <label className="caps">Email</label>
@@ -147,38 +142,33 @@ export default function RegisterPage() {
             type="email"
             placeholder="your@email.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
           />
 
           <label className="caps">Password</label>
           <input
             type="password"
-            placeholder="••••••••"
+            placeholder="password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(event) => setPassword(event.target.value)}
           />
 
           <label className="caps">Confirm Password</label>
           <input
             type="password"
-            placeholder="••••••••"
+            placeholder="password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(event) => setConfirmPassword(event.target.value)}
           />
 
           {error && (
-            <p
-              className="error"
-              style={{ color: "#c0392b", marginTop: "12px", fontWeight: "600" }}
-            >
+            <p className="error" style={{ marginTop: "12px", fontWeight: "600" }}>
               {error}
             </p>
           )}
 
           {success && (
-            <p
-              style={{ color: "#2e7d32", marginTop: "12px", fontWeight: "600" }}
-            >
+            <p style={{ color: "#2e7d32", marginTop: "12px", fontWeight: "600" }}>
               {success}
             </p>
           )}
@@ -193,10 +183,7 @@ export default function RegisterPage() {
 
           <p className="register-text">
             Already have an account?{" "}
-            <span
-              className="register-link"
-              onClick={() => navigate("/login")}
-            >
+            <span className="register-link" onClick={() => navigate("/login")}>
               Login
             </span>
           </p>

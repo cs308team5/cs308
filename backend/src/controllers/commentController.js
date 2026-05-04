@@ -2,7 +2,7 @@ import pool from "../config/db.js";
 
 export const submitComment = async (req, res) => {
   const { productId, text } = req.body;
-  const userId = req.customer?.customerId;
+  const userId = req.customer?.customerId ?? req.customer?.customer_id;
 
   if (!productId || !text || !text.trim()) {
     return res.status(400).json({ message: "productId and text are required." });
@@ -16,6 +16,21 @@ export const submitComment = async (req, res) => {
 
     if (productCheck.rows.length === 0) {
       return res.status(404).json({ message: "Product not found." });
+    }
+
+    const purchaseCheck = await pool.query(
+      `SELECT 1
+       FROM orders o
+       JOIN order_items oi ON oi.order_id = o.order_id
+       WHERE o.customer_id = $1 AND oi.product_id = $2
+       LIMIT 1`,
+      [userId, productId]
+    );
+
+    if (purchaseCheck.rows.length === 0) {
+      return res.status(403).json({
+        message: "Only customers who purchased this product can comment."
+      });
     }
 
     const result = await pool.query(
@@ -42,11 +57,13 @@ export const getPendingComments = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT c.id, c.text, c.status, c.created_at,
-              c.product_id, p.name AS product_name,
-              c.user_id
+              c.product_id, COALESCE(p.name, 'Unknown product') AS product_name,
+              c.user_id,
+              COALESCE(cu.username, cu.name, 'Customer') AS author_name
        FROM comments c
-       JOIN products p ON c.product_id = p.id
-       WHERE c.status = 'pending'
+       LEFT JOIN products p ON c.product_id = p.id
+       LEFT JOIN customers cu ON c.user_id = cu.customer_id
+       WHERE LOWER(TRIM(c.status)) = 'pending'
        ORDER BY c.created_at ASC`
     );
     return res.status(200).json({ success: true, data: result.rows });

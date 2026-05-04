@@ -1,31 +1,40 @@
 /* PAGE */
 .login-page {
   height: 100vh;
-  background: var(--black);
-  color: var(--offwhite);
-  font-family: 'Inter', sans-serif;
+  background: var(--color-inverse-bg);
+  color: var(--color-inverse-text);
+  font-family: var(--font-ui);
   position: relative;
   overflow: hidden;
+}
+
+.register-page {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* LOGO */
 .logo-container {
   position: absolute;
-  top: 30px;
+  top: 72px;
   width: 100%;
   text-align: center;
   z-index: 2;
 }
 
+.register-logo-container {
+  top: 28px;
+}
+
 .logo {
-  font-size: 60px;
-  letter-spacing: -1px;
+  font-size: 42px;
+  letter-spacing: -0.02em;
+  margin: 0;
 }
 
 .tagline {
-  margin-top: 8px;
-  opacity: 0.6;
-  font-size: 16px;
+  margin-top: 10px;
+  color: rgba(240, 238, 231, 0.68);
 }
 
 /* CENTER LOGIN */
@@ -44,20 +53,53 @@
 /* CARD */
 .polaroid-card {
   width: 380px;
-  background: var(--offwhite);
+  background: var(--color-paper);
   padding: 40px;
-  color: black;
-  border-radius: 6px;
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
   min-width: 340px;
 
   box-shadow:
-    0 25px 60px rgba(0,0,0,0.6),
+    var(--shadow-floating),
     inset 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.register-polaroid-wrapper {
+  top: 63%;
+}
+
+.register-polaroid-card {
+  padding: 24px 38px 18px;
+}
+
+.register-polaroid-card h2 {
+  margin-bottom: 10px;
+}
+
+.register-polaroid-card input {
+  margin: 4px 0 8px;
+}
+
+.register-polaroid-card label {
+  font-size: 10px;
+}
+
+.register-polaroid-card .signin {
+  margin-top: 8px;
+  padding: 10px;
+}
+
+.register-polaroid-card .register-text {
+  margin-top: 8px;
+  margin-bottom: 0;
 }
 
 .polaroid-card h2 {
   text-align: center;
   margin-bottom: 20px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 /* INPUTS */
@@ -65,9 +107,15 @@
   width: 100%;
   padding: 12px;
   margin: 8px 0 14px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: none;
-  background: #e6e3db;
+  background: var(--color-input-fill);
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
+.polaroid-card label {
+  font-size: 11px;
 }
 
 /* ROW */
@@ -75,7 +123,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* checkbox + text alignment */
@@ -102,8 +150,8 @@
   padding: 12px;
   background: var(--pink);
   border: none;
-  border-radius: 6px;
-  color: var(--offwhite);
+  border-radius: var(--radius-sm);
+  color: var(--color-inverse-text);
   margin-top: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -119,7 +167,7 @@
   position: absolute;
   width: 80px;
   height: 18px;
-  background: #e8e5dc;
+  background: var(--color-tape);
   top: -12px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
@@ -148,8 +196,8 @@
   bottom: 40px;
   right: 40px;
 
-  background: #ffe44d;
-  color: black;
+  background: var(--color-warning);
+  color: var(--color-text);
   padding: 16px;
   width: 200px;
 
@@ -183,6 +231,10 @@
     transform: translate(-50%, -50%) rotate(0deg);
   }
 
+  .register-polaroid-wrapper {
+    top: 66%;
+  }
+
   .polaroid-card {
     width: 90%;
     padding: 30px;
@@ -192,7 +244,7 @@
 .register-text {
   margin-top: 14px;
   text-align: center;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .register-link {
@@ -209,7 +261,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .remember input {
@@ -217,7 +269,7 @@
 }
 
 .error {
-  color: var(--blue);
-  font-size: 13px;
+  color: var(--color-danger);
+  font-size: 12px;
   margin-top: 6px;
 }

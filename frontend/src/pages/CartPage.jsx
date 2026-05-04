@@ -62,13 +62,16 @@ export default function CartPage() {
     0
   );
 
-  const total = subtotal;
+  const shipping = 15.0;
+  const tax = +(subtotal * 0.0835).toFixed(2);
+  const total = subtotal + shipping + tax;
 
   return (
     <div className="cart-container">
       <div className="cart-left">
-        <h1 className="brand">Shopping Cart</h1>
-        <p className="text">{cart.length} items in your cart</p>
+        <p className="type-eyebrow">Curated Selection</p>
+        <h1 className="type-page-title cart-page-title">Shopping Cart</h1>
+        <p className="type-body-muted cart-page-subtitle">{cart.length} items in your cart</p>
 
         {cart.map(item => (
           <div className="cart-item" key={item.id}>
@@ -87,7 +90,7 @@ export default function CartPage() {
 
             <div className="item-right">
               <button className="remove" onClick={() => removeItem(item.id)}>
-                🗑
+                Remove
               </button>
               <h3>${(item.price * item.quantity).toFixed(2)}</h3>
             </div>
@@ -96,7 +99,8 @@ export default function CartPage() {
       </div>
 
       <div className="cart-right">
-        <h2 className="brand">Order Summary</h2>
+        <p className="cart-summary-label">Review</p>
+        <h2 className="cart-summary-title">Order Summary</h2>
 
         <div className="summary-row">
           <span>Subtotal</span>
@@ -105,7 +109,12 @@ export default function CartPage() {
 
         <div className="summary-row">
           <span>Shipping</span>
-          <span>Free</span>
+          <span>${shipping.toFixed(2)}</span>
+        </div>
+
+        <div className="summary-row">
+          <span>Tax</span>
+          <span>${tax.toFixed(2)}</span>
         </div>
 
         <hr />
@@ -120,7 +129,6 @@ export default function CartPage() {
         Proceed to Checkout
       </button>
 
-        <p className="note">Free shipping on orders over $100</p>
       </div>
     </div>
   );

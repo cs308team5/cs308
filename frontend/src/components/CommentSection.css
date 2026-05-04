@@ -1,15 +1,17 @@
 .cs-container {
-  background: white;
+  background: var(--color-surface);
   border-radius: 18px;
   padding: 35px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-card);
   margin-top: 30px;
+  font-family: var(--font-ui);
 }
 
 .cs-title {
+  font-family: var(--font-stylish);
   font-size: 1.8rem;
   font-weight: normal;
-  color: var(--black);
+  color: var(--color-text);
   margin: 0 0 25px;
 }
 
@@ -17,22 +19,76 @@
 .cs-input-wrap {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 30px;
+}
+
+.rs-star-input {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rs-star-button,
+.rs-static-star {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.rs-star-button:disabled {
+  cursor: not-allowed;
+}
+
+.rs-star-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.rs-star-empty {
+  fill: #ffffff;
+  stroke: #b9b9b9;
+  stroke-width: 1.5;
+}
+
+.rs-star-full {
+  fill: var(--color-text);
+  stroke: var(--color-text);
+  stroke-width: 1.5;
+}
+
+.rs-selected-rating {
+  font-family: var(--font-reviews);
+  margin-left: 10px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.rs-static-stars {
+  display: flex;
+  gap: 3px;
 }
 
 .cs-textarea {
   width: 100%;
   box-sizing: border-box;
   padding: 14px;
-  border: 1.5px solid #e5e5e5;
+  border: 1.5px solid var(--color-border);
   border-radius: 12px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-reviews);
   font-size: 14px;
   resize: vertical;
   transition: 0.2s;
-  color: var(--black);
-  background: white;
+  color: var(--color-text);
+  background: var(--color-surface);
 }
 
 .cs-textarea:focus {
@@ -49,10 +105,10 @@
   width: fit-content;
   padding: 12px 28px;
   background: var(--pink);
-  color: white;
+  color: var(--color-surface);
   border: none;
   border-radius: 12px;
-  font-family: "Inter", sans-serif;
+  font-family: var(--font-ui);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -64,25 +120,31 @@
 }
 
 .cs-submit-btn:disabled {
-  background: #ccc;
+  background: var(--color-disabled);
   cursor: not-allowed;
 }
 
 .cs-msg {
+  font-family: var(--font-reviews);
   font-size: 13px;
   color: var(--green);
   margin: 0;
 }
 
+.cs-msg-muted {
+  color: var(--color-text-muted);
+}
+
 /* LIST */
 .cs-empty {
+  font-family: var(--font-reviews);
   color: #aaa;
   font-size: 14px;
 }
 
 .cs-card {
   padding: 18px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--color-border-soft);
 }
 
 .cs-card:last-child {
@@ -92,23 +154,56 @@
 .cs-card-header {
   display: flex;
   justify-content: space-between;
+  gap: 16px;
   margin-bottom: 8px;
 }
 
+.cs-author-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .cs-author {
+  font-family: var(--font-reviews);
   font-weight: 600;
   font-size: 14px;
-  color: var(--black);
+  color: var(--color-text);
 }
 
 .cs-date {
+  font-family: var(--font-reviews);
   font-size: 12px;
-  color: #aaa;
+  color: var(--color-text-subtle);
+  white-space: nowrap;
 }
 
 .cs-text {
+  font-family: var(--font-reviews);
   font-size: 14px;
-  color: #555;
+  color: var(--color-text-muted);
   line-height: 1.6;
   margin: 0;
+}
+
+.cs-rating-only {
+  font-family: var(--font-reviews);
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .cs-container {
+    padding: 24px 18px;
+  }
+
+  .cs-card-header {
+    flex-direction: column;
+  }
+
+  .rs-selected-rating {
+    width: 100%;
+    margin-left: 0;
+  }
 }

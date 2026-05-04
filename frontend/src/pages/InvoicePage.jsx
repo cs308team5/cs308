@@ -6,7 +6,6 @@ export default function InvoicePage() {
   const { state } = useLocation();
   const navigate = useNavigate();
 
-  // Fallback mock data for preview/dev
   const order = state?.order ?? {
     invoiceNumber: "INV-20240410-8821",
     date: new Date().toLocaleDateString("en-US", {
@@ -52,7 +51,6 @@ export default function InvoicePage() {
 
   return (
     <div className="invoice-container">
-
       <div className="success-banner">
         <div className="success-icon">✓</div>
         <div>
@@ -68,10 +66,7 @@ export default function InvoicePage() {
       </div>
 
       <div className="invoice-content">
-        {/* LEFT SIDE */}
         <div className="invoice-left">
-
-          {/* INVOICE META */}
           <div className="card">
             <div className="card-header">
               <div className="icon">🧾</div>
@@ -86,7 +81,6 @@ export default function InvoicePage() {
             </div>
           </div>
 
-          {/* ORDER ITEMS */}
           <div className="card">
             <div className="card-header">
               <div className="icon">📦</div>
@@ -111,7 +105,6 @@ export default function InvoicePage() {
             ))}
           </div>
 
-          {/* SHIPPING ADDRESS */}
           <div className="card">
             <div className="card-header">
               <div className="icon">📍</div>
@@ -156,8 +149,8 @@ export default function InvoicePage() {
           </div>
         </div>
 
-        {/* RIGHT SIDE — dark panel matching cart/checkout */}
         <div className="invoice-right">
+          <p className="invoice-summary-label">Confirmed</p>
           <h2>Order Summary</h2>
 
           <div className="summary-row">
@@ -186,17 +179,14 @@ export default function InvoicePage() {
             <span className="dot" /> Payment Confirmed
           </div>
 
-          <button
-            className="continue-btn"
-            onClick={() => navigate("/")}
-          >
+          <button className="continue-btn" onClick={() => navigate("/")}>
             Continue Shopping
           </button>
 
           <div className="extra">
             <p>🔒 Secure 256-bit SSL encryption</p>
             <p>🛡 30-day money-back guarantee</p>
-            <p>📬 Estimated delivery: 3–5 business days</p>
+            <p>📬 Estimated delivery: 3-5 business days</p>
           </div>
         </div>
       </div>

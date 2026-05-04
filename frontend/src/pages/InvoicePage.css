@@ -1,14 +1,9 @@
-/* ─────────────────────────────────────────────
-   InvoicePage.css  —  matches CartPage & CheckoutPage style
-───────────────────────────────────────────── */
-
 .invoice-container {
   padding: 40px;
   background: #f7f7f5;
   min-height: 100vh;
 }
 
-/* ── SUCCESS BANNER ── */
 .success-banner {
   display: flex;
   align-items: center;
@@ -69,7 +64,6 @@
   background: #f2f2f2;
 }
 
-/* ── LAYOUT ── */
 .invoice-content {
   display: flex;
   gap: 40px;
@@ -80,7 +74,6 @@
   flex: 2;
 }
 
-/* ── CARD (same as checkout) ── */
 .card {
   background: white;
   border-radius: 18px;
@@ -92,13 +85,17 @@
 .card-header {
   display: flex;
   gap: 15px;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 20px;
 }
 
 .card-header h2 {
-  margin: 0;
+  margin: 0 0 6px;
   color: var(--black);
+  font-size: 1.6rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
 }
 
 .card-header p {
@@ -114,12 +111,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 22px;
   background: #f2f2f2;
   flex-shrink: 0;
 }
 
-/* Invoice date pushed to the right */
 .invoice-date {
   margin-left: auto;
   text-align: right;
@@ -134,7 +130,6 @@
   color: var(--black);
 }
 
-/* ── ORDER ITEMS ── */
 .invoice-item {
   display: flex;
   align-items: center;
@@ -190,7 +185,6 @@
   white-space: nowrap;
 }
 
-/* ── ADDRESS GRID ── */
 .address-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -220,7 +214,6 @@
   font-weight: 500;
 }
 
-/* ── RIGHT PANEL — dark, same as cart/checkout ── */
 .invoice-right {
   flex: 1;
   background: linear-gradient(180deg, #111111, #1a1a1a);
@@ -235,8 +228,19 @@
 }
 
 .invoice-right h2 {
-  margin-bottom: 20px;
+  margin: 0 0 20px;
   color: white;
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.invoice-summary-label {
+  margin: 0 0 12px;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .summary-row {
@@ -263,7 +267,6 @@ hr {
   color: white;
 }
 
-/* ── STATUS BADGE ── */
 .status-badge {
   display: flex;
   align-items: center;
@@ -273,7 +276,7 @@ hr {
   background: rgba(255, 255, 255, 0.07);
   border-radius: 12px;
   font-size: 14px;
-  color: #86efac; /* green */
+  color: #86efac;
   font-weight: 500;
 }
 
@@ -285,7 +288,6 @@ hr {
   flex-shrink: 0;
 }
 
-/* ── CONTINUE BUTTON ── */
 .continue-btn {
   width: 100%;
   margin-top: 16px;
@@ -304,7 +306,6 @@ hr {
   opacity: 0.9;
 }
 
-/* ── EXTRA NOTES ── */
 .extra {
   margin-top: 20px;
   font-size: 13px;
@@ -314,7 +315,6 @@ hr {
   gap: 6px;
 }
 
-/* ── PRINT STYLES ── */
 @media print {
   .success-banner .print-btn,
   .continue-btn {

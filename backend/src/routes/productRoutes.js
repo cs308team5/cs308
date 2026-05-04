@@ -1,6 +1,7 @@
 import express from "express";
-import { getProducts } from "../controllers/productController.js";
-import { getProductById } from "../controllers/productController.js";
+import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, getReviewEligibility } from "../controllers/productController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import adminMiddleware from "../middleware/adminMiddleware.js";
 import { submitRating } from "../controllers/productController.js";
 import pool from "../config/db.js";
 
@@ -33,6 +34,12 @@ router.get("/search", async (req, res) => {
 });
 
 router.get("/:id", getProductById);
-router.post("/:id/rating", submitRating);
+router.get("/:id/review-eligibility", authMiddleware, getReviewEligibility);
+router.post("/:id/rating", authMiddleware, submitRating);
+
+// Admin routes (auth korumalı)
+router.post("/", authMiddleware, adminMiddleware, createProduct);
+router.put("/:id", authMiddleware, adminMiddleware, updateProduct);
+router.delete("/:id", authMiddleware, adminMiddleware, deleteProduct);
 
 export default router;

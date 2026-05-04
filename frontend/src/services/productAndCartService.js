@@ -1,27 +1,88 @@
 import { supabase } from "../lib/supabaseClient";
 
-const mapProduct = (row) => ({
-  id:       row.id,
-  title:    row.name,
-  creator:  row.additional_attributes?.creator ?? "@unknown",
-  price:    `$${Number(row.price).toFixed(2)}`,
-  stock_quantity: row.stock_quantity,
-  category: row.category ?? "uncategorized",
-  img:      row.image_url ?? null,
-  stock_quantity: row.stock_quantity,
-});
+const escapeSearchValue = (value) =>
+  value
+    .replaceAll("\\", "\\\\")
+    .replaceAll(",", "\\,")
+    .replaceAll("(", "\\(")
+    .replaceAll(")", "\\)");
+
+const mapProduct = (row) => {
+  const priceValue = Number(row.price ?? 0);
+  const stockQuantity = Number(row.stock_quantity ?? 0);
+
+  return {
+    id: row.id,
+    title: row.name,
+    description: row.description ?? "",
+    creator: row.additional_attributes?.creator ?? "",
+    price: `$${priceValue.toFixed(2)}`,
+    priceValue,
+    stock_quantity: stockQuantity,
+    inStock: stockQuantity > 0,
+    category: row.category ?? "uncategorized",
+    img: row.image_url ?? null,
+    popularityScore: 0,
+    ratingCount: 0,
+  };
+};
 
 export async function fetchProducts({ category = [], min_price = 0, max_price = 10000, sort = "all", search = "", limit = 1000 } = {}) {
   let query = supabase.from("products").select("*").gte("price", min_price).lte("price", max_price).limit(limit);
 
-  if (search)          query = query.ilike("name", `%${search}%`);
+  if (search) {
+    const escapedSearch = escapeSearchValue(search.trim());
+    query = query.or(`name.ilike.%${escapedSearch}%,description.ilike.%${escapedSearch}%`);
+  }
   if (category.length) query = query.in("category", category);
   if (sort === "discount") query = query.order("price", { ascending: true });
   else                     query = query.order("created_at", { ascending: false });
 
   const { data, error } = await query;
   if (error) throw error;
-  return data.map(mapProduct);
+
+  const mappedProducts = data.map(mapProduct);
+  const productIds = mappedProducts.map((product) => product.id);
+
+  if (productIds.length === 0) {
+    return mappedProducts;
+  }
+
+  const { data: ratingsData, error: ratingsError } = await supabase
+    .from("ratings")
+    .select("product_id, rating")
+    .in("product_id", productIds);
+
+  if (!ratingsError && Array.isArray(ratingsData)) {
+    const ratingMap = ratingsData.reduce((acc, row) => {
+      const productId = row.product_id;
+      const numericRating = Number(row.rating);
+
+      if (!productId || !Number.isFinite(numericRating)) {
+        return acc;
+      }
+
+      if (!acc[productId]) {
+        acc[productId] = { total: 0, count: 0 };
+      }
+
+      acc[productId].total += numericRating;
+      acc[productId].count += 1;
+      return acc;
+    }, {});
+
+    mappedProducts.forEach((product) => {
+      const stats = ratingMap[product.id];
+      if (!stats || stats.count === 0) {
+        return;
+      }
+
+      product.ratingCount = stats.count;
+      product.popularityScore = Number((stats.total / stats.count).toFixed(2));
+    });
+  }
+
+  return mappedProducts;
 }
 
 
@@ -91,7 +152,8 @@ export async function addToCart(userId, productId) {
     body: JSON.stringify({ userId, productId }),
   });
 
-  const data = await response.json();
+  const raw = await response.text();
+  const data = raw ? JSON.parse(raw) : {};
 
   if (!response.ok) {
     throw new Error(data.message || "Failed to add to cart");
