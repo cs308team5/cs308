@@ -121,9 +121,9 @@ export default function MyOrdersPage() {
                   <div className="order-items">
                     {(order.items ?? []).map((item, i) => (
                       <div className="order-item" key={i}>
-                        {item.image && <img src={item.image} alt={item.name} />}
+                        {item.image && <img src={item.image} alt={item.name} style={{ cursor: "pointer" }} onClick={() => navigate(`/products/${item.product_id}`)} />}
                         <div className="item-info">
-                          <span className="item-name">{item.name}</span>
+                          <span className="item-name" style={{ cursor: "pointer" }} onClick={() => navigate(`/products/${item.product_id}`)}>{item.name}</span>
                           <span className="item-qty">Qty: {item.quantity}</span>
                         </div>
                         <span className="item-price">
