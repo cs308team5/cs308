@@ -45,19 +45,38 @@
   color: var(--black);
 }
 
+.preview-btn,
 .print-btn {
-  margin-left: auto;
   padding: 12px 22px;
-  border: 1.5px solid #e5e5e5;
   border-radius: 12px;
-  background: white;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  color: var(--black);
   white-space: nowrap;
   transition: 0.2s;
   flex-shrink: 0;
+}
+
+.preview-btn {
+  margin-left: auto;
+  border: none;
+  background: var(--pink);
+  color: white;
+}
+
+.preview-btn:hover {
+  opacity: 0.9;
+}
+
+.preview-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.print-btn {
+  border: 1.5px solid #e5e5e5;
+  background: white;
+  color: var(--black);
 }
 
 .print-btn:hover {
@@ -315,9 +334,106 @@ hr {
   gap: 6px;
 }
 
+.invoice-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 17, 17, 0.72);
+}
+
+.invoice-preview-modal {
+  width: min(980px, 100%);
+  height: min(90vh, 820px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white;
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+
+.invoice-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-bottom: 1px solid #eee;
+}
+
+.invoice-preview-header h2 {
+  margin: 0 0 4px;
+  color: #000;
+  font-size: 20px;
+}
+
+.invoice-preview-header p {
+  margin: 0;
+  color: #000;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.invoice-preview-close {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid #111;
+  border-radius: 50%;
+  background: #f2f2f2;
+  color: var(--black);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.invoice-preview-close:hover {
+  background: #e8e8e8;
+}
+
+.invoice-preview-frame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #272727;
+}
+
+.invoice-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 22px;
+  border-top: 1px solid #eee;
+}
+
+.invoice-preview-primary,
+.invoice-preview-secondary {
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.invoice-preview-primary {
+  border: none;
+  background: var(--pink);
+  color: white;
+}
+
+.invoice-preview-secondary {
+  border: 1.5px solid #e5e5e5;
+  background: white;
+  color: var(--black);
+}
+
 @media print {
+  .success-banner .preview-btn,
   .success-banner .print-btn,
-  .continue-btn {
+  .continue-btn,
+  .invoice-preview-overlay {
     display: none;
   }
 

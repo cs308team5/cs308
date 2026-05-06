@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getCurrentUser } from "../services/authService.js";
 import "./InvoicePage.css";
 
 export default function InvoicePage() {
   const { state } = useLocation();
   const navigate = useNavigate();
+  const previewFrameRef = useRef(null);
+  const [invoicePreviewUrl, setInvoicePreviewUrl] = useState("");
+  const [isInvoiceLoading, setIsInvoiceLoading] = useState(false);
 
   const order = state?.order ?? {
     invoiceNumber: "INV-20240410-8821",
@@ -47,7 +51,109 @@ export default function InvoicePage() {
     total: 338.92,
   };
 
-  const handlePrint = () => window.print();
+  const invoiceFileName = `${order.shipping.fullName || "customer"} - invoice`;
+
+  useEffect(() => {
+    return () => {
+      if (invoicePreviewUrl) {
+        URL.revokeObjectURL(invoicePreviewUrl);
+      }
+    };
+  }, [invoicePreviewUrl]);
+
+  const closeInvoicePreview = () => {
+    setInvoicePreviewUrl("");
+  };
+
+  const fetchInvoiceUrl = async () => {
+    const user = getCurrentUser();
+
+    if (!user?.token || !order.invoiceNumber) {
+      throw new Error("Invoice PDF is not available for this order.");
+    }
+
+    const response = await fetch(`/api/invoice/${order.invoiceNumber}`, {
+      headers: {
+        Authorization: `Bearer ${user.token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Invoice PDF could not be generated.");
+    }
+
+    const invoiceBlob = await response.blob();
+    const invoiceFile = new File([invoiceBlob], `${invoiceFileName}.pdf`, {
+      type: "application/pdf",
+    });
+
+    return URL.createObjectURL(invoiceFile);
+  };
+
+  const handlePreview = async () => {
+    setIsInvoiceLoading(true);
+
+    try {
+      const invoiceUrl = await fetchInvoiceUrl();
+      setInvoicePreviewUrl(invoiceUrl);
+    } catch (error) {
+      alert(error.message || "Invoice PDF could not be opened.");
+    } finally {
+      setIsInvoiceLoading(false);
+    }
+  };
+
+  const printInvoiceUrl = (invoiceUrl) => {
+    const originalTitle = document.title;
+    const printFrame = document.createElement("iframe");
+
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "0";
+    printFrame.src = invoiceUrl;
+    printFrame.onload = () => {
+      document.title = invoiceFileName;
+      printFrame.contentWindow?.focus();
+      printFrame.contentWindow?.print();
+      setTimeout(() => {
+        document.body.removeChild(printFrame);
+        URL.revokeObjectURL(invoiceUrl);
+        document.title = originalTitle;
+      }, 60000);
+    };
+
+    document.body.appendChild(printFrame);
+  };
+
+  const handlePrint = async () => {
+    try {
+      const invoiceUrl = await fetchInvoiceUrl();
+      printInvoiceUrl(invoiceUrl);
+    } catch (error) {
+      alert(error.message || "Invoice PDF could not be printed.");
+    }
+  };
+
+  const handlePrintPreview = () => {
+    const originalTitle = document.title;
+    const frameWindow = previewFrameRef.current?.contentWindow;
+
+    if (!frameWindow) {
+      alert("Invoice preview is not ready yet.");
+      return;
+    }
+
+    document.title = invoiceFileName;
+    frameWindow.focus();
+    frameWindow.print();
+
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 60000);
+  };
 
   return (
     <div className="invoice-container">
@@ -60,6 +166,9 @@ export default function InvoicePage() {
             <strong>{order.shipping.email}</strong>
           </p>
         </div>
+        <button className="preview-btn" onClick={handlePreview} disabled={isInvoiceLoading}>
+          {isInvoiceLoading ? "Preparing..." : "Preview Invoice"}
+        </button>
         <button className="print-btn" onClick={handlePrint}>
           🖨 Print Invoice
         </button>
@@ -190,6 +299,42 @@ export default function InvoicePage() {
           </div>
         </div>
       </div>
+
+      {invoicePreviewUrl && (
+        <div className="invoice-preview-overlay" role="dialog" aria-modal="true">
+          <div className="invoice-preview-modal">
+            <div className="invoice-preview-header">
+              <div>
+                <h2>Invoice Preview</h2>
+                <p>{invoiceFileName}</p>
+              </div>
+              <button
+                className="invoice-preview-close"
+                onClick={closeInvoicePreview}
+                aria-label="Close invoice preview"
+              >
+                x
+              </button>
+            </div>
+
+            <iframe
+              ref={previewFrameRef}
+              className="invoice-preview-frame"
+              src={`${invoicePreviewUrl}#toolbar=0&navpanes=0`}
+              title="Invoice preview"
+            />
+
+            <div className="invoice-preview-actions">
+              <button className="invoice-preview-secondary" onClick={closeInvoicePreview}>
+                Close
+              </button>
+              <button className="invoice-preview-primary" onClick={handlePrintPreview}>
+                Print / Save PDF
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
