@@ -6,6 +6,7 @@ import { createMockReq, createMockRes } from "./helpers/httpTestUtils.js";
 
 describe("paymentController.processPayment", () => {
   const originalConnect = pool.connect;
+  const originalQuery = pool.query;
   const originalConsoleError = console.error;
 
   beforeEach(() => {
@@ -14,6 +15,7 @@ describe("paymentController.processPayment", () => {
 
   afterEach(() => {
     pool.connect = originalConnect;
+    pool.query = originalQuery;
     console.error = originalConsoleError;
   });
 
@@ -65,6 +67,7 @@ describe("paymentController.processPayment", () => {
     };
 
     pool.connect = async () => client;
+    pool.query = async () => ({ rows: [] });
 
     const req = createMockReq({
       body: {
@@ -101,6 +104,7 @@ describe("paymentController.processPayment", () => {
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.success, true);
     assert.equal(res.body.order_id, "order-1");
+    assert.equal(res.body.invoiceEmailSent, false);
     assert.deepEqual(orderInsert.params, ["authenticated-customer", 120]);
     assert.deepEqual(deliveryInsert.params, [
       "order-1",
