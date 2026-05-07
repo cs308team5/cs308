@@ -10,6 +10,10 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }, // Supabase için gerekli
 });
 
+pool.on("error", (error) => {
+  console.error("Unexpected idle database connection error:", error.message);
+});
+
 console.log("DB URL:", process.env.DATABASE_URL);
 
 export default pool;
