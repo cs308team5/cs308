@@ -29,6 +29,31 @@ const OrdersIcon = () => (
     </svg>
 );
 
+const CommentsIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
+        <line x1="8" y1="9" x2="16" y2="9" />
+        <line x1="8" y1="13" x2="13" y2="13" />
+    </svg>
+);
+
+const DeliveriesIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 7h11v10H3z" />
+        <path d="M14 11h4l3 3v3h-7z" />
+        <circle cx="7" cy="19" r="2" />
+        <circle cx="18" cy="19" r="2" />
+    </svg>
+);
+
+const ProductsIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <path d="M3.3 7 12 12l8.7-5" />
+        <path d="M12 22V12" />
+    </svg>
+);
+
 
 const CartIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
@@ -42,6 +67,12 @@ const NAV_ITEMS = [
     { id: "home",     label: "Home",     path: "/home",     Icon: HomeIcon },
     { id: "discover", label: "Discover", path: "/discover", Icon: DiscoverIcon },
     { id: "myorders",  label: "Orders", path: "/my-orders",  Icon: OrdersIcon },
+];
+
+const ADMIN_NAV_ITEMS = [
+    { id: "comments", label: "Comments", path: "/admin", Icon: CommentsIcon },
+    { id: "products", label: "Products", path: "/admin/products", Icon: ProductsIcon },
+    { id: "deliveries", label: "Deliveries", path: "/admin/deliveries", Icon: DeliveriesIcon },
 ];
 
 // Helper functions
@@ -144,15 +175,18 @@ export function GlobalNavbar() {
 export function GlobalSidebar() {
     const navigate  = useNavigate();
     const location  = useLocation();
+    const user = getCurrentUser();
+    const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
+    const navItems = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS;
 
     // Derive active tab from current path
-    const activeId = NAV_ITEMS.find((item) =>
-        location.pathname.startsWith(item.path)
+    const activeId = [...navItems].sort((a, b) => b.path.length - a.path.length).find((item) =>
+        location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
     )?.id ?? "home";
 
     return (
         <aside className="global-sidebar">
-            {NAV_ITEMS.map(({ id, label, path, Icon }) => (
+            {navItems.map(({ id, label, path, Icon }) => (
                 <button
                     key={id}
                     className={`sidebar-icon-btn ${activeId === id ? "active" : ""}`}

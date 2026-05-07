@@ -54,8 +54,8 @@ export async function createOrder(customer_id, cart_items, total_price, delivery
         }
 
         await client.query(
-            `INSERT INTO deliveries (order_id, customer_id, delivery_address)
-             VALUES ($1, $2, $3)`,
+            `INSERT INTO deliveries (order_id, customer_id, delivery_address, status)
+             VALUES ($1, $2, $3, 'processing')`,
             [order_id, customer_id, formattedDeliveryAddress]
         );
 

@@ -37,7 +37,7 @@
 
 .order-card-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
@@ -62,22 +62,30 @@
 
 .order-right {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
   flex-wrap: wrap;
+  align-self: flex-start;
 }
 
-.status-badge {
+.myorders-status-badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 7px;
-  padding: 6px 14px;
+  height: 42px;
+  min-width: 132px;
+  padding: 0 16px;
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1;
+  box-sizing: border-box;
+  white-space: nowrap;
+  margin: 0;
 }
 
-.status-dot {
+.myorders-status-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
@@ -85,13 +93,21 @@
 }
 
 .order-total {
+  display: inline-flex;
+  align-items: center;
   font-size: 17px;
   font-weight: 700;
   color: var(--black);
+  height: 42px;
+  line-height: 1;
 }
 
 .toggle-btn {
-  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 42px;
+  padding: 0 20px;
   border-radius: 12px;
   border: 1.5px solid #e5e5e5;
   background: white;
@@ -101,6 +117,7 @@
   cursor: pointer;
   transition: 0.2s;
   white-space: nowrap;
+  line-height: 1;
 }
 
 .toggle-btn:hover {

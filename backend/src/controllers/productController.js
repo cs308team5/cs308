@@ -81,6 +81,11 @@ export const getProducts = async (req, res) => {
       category: p.category,
       stock: p.stock_quantity,        // normalized field name
       image_url: p.image_url,
+      model: p.model,
+      serial_number: p.serial_number,
+      warranty_status: p.warranty_status,
+      distributor_information: p.distributor_information,
+      additional_attributes: p.additional_attributes,
       inStock: p.stock_quantity > 0   // derived field
     }));
 
