@@ -158,9 +158,13 @@ export function GlobalNavbar() {
                     )}
                 </button>
 
-                {user && (
+                {user ? (
                     <button className="navbar-text-btn" onClick={handleLogout}>
                         Logout
+                    </button>
+                ) : (
+                    <button className="navbar-text-btn" onClick={() => navigate("/login")}>
+                        Login
                     </button>
                 )}
             </div>
