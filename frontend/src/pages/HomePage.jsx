@@ -58,7 +58,6 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
         await addToCart(user.customer_id, productId);
       }
 
-      window.dispatchEvent(new Event("cartUpdated"));
     } catch (err) {
       console.error("Supabase Add to Cart Error:", err);
       alert(`${err.message}`);

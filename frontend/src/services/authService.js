@@ -1,3 +1,5 @@
+import { mergeGuestCartOnLogin } from "./productAndCartService";
+
 export async function register({ fullName, username, email, password }) {
   try {
     const cleanFullName = fullName?.trim();
@@ -60,12 +62,17 @@ export async function login(email, password) {
       }),
     });
 
-    const data = await response.json();
+    const rawText = await response.text();
+    const data = rawText ? JSON.parse(rawText) : {};
 
     if (!response.ok || !data.customer || !data.token) {
       return {
         success: false,
-        message: data.message || "Email or password is incorrect.",
+        message:
+          data.message ||
+          (response.status === 502
+            ? "Backend server is not reachable. Please restart the backend."
+            : "Email or password is incorrect."),
       };
     }
 
@@ -79,7 +86,7 @@ export async function login(email, password) {
     };
 
     localStorage.setItem("user", JSON.stringify(normalizedUser));
-    localStorage.removeItem("guest_cart");
+    await mergeGuestCartOnLogin(normalizedUser.customerId);
 
     return {
       success: true,
