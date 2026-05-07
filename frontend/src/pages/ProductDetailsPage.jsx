@@ -174,19 +174,7 @@ export default function ProductDetailsPage() {
 
   return (
     <div className="page">
-      <div className="navbar">
-        <div className="nav-left" onClick={() => navigate("/home")}>
-          HOME
-        </div>
-
-        <div className="nav-center">THE DARE</div>
-
-        <div className="nav-right">
-          <span onClick={() => navigate("/profile")}>PROFILE</span>
-          <span onClick={() => navigate("/cart")}>CART</span>
-        </div>
-      </div>
-
+      
       <div className="product-page">
         <div className="image-section">
           <img
