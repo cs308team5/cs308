@@ -189,8 +189,23 @@
   align-items: center;
   gap: 10px;
   min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--black);
   font-size: 13px;
   font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.delivery-item:hover {
+  background: #f7f7f5;
+}
+
+.delivery-item:disabled {
+  cursor: default;
 }
 
 .delivery-item img {

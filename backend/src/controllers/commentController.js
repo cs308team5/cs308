@@ -33,6 +33,22 @@ export const submitComment = async (req, res) => {
       });
     }
 
+    const existingComment = await pool.query(
+      `SELECT id, status
+       FROM comments
+       WHERE user_id = $1
+         AND product_id = $2
+         AND LOWER(TRIM(status)) IN ('pending', 'approved')
+       LIMIT 1`,
+      [userId, productId]
+    );
+
+    if (existingComment.rows.length > 0) {
+      return res.status(400).json({
+        message: "You already have a comment for this product."
+      });
+    }
+
     const result = await pool.query(
       `INSERT INTO comments (user_id, product_id, text, status, created_at)
        VALUES ($1, $2, $3, 'pending', NOW())

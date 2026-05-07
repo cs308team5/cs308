@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../services/authService.js";
 import "./AdminDeliveriesPage.css";
 
@@ -24,6 +25,7 @@ function formatDate(value) {
 }
 
 export default function AdminDeliveriesPage() {
+  const navigate = useNavigate();
   const user = getCurrentUser();
   const token = user?.token ?? null;
   const [deliveries, setDeliveries] = useState([]);
@@ -191,11 +193,17 @@ export default function AdminDeliveriesPage() {
                 {items.length > 0 && (
                   <div className="delivery-items">
                     {items.map((item, index) => (
-                      <div className="delivery-item" key={`${delivery.delivery_id}-${index}`}>
+                      <button
+                        type="button"
+                        className="delivery-item"
+                        key={`${delivery.delivery_id}-${index}`}
+                        onClick={() => item.product_id && navigate(`/products/${item.product_id}`)}
+                        disabled={!item.product_id}
+                      >
                         {item.image_url && <img src={item.image_url} alt={item.name} />}
                         <span>{item.name}</span>
                         <small>Qty {item.quantity}</small>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}

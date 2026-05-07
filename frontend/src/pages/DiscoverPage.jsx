@@ -1,8 +1,8 @@
 import "./DiscoverPage.css";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { fetchProducts } from "../services/productAndCartService.js";
-import { getCurrentUser, logout } from "../services/authService.js";
+import { addToCart, addToGuestCart, fetchProducts } from "../services/productAndCartService.js";
+import { getCurrentUser } from "../services/authService.js";
 import SearchBar from "../components/SearchBar.jsx";
 
 
@@ -29,16 +29,17 @@ const getStockStatus = (stockQuantity) => {
 };
 
 
-const ProductGridCard = ({ product, onOpen }) => {
+const ProductGridCard = ({ product, onOpen, onAddToCart }) => {
   const stock = getStockStatus(product.stock_quantity);
   const hasRatings = product.ratingCount > 0;
+  const inStock = product.stock_quantity > 0;
   const popularityLabel = hasRatings
     ? `★ ${product.popularityScore.toFixed(1)} (${product.ratingCount})`
     : "★ No ratings";
 
   return (
-    <article className="listing-card">
-      <div className="listing-image-shell" onClick={onOpen} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && onOpen()}>
+    <article className="listing-card" onClick={onOpen} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && onOpen()}>
+      <div className="listing-image-shell">
         {product.img ? (
           <img src={product.img} alt={product.title} className="listing-image" />
         ) : (
@@ -59,8 +60,15 @@ const ProductGridCard = ({ product, onOpen }) => {
 
         <div className="listing-card-footer">
           <span className="listing-price">{product.price}</span>
-          <button className="listing-action" onClick={onOpen}>
-            View details
+          <button
+            className={`listing-action ${!inStock ? "disabled" : ""}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAddToCart();
+            }}
+            disabled={!inStock}
+          >
+            {inStock ? "Add to Cart" : "Out of Stock"}
           </button>
         </div>
       </div>
@@ -68,20 +76,23 @@ const ProductGridCard = ({ product, onOpen }) => {
   );
 };
 
-const ProductListRow = ({ product, onOpen }) => {
+const ProductListRow = ({ product, onOpen, onAddToCart }) => {
   const stock = getStockStatus(product.stock_quantity);
   const hasRatings = product.ratingCount > 0;
+  const inStock = product.stock_quantity > 0;
   const popularityLabel = hasRatings
     ? `★ ${product.popularityScore.toFixed(1)} (${product.ratingCount})`
     : "★ No ratings";
 
   return (
-    <article className="listing-row">
-      {product.img ? (
-        <img src={product.img} alt={product.title} className="listing-row-image" />
-      ) : (
-        <div className="listing-row-image listing-image-placeholder">No image</div>
-      )}
+    <article className="listing-row" onClick={onOpen} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && onOpen()}>
+      <div className="listing-row-image-shell">
+        {product.img ? (
+          <img src={product.img} alt={product.title} className="listing-row-image" />
+        ) : (
+          <div className="listing-row-image listing-image-placeholder">No image</div>
+        )}
+      </div>
 
       <div className="listing-row-content">
         <div className="listing-row-header">
@@ -108,9 +119,18 @@ const ProductListRow = ({ product, onOpen }) => {
 
         <div className="listing-row-footer">
           <span className="listing-price">{product.price}</span>
-          <button className="listing-action" onClick={onOpen}>
-            View details
-          </button>
+          <div className="listing-row-actions">
+            <button
+              className={`listing-action ${!inStock ? "disabled" : ""}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onAddToCart();
+              }}
+              disabled={!inStock}
+            >
+              {inStock ? "Add to Cart" : "Out of Stock"}
+            </button>
+          </div>
         </div>
       </div>
     </article>
@@ -296,6 +316,23 @@ export default function DiscoverPage() {
     }));
   };
 
+  const handleAddToCart = async (product) => {
+    if (!product.inStock || product.stock_quantity <= 0) return;
+
+    const user = getCurrentUser();
+
+    try {
+      if (!user) {
+        addToGuestCart(product);
+        return;
+      }
+
+      await addToCart(user.customer_id, product.id);
+    } catch (error) {
+      alert(error.message || "Could not add product to cart.");
+    }
+  };
+
   return (
     <div className="app-shell">
 
@@ -448,12 +485,14 @@ export default function DiscoverPage() {
                     key={product.id}
                     product={product}
                     onOpen={() => navigate(`/products/${product.id}`)}
+                    onAddToCart={() => handleAddToCart(product)}
                   />
                 ) : (
                   <ProductListRow
                     key={product.id}
                     product={product}
                     onOpen={() => navigate(`/products/${product.id}`)}
+                    onAddToCart={() => handleAddToCart(product)}
                   />
                 )
               )}
