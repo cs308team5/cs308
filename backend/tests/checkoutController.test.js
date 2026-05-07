@@ -129,6 +129,8 @@ describe("checkoutController.checkout", () => {
       "order-1",
       "customer-1",
       "123 Main St, Istanbul, Turkey",
+      null,
+      null,
     ]);
     assert.equal(client.releaseCalled, true);
   });
