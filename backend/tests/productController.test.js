@@ -129,6 +129,11 @@ describe("productController.getProducts", () => {
           category: "clothing",
           stock_quantity: 2,
           image_url: "img.png",
+          model: "Evening",
+          serial_number: "DR-001",
+          warranty_status: "2 years",
+          distributor_information: "Dare Distribution",
+          additional_attributes: { color: "red" },
         },
       ],
     });
@@ -148,6 +153,11 @@ describe("productController.getProducts", () => {
       category: "clothing",
       stock: 2,
       image_url: "img.png",
+      model: "Evening",
+      serial_number: "DR-001",
+      warranty_status: "2 years",
+      distributor_information: "Dare Distribution",
+      additional_attributes: { color: "red" },
       inStock: true,
     });
   });
@@ -281,6 +291,20 @@ describe("productController.submitRating", () => {
     const req = createMockReq({
       params: { id: "p1" },
       body: { rating: 6 },
+      customer: { customerId: "u1" },
+    });
+    const res = createMockRes();
+
+    await submitRating(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "Rating must be between 0.5 and 5 in 0.5 increments");
+  });
+
+  test("returns 400 when rating is not a half-star increment", async () => {
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { rating: 3.25 },
       customer: { customerId: "u1" },
     });
     const res = createMockRes();

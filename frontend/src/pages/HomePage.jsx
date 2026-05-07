@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { faCartShopping, faHeart as faHeartSolid, faShareNodes } from "@fortawesome/free-solid-svg-icons";
-import { getCurrentUser, logout } from "../services/authService.js";
+import { getCurrentUser } from "../services/authService.js";
 import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
 import SearchBar from "../components/SearchBar.jsx";
 
@@ -177,7 +177,6 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
 export default function HomePage() {
   const [displayName, setDisplayName] = useState("Guest");
 
-  const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const navigate = useNavigate();
@@ -195,7 +194,6 @@ export default function HomePage() {
     const user = getCurrentUser();
     if (user) {
       setDisplayName(user.username || user.name || "User");
-      setIsAdmin(Boolean(user.isAdmin ?? user.is_admin));
     }
   }, []);
 
@@ -240,14 +238,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="header-actions">
-            {isAdmin && (
-              <button className="admin-comments-btn" onClick={() => navigate("/admin")}>
-                Moderate Comments
-              </button>
-            )}
-
-          </div>
         </div>
 
         <div className="feed-column">

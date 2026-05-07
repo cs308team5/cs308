@@ -264,7 +264,12 @@ export default function CommentSection({ productId, onStatsChange }) {
       return;
     }
 
-    if (ratingValue <= 0) {
+    if (
+      Number.isNaN(Number(ratingValue)) ||
+      ratingValue < 0.5 ||
+      ratingValue > 5 ||
+      !Number.isInteger(ratingValue * 2)
+    ) {
       setSubmitMsg("Select a rating.");
       return;
     }
@@ -280,7 +285,7 @@ export default function CommentSection({ productId, onStatsChange }) {
           Authorization: `Bearer ${user.token}`,
         },
         body: JSON.stringify({
-          rating: ratingValue,
+          rating: Number(ratingValue),
         }),
       });
 

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import pool from "../src/config/db.js";
 import {
+  getAllDeliveries,
   getMyDeliveries,
   updateDeliveryStatus,
 } from "../src/controllers/deliveryController.js";
@@ -103,6 +104,45 @@ describe("deliveryController.updateDeliveryStatus", () => {
 
     assert.equal(res.statusCode, 404);
     assert.equal(res.body.message, "Delivery not found.");
+  });
+});
+
+describe("deliveryController.getAllDeliveries", () => {
+  const originalQuery = pool.query;
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    pool.query = originalQuery;
+    console.error = originalConsoleError;
+  });
+
+  test("returns all deliveries for admin management", async () => {
+    let capturedSql;
+    const delivery = {
+      delivery_id: "delivery-1",
+      order_id: "order-1",
+      customer_name: "Ada",
+      customer_email: "ada@example.com",
+      status: "processing",
+      items: [{ name: "Camera", quantity: 1, unit_price: 120 }],
+    };
+    pool.query = async (sql) => {
+      capturedSql = sql;
+      return { rows: [delivery] };
+    };
+
+    const req = createMockReq();
+    const res = createMockRes();
+
+    await getAllDeliveries(req, res);
+
+    assert.match(capturedSql, /JOIN customers/i);
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body, { success: true, data: [delivery] });
   });
 });
 

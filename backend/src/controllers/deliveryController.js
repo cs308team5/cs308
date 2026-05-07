@@ -1,35 +1,5 @@
 import pool from "../config/db.js";
 
-async function advanceDeliveryStatuses() {
-  try {
-    await pool.query(
-      `UPDATE deliveries d
-       SET status = 'in-transit'
-       FROM orders o
-       WHERE d.order_id = o.order_id
-         AND (d.status = 'processing' OR d.status IS NULL)
-         AND o.created_at <= NOW() - INTERVAL '2 minutes'`
-    );
-
-    await pool.query(
-      `UPDATE deliveries d
-       SET status = 'delivered', is_completed = true
-       FROM orders o
-       WHERE d.order_id = o.order_id
-         AND d.status = 'in-transit'
-         AND o.created_at <= NOW() - INTERVAL '5 minutes'`
-    );
-  } catch (err) {
-    console.error("Delivery progression job error:", err.message);
-  }
-}
-
-export function startDeliveryProgressionJob() {
-  advanceDeliveryStatuses();
-  setInterval(advanceDeliveryStatuses, 60_000);
-  console.log("Delivery progression job started.");
-}
-
 export const updateDeliveryStatus = async (req, res) => {
   const { deliveryId } = req.params;
   const { status } = req.body;
@@ -75,6 +45,46 @@ export const updateDeliveryStatus = async (req, res) => {
       success: false,
       message: "Failed to update delivery status.",
       error: error.message,
+    });
+  }
+};
+
+export const getAllDeliveries = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT 
+        d.delivery_id,
+        d.order_id,
+        d.customer_id,
+        d.delivery_address,
+        d.status,
+        d.is_completed,
+        o.total_price,
+        o.created_at,
+        COALESCE(c.username, c.name, 'Customer') AS customer_name,
+        c.email AS customer_email,
+        json_agg(json_build_object(
+          'product_id', p.id,
+          'name', p.name,
+          'quantity', oi.quantity,
+          'unit_price', oi.unit_price,
+          'image_url', p.image_url
+        ) ORDER BY p.name) AS items
+      FROM deliveries d
+      JOIN orders o ON d.order_id = o.order_id
+      JOIN customers c ON d.customer_id = c.customer_id
+      LEFT JOIN order_items oi ON o.order_id = oi.order_id
+      LEFT JOIN products p ON oi.product_id = p.id
+      GROUP BY d.delivery_id, o.order_id, o.total_price, o.created_at, c.username, c.name, c.email
+      ORDER BY o.created_at DESC`
+    );
+
+    return res.status(200).json({ success: true, data: result.rows });
+  } catch (error) {
+    console.error("Get all deliveries error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to load deliveries.",
     });
   }
 };
