@@ -34,7 +34,7 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="logo-container">
-        <h1 className="logo brand">THE DARE</h1>
+        <h1 className="logo brand" onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>THE DARE</h1>
         <p className="tagline type-eyebrow">dare to wear</p>
       </div>
 
