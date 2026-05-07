@@ -38,6 +38,7 @@ export const processPayment = async (req, res) => {
         cart_items,
         delivery_address,
         shippingAddress,
+        billing_address,
         recipientEmail,
     } = req.body;
     const customerId = req.customer?.customerId ?? req.customer?.customer_id;
@@ -112,11 +113,17 @@ export const processPayment = async (req, res) => {
     // 8. ödeme onaylandıysa order ı kaydet
     if (cart_items?.length) {
         try {
+            const submittedDeliveryAddress = delivery_address ?? shippingAddress;
+            const orderDeliveryAddress =
+                submittedDeliveryAddress && typeof submittedDeliveryAddress === "object"
+                    ? { ...submittedDeliveryAddress, billingAddress: billing_address }
+                    : submittedDeliveryAddress;
+
             const { order_id } = await createOrder(
                 customerId,
                 cart_items,
                 amount,
-                delivery_address ?? shippingAddress
+                orderDeliveryAddress
             );
 
             let invoiceEmailSent = true;

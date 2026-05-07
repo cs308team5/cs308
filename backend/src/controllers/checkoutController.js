@@ -9,20 +9,45 @@ function formatDeliveryAddress(shippingAddress) {
     return shippingAddress.trim();
   }
 
-  const addressParts = [
+  return [
     shippingAddress.address,
     shippingAddress.street,
     shippingAddress.city,
     shippingAddress.state,
     shippingAddress.zip,
     shippingAddress.country,
-  ];
+  ]
+    .filter(Boolean)
+    .join(", ")
+    .trim();
+}
 
-  return addressParts.filter(Boolean).join(", ").trim();
+function formatOptionalAddress(address) {
+  if (!address) {
+    return null;
+  }
+
+  if (typeof address === "string") {
+    return address.trim() || null;
+  }
+
+  const formattedAddress = [
+    address.address,
+    address.street,
+    address.city,
+    address.state,
+    address.zip,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(", ")
+    .trim();
+
+  return formattedAddress || null;
 }
 
 export const checkout = async (req, res) => {
-  const { cart, shippingAddress, paymentInfo } = req.body;
+  const { cart, shippingAddress, billingAddress, paymentInfo } = req.body;
 
   if (!cart || !Array.isArray(cart) || cart.length === 0) {
     return res.status(400).json({
@@ -32,6 +57,9 @@ export const checkout = async (req, res) => {
   }
 
   const deliveryAddress = formatDeliveryAddress(shippingAddress);
+  const formattedBillingAddress = formatOptionalAddress(billingAddress);
+  const phone =
+    typeof shippingAddress === "object" ? shippingAddress.phone?.trim() || null : null;
 
   if (!deliveryAddress) {
     return res.status(400).json({
@@ -99,10 +127,10 @@ export const checkout = async (req, res) => {
 
     await client.query(
       `
-      INSERT INTO deliveries (order_id, customer_id, delivery_address, status)
-      VALUES ($1, $2, $3, 'processing')
+      INSERT INTO deliveries (order_id, customer_id, delivery_address, billing_address, phone, status)
+      VALUES ($1, $2, $3, $4, $5, 'processing')
       `,
-      [orderId, customerId, deliveryAddress]
+      [orderId, customerId, deliveryAddress, formattedBillingAddress, phone]
     );
 
     await client.query("COMMIT");
