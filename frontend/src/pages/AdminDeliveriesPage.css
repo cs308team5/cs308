@@ -118,6 +118,39 @@
   border-top: 1px solid #f0f0f0;
 }
 
+.delivery-required-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.delivery-required-fields div {
+  min-width: 0;
+}
+
+.delivery-required-fields dt {
+  margin-bottom: 4px;
+  color: #777;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.delivery-required-fields dd {
+  margin: 0;
+  color: var(--black);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.delivery-address-field {
+  grid-column: 1 / -1;
+}
+
 .delivery-card-controls {
   display: flex;
   align-items: center;
@@ -188,7 +221,7 @@
   grid-template-columns: 44px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
-  min-height: 44px;
+  min-height: 54px;
   padding: 0;
   border: none;
   background: transparent;
@@ -223,9 +256,20 @@
   white-space: nowrap;
 }
 
-.delivery-item small {
+.delivery-item span small {
+  display: block;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #777;
+  font-size: 11px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+}
+
+.delivery-item > small {
   color: #777;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .delivery-admin-empty {
@@ -251,6 +295,10 @@
   }
 
   .delivery-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .delivery-required-fields {
     grid-template-columns: 1fr;
   }
 

@@ -89,7 +89,46 @@
 
 .admin-products-header {
     display: flex;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    position: sticky;
+    top: 78px;
+    z-index: 3;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(247, 247, 245, 0.96);
+    backdrop-filter: blur(8px);
+}
+
+.admin-product-filters {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(150px, 220px) minmax(130px, 170px);
+    gap: 10px;
+    flex: 1;
+}
+
+.product-search-input,
+.product-filter-select {
+    min-height: 40px;
+}
+
+.product-management-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.product-management-row .product-form {
+    margin-left: 70px;
+}
+
+.product-management-row .product-form .form-title {
+    overflow-wrap: anywhere;
+}
+
+.admin-products-header .add-product {
+    flex-shrink: 0;
 }
 
 .admin-card {
@@ -296,7 +335,21 @@
     }
 
     .admin-products-header {
+        align-items: stretch;
+        flex-direction: column;
         justify-content: flex-start;
+        position: static;
+        padding: 0;
+        background: transparent;
+        backdrop-filter: none;
+    }
+
+    .admin-product-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .product-management-row .product-form {
+        margin-left: 0;
     }
 
     .form-grid {

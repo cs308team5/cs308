@@ -10,10 +10,8 @@ describe("authController.signup", () => {
   const originalQuery = pool.query;
   const originalHash = bcrypt.hash;
   const originalConsoleError = console.error;
-  const originalAdminEmails = process.env.ADMIN_EMAILS;
 
   beforeEach(() => {
-    process.env.ADMIN_EMAILS = "";
     console.error = () => {};
   });
 
@@ -21,7 +19,6 @@ describe("authController.signup", () => {
     pool.query = originalQuery;
     bcrypt.hash = originalHash;
     console.error = originalConsoleError;
-    process.env.ADMIN_EMAILS = originalAdminEmails;
   });
 
   test("returns 400 when name is missing", async () => {
@@ -178,8 +175,9 @@ describe("authController.signup", () => {
       name: "Ada",
       username: "ada",
       email: "a@b.com",
-      isAdmin: false,
-      is_admin: false,
+      role: "customer",
+      isProductManager: false,
+      isSalesManager: false,
     });
   });
 
@@ -256,11 +254,9 @@ describe("authController.login", () => {
   const originalSign = jwt.sign;
   const originalConsoleError = console.error;
   const originalJwtSecret = process.env.JWT_SECRET;
-  const originalAdminEmails = process.env.ADMIN_EMAILS;
 
   beforeEach(() => {
     process.env.JWT_SECRET = "test-secret";
-    process.env.ADMIN_EMAILS = "";
     console.error = () => {};
   });
 
@@ -269,7 +265,6 @@ describe("authController.login", () => {
     bcrypt.compare = originalCompare;
     jwt.sign = originalSign;
     process.env.JWT_SECRET = originalJwtSecret;
-    process.env.ADMIN_EMAILS = originalAdminEmails;
     console.error = originalConsoleError;
   });
 
@@ -362,8 +357,9 @@ describe("authController.login", () => {
       name: "Ada",
       username: "ada",
       email: "a@b.com",
-      isAdmin: false,
-      is_admin: false,
+      role: "customer",
+      isProductManager: false,
+      isSalesManager: false,
     });
   });
 
@@ -424,37 +420,38 @@ describe("authController.login", () => {
       customerId: "c1",
       email: "a@b.com",
       name: "Ada",
-      isAdmin: false,
+      role: "customer",
     });
     assert.equal(signArgs[1], "test-secret");
     assert.deepEqual(signArgs[2], { expiresIn: "24h" });
   });
 
-  test("marks admin users in the response payload", async () => {
-    process.env.ADMIN_EMAILS = "admin@dare.com";
+  test("marks product managers in the response payload", async () => {
     pool.query = async () => ({
       rows: [
         {
           customer_id: "c1",
           name: "Ada",
           username: "ada",
-          email: "admin@dare.com",
+          email: "product@dare.com",
           password_hash: "secret",
+          role: "product_manager",
         },
       ],
     });
     jwt.sign = () => "signed-token";
 
     const req = createMockReq({
-      body: { email: "admin@dare.com", password: "secret" },
+      body: { email: "product@dare.com", password: "secret" },
     });
     const res = createMockRes();
 
     await login(req, res);
 
     assert.equal(res.statusCode, 200);
-    assert.equal(res.body.customer.isAdmin, true);
-    assert.equal(res.body.customer.is_admin, true);
+    assert.equal(res.body.customer.role, "product_manager");
+    assert.equal(res.body.customer.isProductManager, true);
+    assert.equal(res.body.customer.isSalesManager, false);
   });
 
   test("returns 500 when login fails unexpectedly", async () => {

@@ -16,15 +16,15 @@ import MyOrdersPage from "./pages/MyOrdersPage.jsx";
 import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
 import { AppShell } from "./pages/Navbar.jsx";
 
-function AdminProtectedRoute({ children }) {
+function ProductManagerRoute({ children }) {
   const user = getCurrentUser();
-  const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
+  const isProductManager = user?.role === "product_manager";
 
   if (!user?.token) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
+  if (!isProductManager) {
     return <Navigate to="/home" replace />;
   }
 
@@ -82,25 +82,25 @@ const router = createBrowserRouter([
       {
         path: "/admin",
         element: (
-          <AdminProtectedRoute>
+          <ProductManagerRoute>
             <AdminPage />
-          </AdminProtectedRoute>
+          </ProductManagerRoute>
         ),
       },
       {
         path: "/admin/deliveries",
         element: (
-          <AdminProtectedRoute>
+          <ProductManagerRoute>
             <AdminDeliveriesPage />
-          </AdminProtectedRoute>
+          </ProductManagerRoute>
         ),
       },
       {
         path: "/admin/products",
         element: (
-          <AdminProtectedRoute>
+          <ProductManagerRoute>
             <AdminProductsPage />
-          </AdminProtectedRoute>
+          </ProductManagerRoute>
         ),
       },
     ],

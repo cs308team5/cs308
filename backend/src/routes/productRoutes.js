@@ -1,7 +1,15 @@
 import express from "express";
-import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, getReviewEligibility } from "../controllers/productController.js";
+import {
+  getProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getReviewEligibility,
+  updateProductStock,
+} from "../controllers/productController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
-import adminMiddleware from "../middleware/adminMiddleware.js";
+import { requireProductManager } from "../middleware/roleMiddleware.js";
 import { submitRating } from "../controllers/productController.js";
 import pool from "../config/db.js";
 
@@ -38,8 +46,9 @@ router.get("/:id/review-eligibility", authMiddleware, getReviewEligibility);
 router.post("/:id/rating", authMiddleware, submitRating);
 
 // Admin routes (auth korumalı)
-router.post("/", authMiddleware, adminMiddleware, createProduct);
-router.put("/:id", authMiddleware, adminMiddleware, updateProduct);
-router.delete("/:id", authMiddleware, adminMiddleware, deleteProduct);
+router.post("/", authMiddleware, requireProductManager, createProduct);
+router.put("/:id", authMiddleware, requireProductManager, updateProduct);
+router.patch("/:id/stock", authMiddleware, requireProductManager, updateProductStock);
+router.delete("/:id", authMiddleware, requireProductManager, deleteProduct);
 
 export default router;

@@ -24,6 +24,10 @@ function formatDate(value) {
   });
 }
 
+function formatCompletion(value) {
+  return value ? "Completed" : "Not completed";
+}
+
 export default function AdminDeliveriesPage() {
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -64,7 +68,7 @@ export default function AdminDeliveriesPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/deliveries/admin", {
+      const res = await fetch("/api/deliveries/manager", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -161,14 +165,31 @@ export default function AdminDeliveriesPage() {
               <article className="delivery-admin-card" key={delivery.delivery_id}>
                 <div className="delivery-card-main">
                   <div className="delivery-order-meta">
+                    <span className="delivery-order-id">Delivery #{delivery.delivery_id}</span>
                     <span className="delivery-order-id">Order #{delivery.order_id}</span>
                     <span>{formatDate(delivery.created_at)}</span>
                   </div>
                   <h2>{delivery.customer_name || "Customer"}</h2>
                   <p>{delivery.customer_email}</p>
-                  {delivery.delivery_address && (
-                    <p className="delivery-address-line">{delivery.delivery_address}</p>
-                  )}
+
+                  <dl className="delivery-required-fields">
+                    <div>
+                      <dt>Customer ID</dt>
+                      <dd>{delivery.customer_id}</dd>
+                    </div>
+                    <div>
+                      <dt>Total Price</dt>
+                      <dd>{formatCurrency(delivery.total_price)}</dd>
+                    </div>
+                    <div>
+                      <dt>Completion</dt>
+                      <dd>{formatCompletion(delivery.is_completed)}</dd>
+                    </div>
+                    <div className="delivery-address-field">
+                      <dt>Address</dt>
+                      <dd>{delivery.delivery_address || "No address"}</dd>
+                    </div>
+                  </dl>
                 </div>
 
                 <div className="delivery-card-controls">
@@ -187,7 +208,6 @@ export default function AdminDeliveriesPage() {
                       </option>
                     ))}
                   </select>
-                  <strong>{formatCurrency(delivery.total_price)}</strong>
                 </div>
 
                 {items.length > 0 && (
@@ -201,8 +221,11 @@ export default function AdminDeliveriesPage() {
                         disabled={!item.product_id}
                       >
                         {item.image_url && <img src={item.image_url} alt={item.name} />}
-                        <span>{item.name}</span>
-                        <small>Qty {item.quantity}</small>
+                        <span>
+                          {item.name}
+                          <small>Product ID: {item.product_id}</small>
+                        </span>
+                        <small>Quantity: {item.quantity}</small>
                       </button>
                     ))}
                   </div>

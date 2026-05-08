@@ -106,7 +106,6 @@ export function GlobalNavbar() {
     const navigate = useNavigate();
     const [cartCount, setCartCount] = useState(0);
     const [user, setUser] = useState(null);
-    const [isAdmin, setIsAdmin] = useState(false);
 
     const loadCart = async (u) => {
         const count = await readCartCount(u);
@@ -116,13 +115,11 @@ export function GlobalNavbar() {
     useEffect(() => {
         const u = getCurrentUser();
         setUser(u);
-        setIsAdmin(Boolean(u?.isAdmin ?? u?.is_admin));
         loadCart(u);
 
         const onCartUpdate = () => {
             const latestUser = getCurrentUser();
             setUser(latestUser);
-            setIsAdmin(Boolean(latestUser?.isAdmin ?? latestUser?.is_admin));
             loadCart(latestUser);
         };
         window.addEventListener("cartUpdated", onCartUpdate);
@@ -185,8 +182,8 @@ export function GlobalSidebar() {
     const navigate  = useNavigate();
     const location  = useLocation();
     const user = getCurrentUser();
-    const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
-    const navItems = isAdmin ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS;
+    const isProductManager = user?.role === "product_manager";
+    const navItems = isProductManager ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS;
 
     // Derive active tab from current path
     const activeId = [...navItems].sort((a, b) => b.path.length - a.path.length).find((item) =>

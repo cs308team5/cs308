@@ -1,5 +1,22 @@
 import { mergeGuestCartOnLogin } from "./productAndCartService";
 
+const normalizeRole = (role) => {
+  const value = String(role ?? "customer")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
+
+  if (value === "sales_manager" || value === "salesmanager" || value === "sales") {
+    return "sales_manager";
+  }
+
+  if (value === "product_manager" || value === "productmanager" || value === "product") {
+    return "product_manager";
+  }
+
+  return "customer";
+};
+
 export async function register({ fullName, username, email, password }) {
   try {
     const cleanFullName = fullName?.trim();
@@ -81,8 +98,7 @@ export async function login(email, password) {
       token: data.token,
       customer_id: data.customer.customer_id ?? data.customer.customerId,
       customerId: data.customer.customerId ?? data.customer.customer_id,
-      isAdmin: Boolean(data.customer.isAdmin ?? data.customer.is_admin),
-      is_admin: Boolean(data.customer.isAdmin ?? data.customer.is_admin),
+      role: normalizeRole(data.customer.role),
     };
 
     localStorage.setItem("user", JSON.stringify(normalizedUser));
@@ -112,5 +128,11 @@ export async function logout() {
 
 export function getCurrentUser() {
   const user = localStorage.getItem("user");
-  return user ? JSON.parse(user) : null;
+  if (!user) return null;
+
+  const parsed = JSON.parse(user);
+  return {
+    ...parsed,
+    role: normalizeRole(parsed.role),
+  };
 }

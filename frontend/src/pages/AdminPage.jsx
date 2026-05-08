@@ -7,7 +7,7 @@ export default function AdminPage() {
     const navigate = useNavigate();
     const user = getCurrentUser();
     const token = user?.token ?? null;
-    const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
+    const isProductManager = user?.role === "product_manager";
 
     const [comments, setComments] = useState([]);
     const [commentsLoading, setCommentsLoading] = useState(true);
@@ -86,12 +86,12 @@ export default function AdminPage() {
         }
     };
 
-    if (!token || !isAdmin) {
+    if (!token || !isProductManager) {
         return (
             <main className="admin-content">
                 <div className="admin-guard-card">
-                    <h2 className="brand">Admin access required</h2>
-                    <p className="admin-empty">Please log in with an admin account to manage comments.</p>
+                    <h2 className="brand">Product manager access required</h2>
+                    <p className="admin-empty">Please log in with a product manager account to manage comments.</p>
                     <button className="admin-btn add-product" onClick={() => navigate("/login")}>Go to Login</button>
                 </div>
             </main>

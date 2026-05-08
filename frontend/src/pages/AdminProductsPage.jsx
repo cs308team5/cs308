@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../services/authService.js";
 import "./AdminPage.css";
@@ -20,15 +20,42 @@ export default function AdminProductsPage() {
     const navigate = useNavigate();
     const user = getCurrentUser();
     const token = user?.token ?? null;
-    const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
+    const isProductManager = user?.role === "product_manager";
 
     const [products, setProducts] = useState([]);
     const [productsLoading, setProductsLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(EMPTY_FORM);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("all");
+    const [stockFilter, setStockFilter] = useState("all");
     const [msg, setMsg] = useState("");
     const [msgType, setMsgType] = useState("success");
+
+    const categories = useMemo(() => {
+        return [...new Set(products.map((product) => product.category).filter(Boolean))]
+            .sort((left, right) => left.localeCompare(right));
+    }, [products]);
+
+    const filteredProducts = useMemo(() => {
+        const query = searchTerm.trim().toLowerCase();
+
+        return products.filter((product) => {
+            const matchesSearch =
+                !query ||
+                [product.name, product.category, product.model, product.serial_number]
+                    .some((value) => String(value ?? "").toLowerCase().includes(query));
+            const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
+            const stock = Number(product.stock ?? product.stock_quantity ?? 0);
+            const matchesStock =
+                stockFilter === "all" ||
+                (stockFilter === "in-stock" && stock > 0) ||
+                (stockFilter === "out-of-stock" && stock <= 0);
+
+            return matchesSearch && matchesCategory && matchesStock;
+        });
+    }, [categoryFilter, products, searchTerm, stockFilter]);
 
     const showMsg = (text, type = "success") => {
         setMsg(text);
@@ -77,7 +104,13 @@ export default function AdminProductsPage() {
             distributor_information: product.distributor_information ?? "",
         });
         setEditingId(product.id);
-        setShowForm(true);
+        setShowForm(false);
+    };
+
+    const closeForm = () => {
+        setShowForm(false);
+        setEditingId(null);
+        setForm(EMPTY_FORM);
     };
 
     const handleSubmitProduct = async () => {
@@ -86,7 +119,7 @@ export default function AdminProductsPage() {
             return;
         }
         if (!token) {
-            showMsg("Please log in again as an admin.", "error");
+            showMsg("Please log in again as a product manager.", "error");
             return;
         }
 
@@ -111,7 +144,7 @@ export default function AdminProductsPage() {
 
             if (data.success) {
                 showMsg(editingId ? "Product updated." : "Product added.");
-                setShowForm(false);
+                closeForm();
                 fetchProducts();
             } else {
                 showMsg(data.message || "Failed.", "error");
@@ -121,10 +154,52 @@ export default function AdminProductsPage() {
         }
     };
 
+    const renderProductForm = (title) => (
+        <div className="admin-card product-form">
+            <h3 className="form-title brand">{title}</h3>
+            <div className="form-grid">
+                {[
+                    { name: "name", placeholder: "Product Name *" },
+                    { name: "category", placeholder: "Category *" },
+                    { name: "price", placeholder: "Price *", type: "number" },
+                    { name: "stock_quantity", placeholder: "Stock Quantity", type: "number" },
+                    { name: "image_url", placeholder: "Image URL" },
+                    { name: "model", placeholder: "Model" },
+                    { name: "serial_number", placeholder: "Serial Number" },
+                    { name: "warranty_status", placeholder: "Warranty Status" },
+                    { name: "distributor_information", placeholder: "Distributor Info" },
+                ].map((field) => (
+                    <input
+                        key={field.name}
+                        className="form-input"
+                        name={field.name}
+                        type={field.type ?? "text"}
+                        placeholder={field.placeholder}
+                        value={form[field.name]}
+                        onChange={handleFormChange}
+                    />
+                ))}
+                <textarea
+                    className="form-input form-textarea"
+                    name="description"
+                    placeholder="Description"
+                    value={form.description}
+                    onChange={handleFormChange}
+                />
+            </div>
+            <div className="admin-actions">
+                <button className="admin-btn approve" onClick={handleSubmitProduct}>
+                    {editingId ? "Update" : "Add"}
+                </button>
+                <button className="admin-btn reject" onClick={closeForm}>Cancel</button>
+            </div>
+        </div>
+    );
+
     const handleDeleteProduct = async (id, name) => {
         if (!window.confirm(`Delete "${name}"?`)) return;
         if (!token) {
-            showMsg("Please log in again as an admin.", "error");
+            showMsg("Please log in again as a product manager.", "error");
             return;
         }
 
@@ -143,12 +218,12 @@ export default function AdminProductsPage() {
         }
     };
 
-    if (!token || !isAdmin) {
+    if (!token || !isProductManager) {
         return (
             <main className="admin-content">
                 <div className="admin-guard-card">
-                    <h2 className="brand">Admin access required</h2>
-                    <p className="admin-empty">Please log in with an admin account to manage products.</p>
+                    <h2 className="brand">Product manager access required</h2>
+                    <p className="admin-empty">Please log in with a product manager account to manage products.</p>
                     <button className="admin-btn add-product" onClick={() => navigate("/login")}>Go to Login</button>
                 </div>
             </main>
@@ -168,74 +243,67 @@ export default function AdminProductsPage() {
 
                 <div className="admin-list">
                     <div className="admin-products-header">
+                        <div className="admin-product-filters">
+                            <input
+                                className="form-input product-search-input"
+                                value={searchTerm}
+                                onChange={(event) => setSearchTerm(event.target.value)}
+                                placeholder="Search products by name, category, model, serial..."
+                            />
+                            <select
+                                className="form-input product-filter-select"
+                                value={categoryFilter}
+                                onChange={(event) => setCategoryFilter(event.target.value)}
+                            >
+                                <option value="all">All categories</option>
+                                {categories.map((category) => (
+                                    <option value={category} key={category}>{category}</option>
+                                ))}
+                            </select>
+                            <select
+                                className="form-input product-filter-select"
+                                value={stockFilter}
+                                onChange={(event) => setStockFilter(event.target.value)}
+                            >
+                                <option value="all">All stock</option>
+                                <option value="in-stock">In stock</option>
+                                <option value="out-of-stock">Out of stock</option>
+                            </select>
+                        </div>
                         <button className="admin-btn add-product" onClick={openAddForm}>+ Add Product</button>
                     </div>
 
-                    {showForm && (
-                        <div className="admin-card product-form">
-                            <h3 className="form-title brand">{editingId ? "Edit Product" : "Add New Product"}</h3>
-                            <div className="form-grid">
-                                {[
-                                    { name: "name", placeholder: "Product Name *" },
-                                    { name: "category", placeholder: "Category *" },
-                                    { name: "price", placeholder: "Price *", type: "number" },
-                                    { name: "stock_quantity", placeholder: "Stock Quantity", type: "number" },
-                                    { name: "image_url", placeholder: "Image URL" },
-                                    { name: "model", placeholder: "Model" },
-                                    { name: "serial_number", placeholder: "Serial Number" },
-                                    { name: "warranty_status", placeholder: "Warranty Status" },
-                                    { name: "distributor_information", placeholder: "Distributor Info" },
-                                ].map((field) => (
-                                    <input
-                                        key={field.name}
-                                        className="form-input"
-                                        name={field.name}
-                                        type={field.type ?? "text"}
-                                        placeholder={field.placeholder}
-                                        value={form[field.name]}
-                                        onChange={handleFormChange}
-                                    />
-                                ))}
-                                <textarea
-                                    className="form-input form-textarea"
-                                    name="description"
-                                    placeholder="Description"
-                                    value={form.description}
-                                    onChange={handleFormChange}
-                                />
-                            </div>
-                            <div className="admin-actions">
-                                <button className="admin-btn approve" onClick={handleSubmitProduct}>
-                                    {editingId ? "Update" : "Add"}
-                                </button>
-                                <button className="admin-btn reject" onClick={() => setShowForm(false)}>Cancel</button>
-                            </div>
-                        </div>
-                    )}
+                    {showForm && renderProductForm("Add New Product")}
 
                     {productsLoading && <p className="admin-empty">Loading...</p>}
                     {!productsLoading && products.length === 0 && (
                         <p className="admin-empty">No products found.</p>
                     )}
-                    {products.map((product) => (
-                        <div className="admin-card product-card" key={product.id}>
-                            <div className="product-card-left">
-                                {product.image_url && (
-                                    <img src={product.image_url} alt={product.name} className="product-thumb" />
-                                )}
-                                <div className="product-card-info">
-                                    <span className="admin-product-name brand">{product.name}</span>
-                                    <span className="product-category">{product.category}</span>
-                                    <span className="product-price">${Number(product.price).toFixed(2)}</span>
-                                    <span className={`product-stock ${product.stock <= 0 ? "out" : ""}`}>
-                                        Stock: {product.stock}
-                                    </span>
+                    {!productsLoading && products.length > 0 && filteredProducts.length === 0 && (
+                        <p className="admin-empty">No products match your filters.</p>
+                    )}
+                    {filteredProducts.map((product) => (
+                        <div className="product-management-row" key={product.id}>
+                            <div className="admin-card product-card">
+                                <div className="product-card-left">
+                                    {product.image_url && (
+                                        <img src={product.image_url} alt={product.name} className="product-thumb" />
+                                    )}
+                                    <div className="product-card-info">
+                                        <span className="admin-product-name brand">{product.name}</span>
+                                        <span className="product-category">{product.category}</span>
+                                        <span className="product-price">${Number(product.price).toFixed(2)}</span>
+                                        <span className={`product-stock ${product.stock <= 0 ? "out" : ""}`}>
+                                            Stock: {product.stock}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="admin-actions">
+                                    <button className="admin-btn approve" onClick={() => openEditForm(product)}>Edit</button>
+                                    <button className="admin-btn reject" onClick={() => handleDeleteProduct(product.id, product.name)}>Delete</button>
                                 </div>
                             </div>
-                            <div className="admin-actions">
-                                <button className="admin-btn approve" onClick={() => openEditForm(product)}>Edit</button>
-                                <button className="admin-btn reject" onClick={() => handleDeleteProduct(product.id, product.name)}>Delete</button>
-                            </div>
+                            {editingId === product.id && renderProductForm(`Edit ${product.name}`)}
                         </div>
                     ))}
                 </div>
