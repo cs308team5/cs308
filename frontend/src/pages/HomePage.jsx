@@ -2,9 +2,8 @@ import "./HomePage.css";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
-import { faCartShopping, faHeart as faHeartSolid, faShareNodes } from "@fortawesome/free-solid-svg-icons";
-import { getCurrentUser, logout } from "../services/authService.js";
+import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
+import { getCurrentUser } from "../services/authService.js";
 import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
 import SearchBar from "../components/SearchBar.jsx";
 
@@ -25,13 +24,7 @@ const PennantSvg = ({ className, onClick }) => (
 export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity }) => {
   const navigate = useNavigate();
   const inStock = Number(stock_quantity) > 0;
-  const [isLiked, setIsLiked] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
-
-  const toggleLike = (event) => {
-    event.stopPropagation();
-    setIsLiked((current) => !current);
-  };
 
   const togglePin = (event) => {
     event.stopPropagation();
@@ -58,7 +51,6 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
         await addToCart(user.customer_id, productId);
       }
 
-      window.dispatchEvent(new Event("cartUpdated"));
     } catch (err) {
       console.error("Supabase Add to Cart Error:", err);
       alert(`${err.message}`);
@@ -89,17 +81,6 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
           </div>
           <div className="polaroid-content-utility">
             <FontAwesomeIcon icon={faShareNodes} color="var(--blue)" size="lg" />
-            <div className="like-container">
-              <p className="like-count">123</p>
-              <FontAwesomeIcon
-                className={isLiked ? "heart-pop" : ""}
-                onClick={toggleLike}
-                style={{ cursor: "pointer" }}
-                icon={isLiked ? faHeartSolid : faHeartRegular}
-                color={isLiked ? "var(--pink)" : "var(--blue)"}
-                size="lg"
-              />
-            </div>
           </div>
         </div>
 
@@ -177,7 +158,6 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
 export default function HomePage() {
   const [displayName, setDisplayName] = useState("Guest");
 
-  const [isAdmin, setIsAdmin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState([]);
   const navigate = useNavigate();
@@ -195,7 +175,6 @@ export default function HomePage() {
     const user = getCurrentUser();
     if (user) {
       setDisplayName(user.username || user.name || "User");
-      setIsAdmin(Boolean(user.isAdmin ?? user.is_admin));
     }
   }, []);
 
@@ -240,14 +219,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="header-actions">
-            {isAdmin && (
-              <button className="admin-comments-btn" onClick={() => navigate("/admin")}>
-                Moderate Comments
-              </button>
-            )}
-
-          </div>
         </div>
 
         <div className="feed-column">

@@ -1,10 +1,14 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../config/db.js";
-import { isAdminCustomer } from "../utils/adminAccess.js";
+import {
+  normalizeRole,
+  PRODUCT_MANAGER_ROLE,
+  SALES_MANAGER_ROLE,
+} from "../utils/adminAccess.js";
 
 const toSafeCustomer = (customer) => {
-  const isAdmin = isAdminCustomer(customer);
+  const role = normalizeRole(customer.role);
 
   return {
     customerId: customer.customer_id,
@@ -12,8 +16,9 @@ const toSafeCustomer = (customer) => {
     name: customer.name,
     username: customer.username ?? null,
     email: customer.email,
-    isAdmin,
-    is_admin: isAdmin,
+    role,
+    isProductManager: role === PRODUCT_MANAGER_ROLE,
+    isSalesManager: role === SALES_MANAGER_ROLE,
   };
 };
 
@@ -99,7 +104,7 @@ export const login = async (req, res) => {
         customerId: customer.customer_id,
         email: customer.email,
         name: customer.name,
-        isAdmin: isAdminCustomer(customer),
+        role: normalizeRole(customer.role),
       },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }

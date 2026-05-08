@@ -23,6 +23,11 @@ export default function CheckoutPage() {
     state: "",
     zip: "",
     country: "",
+    billingStreet: "",
+    billingCity: "",
+    billingState: "",
+    billingZip: "",
+    billingCountry: "",
     cardNumber: "",
     cardName: "",
     expiry: "",
@@ -30,6 +35,7 @@ export default function CheckoutPage() {
   });
   const isSubmittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sameAsDelivery, setSameAsDelivery] = useState(false);
 
   const validateEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
@@ -69,6 +75,26 @@ export default function CheckoutPage() {
     }
 
     setForm({ ...form, [name]: value });
+  };
+
+  const getBillingAddress = () => {
+    if (sameAsDelivery) {
+      return {
+        street: form.street,
+        city: form.city,
+        state: form.state,
+        zip: form.zip,
+        country: form.country,
+      };
+    }
+
+    return {
+      street: form.billingStreet,
+      city: form.billingCity,
+      state: form.billingState,
+      zip: form.billingZip,
+      country: form.billingCountry,
+    };
   };
 
   const handlePlaceOrder = async () => {
@@ -151,6 +177,40 @@ export default function CheckoutPage() {
       return;
     }
 
+    const billingAddress = getBillingAddress();
+
+    if (!sameAsDelivery) {
+      if (!billingAddress.street.trim()) {
+        alert("Billing street address is required.");
+        releaseSubmitLock();
+        return;
+      }
+
+      if (!billingAddress.city.trim()) {
+        alert("Billing city is required.");
+        releaseSubmitLock();
+        return;
+      }
+
+      if (!billingAddress.state.trim()) {
+        alert("Billing state is required.");
+        releaseSubmitLock();
+        return;
+      }
+
+      if (!billingAddress.zip.trim()) {
+        alert("Billing ZIP code is required.");
+        releaseSubmitLock();
+        return;
+      }
+
+      if (!billingAddress.country.trim() || billingAddress.country === "Select country") {
+        alert("Billing country is required.");
+        releaseSubmitLock();
+        return;
+      }
+    }
+
     if (form.cardNumber.replace(/\s/g, "").length !== 16) {
       alert("Please enter a valid 16-digit card number.");
       releaseSubmitLock();
@@ -215,6 +275,7 @@ export default function CheckoutPage() {
         zip: form.zip,
         country: form.country,
       },
+      billing: billingAddress,
       subtotal,
       shippingCost: shipping,
       tax,
@@ -240,7 +301,9 @@ export default function CheckoutPage() {
         state: form.state,
         zip: form.zip,
         country: form.country,
+        phone: form.phone,
       },
+      billing_address: billingAddress,
     };
 
     let paymentRes;
@@ -352,6 +415,69 @@ export default function CheckoutPage() {
                 <option>Turkey</option>
               </select>
             </div>
+          </div>
+
+          <div className="card">
+            <div className="card-header">
+              <div className="icon">🧾</div>
+              <div>
+                <h2>Billing Address</h2>
+                <p>Where should we send billing details?</p>
+              </div>
+            </div>
+
+            <label className="same-address-option">
+              <input
+                type="checkbox"
+                checked={sameAsDelivery}
+                onChange={(event) => setSameAsDelivery(event.target.checked)}
+              />
+              <span>Same as delivery address</span>
+            </label>
+
+            {!sameAsDelivery && (
+              <>
+                <div className="input-group">
+                  <label>Street Address</label>
+                  <input
+                    name="billingStreet"
+                    value={form.billingStreet}
+                    onChange={handleChange}
+                    placeholder="123 Main Street, Apt 4B"
+                    required
+                  />
+                </div>
+
+                <div className="grid-3">
+                  <div className="input-group">
+                    <label>City</label>
+                    <input name="billingCity" value={form.billingCity} onChange={handleChange} placeholder="New York" required />
+                  </div>
+
+                  <div className="input-group">
+                    <label>State</label>
+                    <input name="billingState" value={form.billingState} onChange={handleChange} placeholder="NY" required />
+                  </div>
+
+                  <div className="input-group">
+                    <label>ZIP Code</label>
+                    <input name="billingZip" value={form.billingZip} onChange={handleChange} placeholder="10001" required />
+                  </div>
+                </div>
+
+                <div className="input-group">
+                  <label>Country</label>
+                  <select name="billingCountry" value={form.billingCountry} onChange={handleChange} required>
+                    <option value="">Select country</option>
+                    <option>United States</option>
+                    <option>United Kingdom</option>
+                    <option>Germany</option>
+                    <option>France</option>
+                    <option>Turkey</option>
+                  </select>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="card">

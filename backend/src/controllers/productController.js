@@ -81,6 +81,11 @@ export const getProducts = async (req, res) => {
       category: p.category,
       stock: p.stock_quantity,        // normalized field name
       image_url: p.image_url,
+      model: p.model,
+      serial_number: p.serial_number,
+      warranty_status: p.warranty_status,
+      distributor_information: p.distributor_information,
+      additional_attributes: p.additional_attributes,
       inStock: p.stock_quantity > 0   // derived field
     }));
 
@@ -340,6 +345,38 @@ export const updateProduct = async (req, res) => {
     return res.status(200).json({ success: true, data: result.rows[0] });
   } catch (error) {
     console.error("Update product error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+export const updateProductStock = async (req, res) => {
+  const { id } = req.params;
+  const { stock_quantity } = req.body;
+  const stockQuantity = Number(stock_quantity);
+
+  if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {
+    return res.status(400).json({
+      success: false,
+      message: "stock_quantity must be a non-negative integer.",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE products
+       SET stock_quantity = $1
+       WHERE id = $2
+       RETURNING *`,
+      [stockQuantity, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Product not found." });
+    }
+
+    return res.status(200).json({ success: true, data: result.rows[0] });
+  } catch (error) {
+    console.error("Update product stock error:", error);
     return res.status(500).json({ success: false, message: "Server error." });
   }
 };

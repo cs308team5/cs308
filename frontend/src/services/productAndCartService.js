@@ -1,5 +1,9 @@
 import { supabase } from "../lib/supabaseClient";
 
+function notifyCartUpdated() {
+  window.dispatchEvent(new Event("cartUpdated"));
+}
+
 const escapeSearchValue = (value) =>
   value
     .replaceAll("\\", "\\\\")
@@ -139,7 +143,7 @@ export async function addToCart(userId, productId) {
   }
 }
 */
-export async function addToCart(userId, productId) {
+export async function addToCart(userId, productId, quantity = 1) {
   if (userId === undefined || productId === undefined) {
     throw new Error("userId or productId is undefined.");
   }
@@ -149,7 +153,7 @@ export async function addToCart(userId, productId) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ userId, productId }),
+    body: JSON.stringify({ userId, productId, quantity }),
   });
 
   const raw = await response.text();
@@ -159,6 +163,7 @@ export async function addToCart(userId, productId) {
     throw new Error(data.message || "Failed to add to cart");
   }
 
+  notifyCartUpdated();
   return data;
 }
 
@@ -168,6 +173,7 @@ export async function updateCartQuantity(cartItemId, quantity) {
     .update({ quantity })
     .eq("id", cartItemId);
   if (error) throw error;
+  notifyCartUpdated();
 }
 
 export async function removeFromCart(cartItemId) {
@@ -176,6 +182,27 @@ export async function removeFromCart(cartItemId) {
     .delete()
     .eq("id", cartItemId);
   if (error) throw error;
+  notifyCartUpdated();
+}
+
+export async function mergeGuestCartOnLogin(userId) {
+  const guestCart = getGuestCart();
+  if (guestCart.length === 0) return;
+
+  for(const item of guestCart) {
+    for(let i = 0; i < item.quantity; i++) {
+      try 
+      {
+        await addToCart(userId, item.product_id, 1);
+      } 
+      catch (error) 
+      {
+        console.error(`Failed to merge item ${item.product_id} into cart:`, error);
+      }
+    }
+  }
+
+  saveGuestCart([]);
 }
 
 // Local cart for quests
@@ -186,6 +213,7 @@ export function getGuestCart() {
 
 export function saveGuestCart(cart) {
   localStorage.setItem("guest_cart", JSON.stringify(cart));
+  notifyCartUpdated();
 }
 
 export function addToGuestCart(product) {

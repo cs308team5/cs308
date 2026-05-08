@@ -6,6 +6,7 @@ import {
   getReviewEligibility,
   getProducts,
   submitRating,
+  updateProductStock,
 } from "../src/controllers/productController.js";
 import { createMockReq, createMockRes } from "./helpers/httpTestUtils.js";
 
@@ -129,6 +130,11 @@ describe("productController.getProducts", () => {
           category: "clothing",
           stock_quantity: 2,
           image_url: "img.png",
+          model: "Evening",
+          serial_number: "DR-001",
+          warranty_status: "2 years",
+          distributor_information: "Dare Distribution",
+          additional_attributes: { color: "red" },
         },
       ],
     });
@@ -148,6 +154,11 @@ describe("productController.getProducts", () => {
       category: "clothing",
       stock: 2,
       image_url: "img.png",
+      model: "Evening",
+      serial_number: "DR-001",
+      warranty_status: "2 years",
+      distributor_information: "Dare Distribution",
+      additional_attributes: { color: "red" },
       inStock: true,
     });
   });
@@ -203,6 +214,10 @@ describe("productController.getProductById", () => {
           category: "clothing",
           stock_quantity: 4,
           image_url: "img.png",
+          model: "Evening",
+          serial_number: "DR-001",
+          warranty_status: "2 years",
+          distributor_information: "Dare Distribution",
           additional_attributes: { color: "red" },
         },
       ],
@@ -222,6 +237,10 @@ describe("productController.getProductById", () => {
       category: "clothing",
       stock: 4,
       image_url: "img.png",
+      model: "Evening",
+      serial_number: "DR-001",
+      warranty_status: "2 years",
+      distributor_information: "Dare Distribution",
       additional_attributes: { color: "red" },
       inStock: true,
     });
@@ -273,6 +292,20 @@ describe("productController.submitRating", () => {
     const req = createMockReq({
       params: { id: "p1" },
       body: { rating: 6 },
+      customer: { customerId: "u1" },
+    });
+    const res = createMockRes();
+
+    await submitRating(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "Rating must be between 0.5 and 5 in 0.5 increments");
+  });
+
+  test("returns 400 when rating is not a half-star increment", async () => {
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { rating: 3.25 },
       customer: { customerId: "u1" },
     });
     const res = createMockRes();
@@ -414,6 +447,70 @@ describe("productController.submitRating", () => {
 
     assert.equal(res.statusCode, 500);
     assert.equal(res.body.message, "Server error");
+  });
+});
+
+describe("productController.updateProductStock", () => {
+  const originalQuery = pool.query;
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    pool.query = originalQuery;
+    console.error = originalConsoleError;
+  });
+
+  test("returns 400 when stock quantity is invalid", async () => {
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { stock_quantity: -1 },
+    });
+    const res = createMockRes();
+
+    await updateProductStock(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "stock_quantity must be a non-negative integer.");
+  });
+
+  test("updates product stock", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return {
+        rows: [{ id: "p1", stock_quantity: 7 }],
+      };
+    };
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { stock_quantity: 7 },
+    });
+    const res = createMockRes();
+
+    await updateProductStock(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(capturedParams, [7, "p1"]);
+    assert.equal(res.body.data.stock_quantity, 7);
+  });
+
+  test("returns 404 when product stock target does not exist", async () => {
+    pool.query = async () => ({ rows: [] });
+
+    const req = createMockReq({
+      params: { id: "missing-product" },
+      body: { stock_quantity: 3 },
+    });
+    const res = createMockRes();
+
+    await updateProductStock(req, res);
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(res.body.message, "Product not found.");
   });
 });
 

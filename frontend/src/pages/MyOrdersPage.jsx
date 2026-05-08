@@ -97,10 +97,10 @@ export default function MyOrdersPage() {
                   </div>
                   <div className="order-right">
                     <span
-                      className="status-badge"
+                      className="myorders-status-badge"
                       style={{ color: config.color, background: config.bg }}
                     >
-                      <span className="status-dot" style={{ background: config.dot }} />
+                      <span className="myorders-status-dot" style={{ background: config.dot }} />
                       {config.label}
                     </span>
                     <span className="order-total">${Number(order.total_price).toFixed(2)}</span>

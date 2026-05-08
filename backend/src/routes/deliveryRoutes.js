@@ -1,8 +1,16 @@
 import express from "express";
-import { updateDeliveryStatus, getMyDeliveries } from "../controllers/deliveryController.js";
+import {
+  updateDeliveryStatus,
+  getAllDeliveries,
+  getMyDeliveries,
+} from "../controllers/deliveryController.js";
+import authMiddleware from "../middleware/authMiddleware.js";
+import { requireProductManager } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-router.patch("/:deliveryId/status", updateDeliveryStatus);
+router.get("/manager", authMiddleware, requireProductManager, getAllDeliveries);
+router.get("/admin", authMiddleware, requireProductManager, getAllDeliveries);
+router.patch("/:deliveryId/status", authMiddleware, requireProductManager, updateDeliveryStatus);
 router.get("/my/:customerId", getMyDeliveries);
 export default router;

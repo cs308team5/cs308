@@ -9,24 +9,26 @@ import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
 import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
 import AdminPage from "./pages/AdminPage";
+import AdminDeliveriesPage from "./pages/AdminDeliveriesPage.jsx";
+import AdminProductsPage from "./pages/AdminProductsPage.jsx";
 import { getCurrentUser } from "./services/authService.js";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
 import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
 import { AppShell } from "./pages/Navbar.jsx";
 
-function AdminRoute() {
+function ProductManagerRoute({ children }) {
   const user = getCurrentUser();
-  const isAdmin = Boolean(user?.isAdmin ?? user?.is_admin);
+  const isProductManager = user?.role === "product_manager";
 
   if (!user?.token) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!isAdmin) {
+  if (!isProductManager) {
     return <Navigate to="/home" replace />;
   }
 
-  return <AdminPage />;
+  return children;
 }
 
 function ProtectedRoute({ children }) {
@@ -77,7 +79,30 @@ const router = createBrowserRouter([
             </ProtectedRoute>
         ),
       },
-      { path: "/admin", element: <AdminRoute /> },
+      {
+        path: "/admin",
+        element: (
+          <ProductManagerRoute>
+            <AdminPage />
+          </ProductManagerRoute>
+        ),
+      },
+      {
+        path: "/admin/deliveries",
+        element: (
+          <ProductManagerRoute>
+            <AdminDeliveriesPage />
+          </ProductManagerRoute>
+        ),
+      },
+      {
+        path: "/admin/products",
+        element: (
+          <ProductManagerRoute>
+            <AdminProductsPage />
+          </ProductManagerRoute>
+        ),
+      },
     ],
   },
 

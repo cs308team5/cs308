@@ -1,32 +1,39 @@
-const ADMIN_ROLE_VALUES = new Set(["admin", "administrator"]);
+export const CUSTOMER_ROLE = "customer";
+export const SALES_MANAGER_ROLE = "sales_manager";
+export const PRODUCT_MANAGER_ROLE = "product_manager";
 
-const truthyValues = new Set([true, 1, "1", "true", "yes"]);
+const ROLE_ALIASES = new Map([
+  ["customer", CUSTOMER_ROLE],
+  ["sales_manager", SALES_MANAGER_ROLE],
+  ["salesmanager", SALES_MANAGER_ROLE],
+  ["sales", SALES_MANAGER_ROLE],
+  ["product_manager", PRODUCT_MANAGER_ROLE],
+  ["productmanager", PRODUCT_MANAGER_ROLE],
+  ["product", PRODUCT_MANAGER_ROLE],
+]);
 
-const normalizeEmail = (value) => String(value ?? "").trim().toLowerCase();
+export const normalizeRole = (value) => {
+  const normalized = String(value ?? CUSTOMER_ROLE)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, "_");
 
-export const getConfiguredAdminEmails = () =>
-  new Set(
-    String(process.env.ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((value) => normalizeEmail(value))
-      .filter(Boolean)
-  );
+  return ROLE_ALIASES.get(normalized) ?? CUSTOMER_ROLE;
+};
 
-export const isAdminCustomer = (customer) => {
+export const hasRole = (customer, roles) => {
   if (!customer) {
     return false;
   }
 
-  const adminEmailSet = getConfiguredAdminEmails();
-  const email = normalizeEmail(customer.email);
-
-  return (
-    truthyValues.has(customer.is_admin) ||
-    truthyValues.has(customer.isAdmin) ||
-    ADMIN_ROLE_VALUES.has(String(customer.role ?? "").trim().toLowerCase()) ||
-    ADMIN_ROLE_VALUES.has(String(customer.user_role ?? "").trim().toLowerCase()) ||
-    ADMIN_ROLE_VALUES.has(String(customer.customer_type ?? "").trim().toLowerCase()) ||
-    ADMIN_ROLE_VALUES.has(String(customer.account_type ?? "").trim().toLowerCase()) ||
-    (email && adminEmailSet.has(email))
-  );
+  return roles.includes(normalizeRole(customer.role));
 };
+
+export const isSalesManager = (customer) =>
+  hasRole(customer, [SALES_MANAGER_ROLE]);
+
+export const isProductManager = (customer) =>
+  hasRole(customer, [PRODUCT_MANAGER_ROLE]);
+
+export const isManager = (customer) =>
+  hasRole(customer, [SALES_MANAGER_ROLE, PRODUCT_MANAGER_ROLE]);

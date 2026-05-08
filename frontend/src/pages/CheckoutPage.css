@@ -83,6 +83,28 @@
   outline: none;
 }
 
+.same-address-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #fafafa;
+  color: var(--black);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.same-address-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--pink);
+  cursor: pointer;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;

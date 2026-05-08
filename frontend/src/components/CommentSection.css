@@ -19,8 +19,31 @@
 .cs-input-wrap {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
   margin-bottom: 30px;
+}
+
+.cs-form-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-border-soft);
+}
+
+.cs-form-block:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.cs-form-label {
+  margin: 0;
+  font-family: var(--font-reviews);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
 }
 
 .rs-star-input {
