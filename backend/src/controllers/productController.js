@@ -13,6 +13,159 @@ const hasPurchasedProduct = async (customerId, productId) => {
   return result.rows.length > 0;
 };
 
+const ensureCategoryTable = async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS product_categories (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+};
+
+const normalizeCategoryName = (value) => String(value ?? "").trim();
+
+const normalizeJsonValue = (value) => {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      return null;
+    }
+
+    try {
+      return JSON.stringify(JSON.parse(trimmedValue));
+    } catch {
+      return JSON.stringify(trimmedValue);
+    }
+  }
+
+  return JSON.stringify(value);
+};
+
+export const getCategories = async (req, res) => {
+  try {
+    await ensureCategoryTable();
+
+    const result = await pool.query(
+      `WITH combined_categories AS (
+         SELECT name FROM product_categories
+         UNION
+         SELECT category AS name FROM products WHERE category IS NOT NULL AND TRIM(category) <> ''
+       )
+       SELECT
+         cc.name,
+         COUNT(p.id)::int AS product_count
+       FROM combined_categories cc
+       LEFT JOIN products p ON LOWER(TRIM(p.category)) = LOWER(TRIM(cc.name))
+       GROUP BY cc.name
+       ORDER BY LOWER(cc.name) ASC`
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Get categories error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+export const createCategory = async (req, res) => {
+  const name = normalizeCategoryName(req.body?.name);
+
+  if (!name) {
+    return res.status(400).json({
+      success: false,
+      message: "Category name is required.",
+    });
+  }
+
+  try {
+    await ensureCategoryTable();
+
+    const duplicate = await pool.query(
+      `SELECT name FROM product_categories WHERE LOWER(TRIM(name)) = LOWER(TRIM($1))
+       UNION
+       SELECT category AS name FROM products WHERE LOWER(TRIM(category)) = LOWER(TRIM($1))
+       LIMIT 1`,
+      [name]
+    );
+
+    if (duplicate.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message: "Category already exists.",
+      });
+    }
+
+    const result = await pool.query(
+      "INSERT INTO product_categories (name) VALUES ($1) RETURNING name, 0::int AS product_count",
+      [name]
+    );
+
+    return res.status(201).json({
+      success: true,
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Create category error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
+export const deleteCategory = async (req, res) => {
+  const name = normalizeCategoryName(req.params?.name);
+
+  if (!name) {
+    return res.status(400).json({
+      success: false,
+      message: "Category name is required.",
+    });
+  }
+
+  try {
+    await ensureCategoryTable();
+
+    const usage = await pool.query(
+      "SELECT COUNT(*)::int AS count FROM products WHERE LOWER(TRIM(category)) = LOWER(TRIM($1))",
+      [name]
+    );
+
+    if (usage.rows[0]?.count > 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Category is in use by products and cannot be removed.",
+      });
+    }
+
+    const result = await pool.query(
+      "DELETE FROM product_categories WHERE LOWER(TRIM(name)) = LOWER(TRIM($1)) RETURNING name",
+      [name]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Delete category error:", error);
+    return res.status(500).json({ success: false, message: "Server error." });
+  }
+};
+
 /**
  * GET /api/products
  *
@@ -293,8 +446,8 @@ export const createProduct = async (req, res) => {
         name, description ?? null, price, category,
         image_url ?? null, stock_quantity ?? 0,
         model ?? null, serial_number ?? null,
-        warranty_status ?? null, distributor_information ?? null,
-        additional_attributes ? JSON.stringify(additional_attributes) : null
+        warranty_status ?? null, normalizeJsonValue(distributor_information),
+        normalizeJsonValue(additional_attributes)
       ]
     );
 
@@ -321,7 +474,11 @@ export const updateProduct = async (req, res) => {
 
   allowed.forEach((key) => {
     if (fields[key] !== undefined) {
-      values.push(key === "additional_attributes" ? JSON.stringify(fields[key]) : fields[key]);
+      values.push(
+        key === "additional_attributes" || key === "distributor_information"
+          ? normalizeJsonValue(fields[key])
+          : fields[key]
+      );
       updates.push(`${key} = $${values.length}`);
     }
   });
