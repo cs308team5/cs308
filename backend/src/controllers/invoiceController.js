@@ -362,6 +362,47 @@ async function fetchOrderData(orderId, customerId) {
   };
 }
 
+async function fetchManagerOrderData(orderId) {
+  const orderResult = await pool.query(
+    `SELECT o.order_id, o.total_price, o.status, o.created_at,
+              c.customer_id, c.name, c.email, c.tax_id, c.address,
+              d.delivery_address, d.billing_address, d.phone
+       FROM invoices i
+       JOIN orders o ON o.order_id = i.order_id
+       JOIN customers c ON o.customer_id = c.customer_id
+       LEFT JOIN deliveries d ON d.order_id = o.order_id
+       WHERE i.order_id = $1`,
+    [orderId]
+  );
+
+  if (orderResult.rows.length === 0) {
+    return null;
+  }
+
+  const itemsResult = await pool.query(
+    `SELECT oi.quantity, oi.unit_price,
+              p.name AS product_name
+       FROM order_items oi
+       JOIN products p ON oi.product_id = p.id
+       WHERE oi.order_id = $1`,
+    [orderId]
+  );
+
+  return {
+    order: orderResult.rows[0],
+    items: itemsResult.rows,
+  };
+}
+
+function sendInvoicePdf(res, orderId, pdfBuffer) {
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=invoice-${orderId}.pdf`
+  );
+  res.send(pdfBuffer);
+}
+
 export const listInvoices = async (req, res) => {
   try {
     const { whereClause, values, filters } = buildInvoiceListFilters(req.query ?? {});
@@ -385,7 +426,10 @@ export const listInvoices = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: result.rows,
+      data: result.rows.map((invoice) => ({
+        ...invoice,
+        pdf_url: `/api/invoice/manager/${invoice.order_id}/pdf`,
+      })),
       count: result.rows.length,
       filters,
     });
@@ -411,17 +455,28 @@ export const generateInvoice = async (req, res) => {
 
     const pdfBuffer = await buildInvoiceBuffer(data.order, data.items);
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=invoice-${orderId}.pdf`
-    );
-
     await saveInvoiceRecord(orderId, customerId, data.order.total_price);
-    res.send(pdfBuffer);
+    sendInvoicePdf(res, orderId, pdfBuffer);
   } catch (error) {
     console.error("Invoice generation error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const generateManagerInvoice = async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    const data = await fetchManagerOrderData(orderId);
+    if (!data) {
+      return res.status(404).json({ message: "Invoice not found." });
+    }
+
+    const pdfBuffer = await buildInvoiceBuffer(data.order, data.items);
+    sendInvoicePdf(res, orderId, pdfBuffer);
+  } catch (error) {
+    console.error("Manager invoice generation error:", error);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
