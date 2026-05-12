@@ -97,6 +97,16 @@ export default function CheckoutPage() {
     };
   };
 
+  const clearSensitivePaymentFields = () => {
+    setForm((currentForm) => ({
+      ...currentForm,
+      cardNumber: "",
+      cardName: "",
+      expiry: "",
+      cvv: "",
+    }));
+  };
+
   const handlePlaceOrder = async () => {
     if (isSubmittingRef.current) {
       return;
@@ -317,11 +327,14 @@ export default function CheckoutPage() {
         body: JSON.stringify(paymentPayload),
       });
       paymentRes = await res.json();
-    } catch (err) {
+    } catch {
+      clearSensitivePaymentFields();
       alert("Payment request failed. Please try again.");
       releaseSubmitLock();
       return;
     }
+
+    clearSensitivePaymentFields();
 
     if (!paymentRes.success) {
       alert(paymentRes.message || "Payment declined.");

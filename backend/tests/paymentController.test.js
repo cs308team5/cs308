@@ -4,6 +4,8 @@ import pool from "../src/config/db.js";
 import { processPayment } from "../src/controllers/paymentController.js";
 import { createMockReq, createMockRes } from "./helpers/httpTestUtils.js";
 
+const stringify = (value) => JSON.stringify(value);
+
 describe("paymentController.processPayment", () => {
   const originalConnect = pool.connect;
   const originalQuery = pool.query;
@@ -104,7 +106,11 @@ describe("paymentController.processPayment", () => {
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.success, true);
     assert.equal(res.body.order_id, "order-1");
+    assert.equal(res.body.cardLast4, "1111");
     assert.equal(res.body.invoiceEmailSent, false);
+    assert.equal(stringify(res.body).includes("4111111111111111"), false);
+    assert.equal(stringify(queries).includes("4111111111111111"), false);
+    assert.equal(stringify(queries).includes("cvv"), false);
     assert.deepEqual(orderInsert.params, ["authenticated-customer", 120]);
     assert.deepEqual(deliveryInsert.params, [
       "order-1",

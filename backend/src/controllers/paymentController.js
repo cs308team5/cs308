@@ -60,6 +60,7 @@ export const processPayment = async (req, res) => {
 
     // 2. Kart numarası sadece rakam mı?
     const cleanCard = cardNumber.replace(/\s/g, "");
+    const cardLast4 = cleanCard.slice(-4);
     if (!/^\d{16}$/.test(cleanCard)) {
         return res.status(400).json({
             success: false,
@@ -107,6 +108,7 @@ export const processPayment = async (req, res) => {
             success: false,
             message: "Payment declined by bank.",
             transactionId,
+            cardLast4,
         });
     }
 
@@ -144,6 +146,7 @@ export const processPayment = async (req, res) => {
                 transactionId,
                 amount,
                 order_id,
+                cardLast4,
                 invoiceEmailSent,
                 ...(invoiceEmailError ? { invoiceEmailError } : {}),
             });
@@ -162,5 +165,6 @@ export const processPayment = async (req, res) => {
         message: "Payment approved.",
         transactionId,
         amount,
+        cardLast4,
     });
 };
