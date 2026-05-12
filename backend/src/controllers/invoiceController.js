@@ -403,6 +403,10 @@ function sendInvoicePdf(res, orderId, pdfBuffer) {
   res.send(pdfBuffer);
 }
 
+function toMoney(value) {
+  return Number(Number(value ?? 0).toFixed(2));
+}
+
 export const listInvoices = async (req, res) => {
   try {
     const { whereClause, values, filters } = buildInvoiceListFilters(req.query ?? {});
@@ -439,6 +443,46 @@ export const listInvoices = async (req, res) => {
     }
 
     console.error("Invoice list error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const calculateRevenue = async (req, res) => {
+  try {
+    const { whereClause, values, filters } = buildInvoiceListFilters(req.query ?? {});
+    const result = await pool.query(
+      `SELECT COUNT(*)::int AS invoice_count,
+              COALESCE(SUM(i.total_price), 0)::numeric AS gross_revenue
+         FROM invoices i
+         ${whereClause}`,
+      values
+    );
+
+    const summary = result.rows[0] ?? {};
+    const grossRevenue = toMoney(summary.gross_revenue);
+    const refundedAmount = 0;
+    const loss = refundedAmount;
+    const netRevenue = toMoney(grossRevenue - refundedAmount);
+    const profit = netRevenue;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        invoice_count: Number(summary.invoice_count ?? 0),
+        gross_revenue: grossRevenue,
+        refunded_amount: refundedAmount,
+        loss,
+        net_revenue: netRevenue,
+        profit,
+      },
+      filters,
+    });
+  } catch (error) {
+    if (error.status === 400) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    console.error("Revenue calculation error:", error);
     return res.status(500).json({ message: "Server error" });
   }
 };

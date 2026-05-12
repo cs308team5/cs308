@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  calculateRevenue,
   generateInvoice,
   generateManagerInvoice,
   listInvoices,
@@ -14,6 +15,7 @@ const router = express.Router();
 
 router.post("/send-preview", sendInvoicePreviewEmail);
 router.get("/manager", authMiddleware, requireSalesManager, listInvoices);
+router.get("/manager/revenue", authMiddleware, requireSalesManager, calculateRevenue);
 router.get("/manager/:orderId/pdf", authMiddleware, requireSalesManager, generateManagerInvoice);
 router.get("/:orderId", authMiddleware, generateInvoice);
 router.post("/send/:orderId", authMiddleware, sendInvoiceEmail);

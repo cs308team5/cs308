@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import pool from "../src/config/db.js";
 import {
+  calculateRevenue,
   generateManagerInvoice,
   listInvoices,
 } from "../src/controllers/invoiceController.js";
@@ -163,5 +164,100 @@ describe("invoiceController.generateManagerInvoice", () => {
 
     assert.equal(res.statusCode, 404);
     assert.equal(res.body.message, "Invoice not found.");
+  });
+});
+
+describe("invoiceController.calculateRevenue", () => {
+  const originalQuery = pool.query;
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    pool.query = originalQuery;
+    console.error = originalConsoleError;
+  });
+
+  test("returns revenue summary filtered by date range", async () => {
+    let capturedSql = "";
+    let capturedParams = [];
+    pool.query = async (sql, params = []) => {
+      capturedSql = sql;
+      capturedParams = params;
+      return {
+        rows: [
+          {
+            invoice_count: 3,
+            gross_revenue: "459.987",
+          },
+        ],
+      };
+    };
+
+    const req = createMockReq({
+      query: { startDate: "2026-05-01", endDate: "2026-05-31" },
+    });
+    const res = createMockRes();
+
+    await calculateRevenue(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.success, true);
+    assert.deepEqual(res.body.data, {
+      invoice_count: 3,
+      gross_revenue: 459.99,
+      refunded_amount: 0,
+      loss: 0,
+      net_revenue: 459.99,
+      profit: 459.99,
+    });
+    assert.match(capturedSql, /COUNT\(\*\)::int AS invoice_count/);
+    assert.match(capturedSql, /SUM\(i\.total_price\)/);
+    assert.match(capturedSql, /i\.generated_at >= \$1/);
+    assert.match(capturedSql, /i\.generated_at <= \$2/);
+    assert.deepEqual(capturedParams, [
+      "2026-05-01T00:00:00.000Z",
+      "2026-05-31T23:59:59.999Z",
+    ]);
+  });
+
+  test("returns zero summary when there are no invoices", async () => {
+    pool.query = async () => ({
+      rows: [
+        {
+          invoice_count: 0,
+          gross_revenue: null,
+        },
+      ],
+    });
+
+    const req = createMockReq();
+    const res = createMockRes();
+
+    await calculateRevenue(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body.data, {
+      invoice_count: 0,
+      gross_revenue: 0,
+      refunded_amount: 0,
+      loss: 0,
+      net_revenue: 0,
+      profit: 0,
+    });
+  });
+
+  test("returns 400 for invalid revenue date filters", async () => {
+    const req = createMockReq({
+      query: { startDate: "2026-06-01", endDate: "2026-05-01" },
+    });
+    const res = createMockRes();
+
+    await calculateRevenue(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "startDate cannot be after endDate.");
   });
 });
