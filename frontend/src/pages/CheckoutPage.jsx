@@ -351,6 +351,10 @@ export default function CheckoutPage() {
     const order = {
       invoiceNumber: paymentRes.order_id,
       ...checkoutInvoiceOrder,
+      payment: {
+        cardLast4: paymentRes.cardLast4 ?? null,
+        cardMasked: paymentRes.cardMasked ?? null,
+      },
     };
 
     if (paymentRes.invoiceEmailSent === false) {
