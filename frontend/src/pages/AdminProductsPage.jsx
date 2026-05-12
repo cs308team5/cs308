@@ -24,6 +24,9 @@ export default function AdminProductsPage() {
 
     const [products, setProducts] = useState([]);
     const [productsLoading, setProductsLoading] = useState(true);
+    const [categoryOptions, setCategoryOptions] = useState([]);
+    const [categoryName, setCategoryName] = useState("");
+    const [categoryActionName, setCategoryActionName] = useState(null);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(EMPTY_FORM);
@@ -34,8 +37,24 @@ export default function AdminProductsPage() {
     const [msgType, setMsgType] = useState("success");
 
     const categories = useMemo(() => {
-        return [...new Set(products.map((product) => product.category).filter(Boolean))]
+        const productCategories = products.map((product) => product.category).filter(Boolean);
+        const managedCategories = categoryOptions.map((category) => category.name).filter(Boolean);
+
+        return [...new Set([...managedCategories, ...productCategories])]
             .sort((left, right) => left.localeCompare(right));
+    }, [categoryOptions, products]);
+
+    const categoryCounts = useMemo(() => {
+        return products.reduce((counts, product) => {
+            const category = product.category;
+
+            if (!category) {
+                return counts;
+            }
+
+            counts[category] = (counts[category] ?? 0) + 1;
+            return counts;
+        }, {});
     }, [products]);
 
     const filteredProducts = useMemo(() => {
@@ -65,6 +84,7 @@ export default function AdminProductsPage() {
 
     useEffect(() => {
         fetchProducts();
+        fetchCategories();
     }, []);
 
     const fetchProducts = async () => {
@@ -77,6 +97,19 @@ export default function AdminProductsPage() {
             showMsg("Could not load products.", "error");
         } finally {
             setProductsLoading(false);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch("/api/products/categories");
+            const data = await res.json();
+
+            if (data.success) {
+                setCategoryOptions(data.data ?? []);
+            }
+        } catch {
+            setCategoryOptions([]);
         }
     };
 
@@ -111,6 +144,76 @@ export default function AdminProductsPage() {
         setShowForm(false);
         setEditingId(null);
         setForm(EMPTY_FORM);
+    };
+
+    const handleAddCategory = async () => {
+        const cleanName = categoryName.trim();
+
+        if (!cleanName) {
+            showMsg("Category name is required.", "error");
+            return;
+        }
+
+        if (!token) {
+            showMsg("Please log in again as a product manager.", "error");
+            return;
+        }
+
+        setCategoryActionName(cleanName);
+
+        try {
+            const res = await fetch("/api/products/categories", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ name: cleanName }),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                showMsg(data.message || "Could not add category.", "error");
+                return;
+            }
+
+            setCategoryName("");
+            showMsg("Category added.");
+            fetchCategories();
+        } catch {
+            showMsg("Could not add category.", "error");
+        } finally {
+            setCategoryActionName(null);
+        }
+    };
+
+    const handleDeleteCategory = async (name) => {
+        if (!token) {
+            showMsg("Please log in again as a product manager.", "error");
+            return;
+        }
+
+        setCategoryActionName(name);
+
+        try {
+            const res = await fetch(`/api/products/categories/${encodeURIComponent(name)}`, {
+                method: "DELETE",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                showMsg(data.message || "Could not remove category.", "error");
+                return;
+            }
+
+            showMsg("Category removed.");
+            fetchCategories();
+        } catch {
+            showMsg("Could not remove category.", "error");
+        } finally {
+            setCategoryActionName(null);
+        }
     };
 
     const handleSubmitProduct = async () => {
@@ -271,6 +374,56 @@ export default function AdminProductsPage() {
                             </select>
                         </div>
                         <button className="admin-btn add-product" onClick={openAddForm}>+ Add Product</button>
+                    </div>
+
+                    <div className="admin-card category-manager-card">
+                        <div className="category-manager-top">
+                            <div>
+                                <h3 className="form-title brand">Categories</h3>
+                                <p className="category-manager-subtitle">Add and remove product categories.</p>
+                            </div>
+                            <div className="category-add-row">
+                                <input
+                                    className="form-input"
+                                    value={categoryName}
+                                    onChange={(event) => setCategoryName(event.target.value)}
+                                    placeholder="New category name"
+                                />
+                                <button
+                                    className="admin-btn add-product"
+                                    onClick={handleAddCategory}
+                                    disabled={Boolean(categoryActionName)}
+                                >
+                                    Add
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="category-chip-list">
+                            {categories.length === 0 ? (
+                                <span className="category-empty-text">No categories yet.</span>
+                            ) : (
+                                categories.map((category) => {
+                                    const usageCount = categoryCounts[category] ?? 0;
+                                    const isBusy = categoryActionName === category;
+
+                                    return (
+                                        <span className="category-chip" key={category}>
+                                            <span>{category}</span>
+                                            <small>{usageCount} product{usageCount !== 1 ? "s" : ""}</small>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteCategory(category)}
+                                                disabled={isBusy || usageCount > 0}
+                                                title={usageCount > 0 ? "Remove products from this category first" : "Remove category"}
+                                            >
+                                                x
+                                            </button>
+                                        </span>
+                                    );
+                                })
+                            )}
+                        </div>
                     </div>
 
                     {showForm && renderProductForm("Add New Product")}

@@ -7,6 +7,9 @@ import {
   deleteProduct,
   getReviewEligibility,
   updateProductStock,
+  getCategories,
+  createCategory,
+  deleteCategory,
 } from "../controllers/productController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 import { requireProductManager } from "../middleware/roleMiddleware.js";
@@ -16,6 +19,9 @@ import pool from "../config/db.js";
 const router = express.Router();
 
 router.get("/", getProducts);
+router.get("/categories", getCategories);
+router.post("/categories", authMiddleware, requireProductManager, createCategory);
+router.delete("/categories/:name", authMiddleware, requireProductManager, deleteCategory);
 
 router.get("/search", async (req, res) => {
   const query = req.query.q;
