@@ -259,6 +259,63 @@ function buildInvoiceBuffer(order, items) {
   });
 }
 
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseInvoiceDateParam(value, fieldName, boundary = "start") {
+  if (!value) {
+    return null;
+  }
+
+  let normalizedValue = value;
+  if (DATE_ONLY_PATTERN.test(value) && boundary === "start") {
+    normalizedValue = `${value}T00:00:00.000Z`;
+  } else if (DATE_ONLY_PATTERN.test(value) && boundary === "end") {
+    normalizedValue = `${value}T23:59:59.999Z`;
+  }
+
+  const date = new Date(normalizedValue);
+  if (Number.isNaN(date.getTime())) {
+    const error = new Error(`${fieldName} must be a valid date.`);
+    error.status = 400;
+    throw error;
+  }
+
+  return date;
+}
+
+function buildInvoiceListFilters(query) {
+  const startDate = parseInvoiceDateParam(query.startDate, "startDate", "start");
+  const endDate = parseInvoiceDateParam(query.endDate, "endDate", "end");
+
+  if (startDate && endDate && startDate > endDate) {
+    const error = new Error("startDate cannot be after endDate.");
+    error.status = 400;
+    throw error;
+  }
+
+  const conditions = [];
+  const values = [];
+
+  if (startDate) {
+    values.push(startDate.toISOString());
+    conditions.push(`i.generated_at >= $${values.length}`);
+  }
+
+  if (endDate) {
+    values.push(endDate.toISOString());
+    conditions.push(`i.generated_at <= $${values.length}`);
+  }
+
+  return {
+    whereClause: conditions.length ? `WHERE ${conditions.join(" AND ")}` : "",
+    values,
+    filters: {
+      startDate: startDate?.toISOString() ?? null,
+      endDate: endDate?.toISOString() ?? null,
+    },
+  };
+}
+
 async function saveInvoiceRecord(orderId, customerId, totalPrice) {
   const existing = await pool.query(
     `SELECT invoice_id FROM invoices WHERE order_id = $1`,
@@ -304,6 +361,43 @@ async function fetchOrderData(orderId, customerId) {
     items: itemsResult.rows,
   };
 }
+
+export const listInvoices = async (req, res) => {
+  try {
+    const { whereClause, values, filters } = buildInvoiceListFilters(req.query ?? {});
+    const result = await pool.query(
+      `SELECT i.invoice_id,
+              i.order_id,
+              i.customer_id,
+              i.generated_at,
+              i.total_price,
+              c.name AS customer_name,
+              c.email AS customer_email,
+              o.status AS order_status,
+              o.created_at AS order_created_at
+         FROM invoices i
+         JOIN customers c ON c.customer_id = i.customer_id
+         LEFT JOIN orders o ON o.order_id = i.order_id
+         ${whereClause}
+         ORDER BY i.generated_at DESC, i.invoice_id DESC`,
+      values
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result.rows,
+      count: result.rows.length,
+      filters,
+    });
+  } catch (error) {
+    if (error.status === 400) {
+      return res.status(400).json({ message: error.message });
+    }
+
+    console.error("Invoice list error:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const generateInvoice = async (req, res) => {
   const { orderId } = req.params;

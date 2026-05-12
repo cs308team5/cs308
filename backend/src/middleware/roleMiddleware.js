@@ -38,4 +38,5 @@ export const requireRole = (...allowedRoles) => {
   };
 };
 
+export const requireSalesManager = requireRole("sales_manager");
 export const requireProductManager = requireRole("product_manager");
