@@ -115,4 +115,63 @@ describe("paymentController.processPayment", () => {
     ]);
     assert.deepEqual(cartDelete.params, ["authenticated-customer"]);
   });
+
+  test("rolls back and returns 500 when stock is insufficient while saving the order", async () => {
+    const queries = [];
+    const client = {
+      async query(sql, params = []) {
+        queries.push({ sql, params });
+
+        if (/INSERT INTO orders/i.test(sql)) {
+          return { rows: [{ order_id: "order-1" }] };
+        }
+
+        if (/UPDATE products SET stock_quantity/i.test(sql)) {
+          return { rowCount: 0, rows: [] };
+        }
+
+        return { rowCount: 1, rows: [] };
+      },
+      releaseCalled: false,
+      release() {
+        this.releaseCalled = true;
+      },
+    };
+
+    pool.connect = async () => client;
+    pool.query = async () => ({ rows: [] });
+
+    const req = createMockReq({
+      body: {
+        cardNumber: "4111111111111111",
+        cvv: "123",
+        expiryMonth: "12",
+        expiryYear: "99",
+        amount: 120,
+        cart_items: [
+          {
+            product_id: "product-1",
+            quantity: 3,
+            price: 40,
+          },
+        ],
+        delivery_address: "123 Main St",
+      },
+      customer: { customerId: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await processPayment(req, res);
+
+    assert.equal(res.statusCode, 500);
+    assert.deepEqual(res.body, {
+      success: false,
+      message: "Payment approved but order could not be saved.",
+    });
+    assert.equal(queries.some(({ sql }) => sql === "BEGIN"), true);
+    assert.equal(queries.some(({ sql }) => /UPDATE products SET stock_quantity/i.test(sql)), true);
+    assert.equal(queries.some(({ sql }) => sql === "ROLLBACK"), true);
+    assert.equal(queries.some(({ sql }) => sql === "COMMIT"), false);
+    assert.equal(client.releaseCalled, true);
+  });
 });

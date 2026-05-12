@@ -17,7 +17,9 @@ export default function OrderTrackingPage() {
             return;
         }
 
-        fetch(`http://localhost:3000/api/deliveries/my/${user.customer_id}`)
+        fetch(`http://localhost:3000/api/deliveries/my/${user.customer_id}`, {
+            headers: { Authorization: `Bearer ${user.token}` },
+        })
             .then((res) => res.json())
             .then((data) => {
                 setOrders(data.data || []);

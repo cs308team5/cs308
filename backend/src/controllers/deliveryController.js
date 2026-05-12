@@ -91,6 +91,21 @@ export const getAllDeliveries = async (req, res) => {
 
 export const getMyDeliveries = async (req, res) => {
   const { customerId } = req.params;
+  const authenticatedCustomerId = req.customer?.customerId ?? req.customer?.customer_id;
+
+  if (!authenticatedCustomerId) {
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required.",
+    });
+  }
+
+  if (String(authenticatedCustomerId) !== String(customerId)) {
+    return res.status(403).json({
+      success: false,
+      message: "You can only view your own deliveries.",
+    });
+  }
 
   try {
     const result = await pool.query(
