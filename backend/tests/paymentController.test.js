@@ -107,6 +107,7 @@ describe("paymentController.processPayment", () => {
     assert.equal(res.body.success, true);
     assert.equal(res.body.order_id, "order-1");
     assert.equal(res.body.cardLast4, "1111");
+    assert.equal(res.body.cardMasked, "**** **** **** 1111");
     assert.equal(res.body.invoiceEmailSent, false);
     assert.equal(stringify(res.body).includes("4111111111111111"), false);
     assert.equal(stringify(queries).includes("4111111111111111"), false);

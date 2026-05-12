@@ -46,6 +46,16 @@ function formatOptionalAddress(address) {
   return formattedAddress || null;
 }
 
+function maskCardNumber(cardNumber) {
+  const cleanCard = String(cardNumber ?? "").replace(/\D/g, "");
+  const last4 = cleanCard.slice(-4);
+
+  return {
+    cardLast4: last4 || null,
+    cardMasked: last4 ? `**** **** **** ${last4}` : null,
+  };
+}
+
 export const checkout = async (req, res) => {
   const { cart, shippingAddress, billingAddress, paymentInfo } = req.body;
 
@@ -76,6 +86,7 @@ export const checkout = async (req, res) => {
   }
 
   const customerId = req.customer.customerId;
+  const maskedPaymentInfo = maskCardNumber(paymentInfo?.cardNumber);
 
   const client = await pool.connect();
 
@@ -146,7 +157,9 @@ export const checkout = async (req, res) => {
         status: order.status,
         shippingAddress,
         paymentInfo: {
-          cardEnding: paymentInfo?.cardNumber?.slice(-4) || null,
+          cardEnding: maskedPaymentInfo.cardLast4,
+          cardLast4: maskedPaymentInfo.cardLast4,
+          cardMasked: maskedPaymentInfo.cardMasked,
         },
         created_at: order.created_at,
       },

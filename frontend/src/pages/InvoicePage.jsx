@@ -49,6 +49,9 @@ export default function InvoicePage() {
     shippingCost: 15.0,
     tax: 24.92,
     total: 338.92,
+    payment: {
+      cardMasked: "**** **** **** 1111",
+    },
   };
 
   const invoiceFileName = `${order.shipping.fullName || "customer"} - invoice`;
@@ -287,6 +290,13 @@ export default function InvoicePage() {
           <div className="status-badge">
             <span className="dot" /> Payment Confirmed
           </div>
+
+          {order.payment?.cardMasked && (
+            <div className="summary-row">
+              <span>Card</span>
+              <span>{order.payment.cardMasked}</span>
+            </div>
+          )}
 
           <button className="continue-btn" onClick={() => navigate("/")}>
             Continue Shopping

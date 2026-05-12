@@ -121,7 +121,11 @@ describe("checkoutController.checkout", () => {
     assert.equal(res.body.order.id, "order-1");
     assert.equal(res.body.order.totalItems, 2);
     assert.equal(res.body.order.totalPrice, 70);
-    assert.deepEqual(res.body.order.paymentInfo, { cardEnding: "1111" });
+    assert.deepEqual(res.body.order.paymentInfo, {
+      cardEnding: "1111",
+      cardLast4: "1111",
+      cardMasked: "**** **** **** 1111",
+    });
     assert.equal(JSON.stringify(res.body).includes("4111111111111111"), false);
     assert.deepEqual(orderInsert.params, ["customer-1", 70, "pending"]);
     assert.deepEqual(itemInserts[0].params, ["order-1", "product-1", 2, 25]);

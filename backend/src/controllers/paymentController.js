@@ -28,6 +28,16 @@ function isCardExpired(month, year) {
     return expiry < now;
 }
 
+function maskCardNumber(cardNumber) {
+    const cleanCard = String(cardNumber ?? "").replace(/\D/g, "");
+    const last4 = cleanCard.slice(-4);
+
+    return {
+        cardLast4: last4 || null,
+        cardMasked: last4 ? `**** **** **** ${last4}` : null,
+    };
+}
+
 export const processPayment = async (req, res) => {
     const {
         cardNumber,
@@ -60,7 +70,7 @@ export const processPayment = async (req, res) => {
 
     // 2. Kart numarası sadece rakam mı?
     const cleanCard = cardNumber.replace(/\s/g, "");
-    const cardLast4 = cleanCard.slice(-4);
+    const { cardLast4, cardMasked } = maskCardNumber(cleanCard);
     if (!/^\d{16}$/.test(cleanCard)) {
         return res.status(400).json({
             success: false,
@@ -109,6 +119,7 @@ export const processPayment = async (req, res) => {
             message: "Payment declined by bank.",
             transactionId,
             cardLast4,
+            cardMasked,
         });
     }
 
@@ -147,6 +158,7 @@ export const processPayment = async (req, res) => {
                 amount,
                 order_id,
                 cardLast4,
+                cardMasked,
                 invoiceEmailSent,
                 ...(invoiceEmailError ? { invoiceEmailError } : {}),
             });
@@ -166,5 +178,6 @@ export const processPayment = async (req, res) => {
         transactionId,
         amount,
         cardLast4,
+        cardMasked,
     });
 };
