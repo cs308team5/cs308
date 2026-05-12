@@ -363,7 +363,7 @@ describe("authController.login", () => {
     });
   });
 
-  test("falls back to plain-text password comparison when hash is not bcrypt", async () => {
+  test("returns 401 when the stored password is not a bcrypt hash", async () => {
     pool.query = async () => ({
       rows: [
         {
@@ -378,7 +378,6 @@ describe("authController.login", () => {
     bcrypt.compare = async () => {
       throw new Error("should not be called");
     };
-    jwt.sign = () => "signed-token";
 
     const req = createMockReq({
       body: { email: "a@b.com", password: "secret" },
@@ -387,8 +386,8 @@ describe("authController.login", () => {
 
     await login(req, res);
 
-    assert.equal(res.statusCode, 200);
-    assert.equal(res.body.token, "signed-token");
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.body.message, "Invalid credentials");
   });
 
   test("passes the expected JWT payload and options to jwt.sign", async () => {
@@ -400,10 +399,11 @@ describe("authController.login", () => {
           name: "Ada",
           username: "ada",
           email: "a@b.com",
-          password_hash: "secret",
+          password_hash: "$2b$10$hashed",
         },
       ],
     });
+    bcrypt.compare = async () => true;
     jwt.sign = (...args) => {
       signArgs = args;
       return "signed-token";
@@ -434,11 +434,12 @@ describe("authController.login", () => {
           name: "Ada",
           username: "ada",
           email: "product@dare.com",
-          password_hash: "secret",
+          password_hash: "$2b$10$hashed",
           role: "product_manager",
         },
       ],
     });
+    bcrypt.compare = async () => true;
     jwt.sign = () => "signed-token";
 
     const req = createMockReq({

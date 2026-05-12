@@ -87,13 +87,12 @@ export const login = async (req, res) => {
     }
 
     const passwordHash = customer.password_hash ?? "";
-    let isMatch = false;
 
-    if (passwordHash.startsWith("$2")) {
-      isMatch = await bcrypt.compare(password, passwordHash);
-    } else {
-      isMatch = passwordHash === password;
+    if (!passwordHash.startsWith("$2")) {
+      return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    const isMatch = await bcrypt.compare(password, passwordHash);
 
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
