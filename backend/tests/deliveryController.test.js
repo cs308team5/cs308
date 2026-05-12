@@ -175,7 +175,10 @@ describe("deliveryController.getMyDeliveries", () => {
       return { rows: [delivery] };
     };
 
-    const req = createMockReq({ params: { customerId: "customer-1" } });
+    const req = createMockReq({
+      params: { customerId: "customer-1" },
+      customer: { customerId: "customer-1" },
+    });
     const res = createMockRes();
 
     await getMyDeliveries(req, res);
@@ -183,5 +186,42 @@ describe("deliveryController.getMyDeliveries", () => {
     assert.equal(res.statusCode, 200);
     assert.deepEqual(capturedParams, ["customer-1"]);
     assert.deepEqual(res.body, { success: true, data: [delivery] });
+  });
+
+  test("returns 401 when the request is unauthenticated", async () => {
+    let queryCalled = false;
+    pool.query = async () => {
+      queryCalled = true;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({ params: { customerId: "customer-1" } });
+    const res = createMockRes();
+
+    await getMyDeliveries(req, res);
+
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.body.message, "Authentication required.");
+    assert.equal(queryCalled, false);
+  });
+
+  test("returns 403 when a customer requests another customer's deliveries", async () => {
+    let queryCalled = false;
+    pool.query = async () => {
+      queryCalled = true;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      params: { customerId: "customer-2" },
+      customer: { customerId: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await getMyDeliveries(req, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.message, "You can only view your own deliveries.");
+    assert.equal(queryCalled, false);
   });
 });
