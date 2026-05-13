@@ -3,8 +3,10 @@ import assert from "node:assert/strict";
 import pool from "../src/config/db.js";
 import {
   calculateRevenue,
+  generateInvoice,
   generateManagerInvoice,
   listInvoices,
+  sendInvoiceEmail,
 } from "../src/controllers/invoiceController.js";
 import { createMockReq, createMockRes } from "./helpers/httpTestUtils.js";
 
@@ -164,6 +166,73 @@ describe("invoiceController.generateManagerInvoice", () => {
 
     assert.equal(res.statusCode, 404);
     assert.equal(res.body.message, "Invoice not found.");
+  });
+});
+
+describe("invoiceController customer invoice access", () => {
+  const originalQuery = pool.query;
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    pool.query = originalQuery;
+    console.error = originalConsoleError;
+  });
+
+  test("does not generate a PDF for another customer's order", async () => {
+    const queries = [];
+    pool.query = async (sql, params = []) => {
+      queries.push({ sql, params });
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      params: { orderId: "order-owned-by-someone-else" },
+      customer: { customerId: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await generateInvoice(req, res);
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(res.body.message, "Order not found.");
+    assert.equal(queries.length, 1);
+    assert.match(queries[0].sql, /WHERE o\.order_id = \$1 AND o\.customer_id = \$2/);
+    assert.deepEqual(queries[0].params, [
+      "order-owned-by-someone-else",
+      "customer-1",
+    ]);
+    assert.equal(res.sent, null);
+  });
+
+  test("does not email an invoice for another customer's order", async () => {
+    const queries = [];
+    pool.query = async (sql, params = []) => {
+      queries.push({ sql, params });
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      params: { orderId: "order-owned-by-someone-else" },
+      customer: { customerId: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await sendInvoiceEmail(req, res);
+
+    assert.equal(res.statusCode, 404);
+    assert.equal(res.body.message, "Failed to send the invoice email.");
+    assert.equal(res.body.error, "Order not found.");
+    assert.equal(Object.hasOwn(res.body, "stack"), false);
+    assert.equal(queries.length, 1);
+    assert.match(queries[0].sql, /WHERE o\.order_id = \$1 AND o\.customer_id = \$2/);
+    assert.deepEqual(queries[0].params, [
+      "order-owned-by-someone-else",
+      "customer-1",
+    ]);
   });
 });
 

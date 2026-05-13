@@ -537,10 +537,9 @@ export const sendInvoiceEmail = async (req, res) => {
     });
   } catch (error) {
     console.error("Invoice email error:", error);
-    return res.status(500).json({
+    return res.status(error.status || 500).json({
       message: "Failed to send the invoice email.",
       error: error.message,
-      stack: error.stack,
     });
   }
 };
