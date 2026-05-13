@@ -27,7 +27,7 @@ export default function MyOrdersPage() {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/orders/my-orders", {
+      const res = await fetch("/api/orders/my-orders", {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       const data = await res.json();

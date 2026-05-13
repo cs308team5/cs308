@@ -1,7 +1,14 @@
 import pool from "../config/db.js";
 
 export async function getMyOrders(req, res) {
-  const customerId = req.customer.customerId;
+  const customerId = req.customer?.customerId ?? req.customer?.customer_id;
+
+  if (!customerId) {
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required.",
+    });
+  }
 
   try {
     const result = await pool.query(

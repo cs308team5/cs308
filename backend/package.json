@@ -5,8 +5,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test --test-isolation=none tests/*.test.js",
-    "test:unit": "node --test --test-isolation=none tests/*.test.js",
+    "test": "node --test tests/*.test.js",
+    "test:unit": "node --test tests/*.test.js",
     "db:allow-half-star-ratings": "node scripts/allow-half-star-ratings.js"
   },
   "dependencies": {
