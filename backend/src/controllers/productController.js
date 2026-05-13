@@ -1,4 +1,10 @@
 import pool from "../config/db.js";
+import {
+  parseNonNegativeInteger,
+  parseNonNegativeMoney,
+  parsePercentage,
+  parsePositivePrice,
+} from "../utils/inputValidation.js";
 
 const hasPurchasedProduct = async (customerId, productId) => {
   const result = await pool.query(
@@ -45,6 +51,44 @@ const normalizeJsonValue = (value) => {
   }
 
   return JSON.stringify(value);
+};
+
+const validateProductNumericInputs = (fields, { requirePrice = false } = {}) => {
+  const validated = {};
+
+  if (requirePrice || fields.price !== undefined) {
+    const price = parsePositivePrice(fields.price);
+    if (price === null) {
+      return { error: "price must be a positive number." };
+    }
+    validated.price = price;
+  }
+
+  if (fields.stock_quantity !== undefined) {
+    const stockQuantity = parseNonNegativeInteger(fields.stock_quantity);
+    if (stockQuantity === null) {
+      return { error: "stock_quantity must be a non-negative integer." };
+    }
+    validated.stock_quantity = stockQuantity;
+  }
+
+  if (fields.discount !== undefined) {
+    const discount = parsePercentage(fields.discount);
+    if (discount === null) {
+      return { error: "discount must be a number between 0 and 100." };
+    }
+    validated.discount = discount;
+  }
+
+  if (fields.refund_amount !== undefined) {
+    const refundAmount = parseNonNegativeMoney(fields.refund_amount);
+    if (refundAmount === null) {
+      return { error: "refund_amount must be a non-negative number." };
+    }
+    validated.refund_amount = refundAmount;
+  }
+
+  return { values: validated };
 };
 
 export const getCategories = async (req, res) => {
@@ -431,8 +475,13 @@ export const createProduct = async (req, res) => {
     additional_attributes
   } = req.body;
 
-  if (!name || !price || !category) {
+  if (!name || price === undefined || price === null || !category) {
     return res.status(400).json({ success: false, message: "name, price and category are required." });
+  }
+
+  const validation = validateProductNumericInputs(req.body, { requirePrice: true });
+  if (validation.error) {
+    return res.status(400).json({ success: false, message: validation.error });
   }
 
   try {
@@ -443,8 +492,8 @@ export const createProduct = async (req, res) => {
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
        RETURNING *`,
       [
-        name, description ?? null, price, category,
-        image_url ?? null, stock_quantity ?? 0,
+        name, description ?? null, validation.values.price, category,
+        image_url ?? null, validation.values.stock_quantity ?? 0,
         model ?? null, serial_number ?? null,
         warranty_status ?? null, normalizeJsonValue(distributor_information),
         normalizeJsonValue(additional_attributes)
@@ -462,6 +511,11 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
   const fields = req.body;
+  const validation = validateProductNumericInputs(fields);
+
+  if (validation.error) {
+    return res.status(400).json({ success: false, message: validation.error });
+  }
 
   const allowed = [
     "name", "description", "price", "category", "image_url",
@@ -477,7 +531,7 @@ export const updateProduct = async (req, res) => {
       values.push(
         key === "additional_attributes" || key === "distributor_information"
           ? normalizeJsonValue(fields[key])
-          : fields[key]
+          : validation.values[key] ?? fields[key]
       );
       updates.push(`${key} = $${values.length}`);
     }
@@ -509,9 +563,9 @@ export const updateProduct = async (req, res) => {
 export const updateProductStock = async (req, res) => {
   const { id } = req.params;
   const { stock_quantity } = req.body;
-  const stockQuantity = Number(stock_quantity);
+  const stockQuantity = parseNonNegativeInteger(stock_quantity);
 
-  if (!Number.isInteger(stockQuantity) || stockQuantity < 0) {
+  if (stockQuantity === null) {
     return res.status(400).json({
       success: false,
       message: "stock_quantity must be a non-negative integer.",

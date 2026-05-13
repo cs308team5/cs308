@@ -1,12 +1,11 @@
 import pool from "../config/db.js";
+import { normalizeDeliveryStatus } from "../utils/inputValidation.js";
 
 export const updateDeliveryStatus = async (req, res) => {
   const { deliveryId } = req.params;
-  const { status } = req.body;
+  const status = normalizeDeliveryStatus(req.body?.status);
 
-  const allowedStatuses = ["processing", "in-transit", "delivered"];
-
-  if (!status || !allowedStatuses.includes(status)) {
+  if (!status) {
     return res.status(400).json({
       success: false,
       message: "Invalid delivery status.",
