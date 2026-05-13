@@ -57,6 +57,27 @@ describe("myOrdersController.getMyOrders", () => {
     assert.deepEqual(res.body, { success: true, orders });
   });
 
+  test("ignores spoofed customer identifiers outside the authenticated token", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      body: { customerId: "customer-2", customer_id: "customer-2" },
+      params: { customerId: "customer-2" },
+      query: { customerId: "customer-2" },
+      customer: { customerId: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await getMyOrders(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(capturedParams, ["customer-1"]);
+  });
+
   test("uses customer_id from the token payload when customerId is absent", async () => {
     let capturedParams;
     pool.query = async (sql, params = []) => {
