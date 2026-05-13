@@ -63,6 +63,33 @@ describe("deliveryController.updateDeliveryStatus", () => {
     assert.equal(res.body.delivery.is_completed, false);
   });
 
+  test("normalizes whitespace and casing for valid delivery statuses", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return {
+        rows: [
+          {
+            delivery_id: "delivery-1",
+            status: "delivered",
+            is_completed: true,
+          },
+        ],
+      };
+    };
+
+    const req = createMockReq({
+      params: { deliveryId: "delivery-1" },
+      body: { status: " Delivered " },
+    });
+    const res = createMockRes();
+
+    await updateDeliveryStatus(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(capturedParams, ["delivered", true, "delivery-1"]);
+  });
+
   test("sets is_completed true when delivery is delivered", async () => {
     let capturedParams;
     pool.query = async (sql, params = []) => {

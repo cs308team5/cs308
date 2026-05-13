@@ -2,10 +2,12 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 import assert from "node:assert/strict";
 import pool from "../src/config/db.js";
 import {
+  createProduct,
   getProductById,
   getReviewEligibility,
   getProducts,
   submitRating,
+  updateProduct,
   updateProductStock,
 } from "../src/controllers/productController.js";
 import { createMockReq, createMockRes } from "./helpers/httpTestUtils.js";
@@ -511,6 +513,146 @@ describe("productController.updateProductStock", () => {
 
     assert.equal(res.statusCode, 404);
     assert.equal(res.body.message, "Product not found.");
+  });
+});
+
+describe("productController product numeric validation", () => {
+  const originalQuery = pool.query;
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    pool.query = originalQuery;
+    console.error = originalConsoleError;
+  });
+
+  test("rejects product creation with an invalid price", async () => {
+    let queryCalled = false;
+    pool.query = async () => {
+      queryCalled = true;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      body: { name: "Camera", price: -10, category: "electronics" },
+    });
+    const res = createMockRes();
+
+    await createProduct(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "price must be a positive number.");
+    assert.equal(queryCalled, false);
+  });
+
+  test("rejects product creation with a fractional stock quantity", async () => {
+    let queryCalled = false;
+    pool.query = async () => {
+      queryCalled = true;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      body: {
+        name: "Camera",
+        price: 120,
+        category: "electronics",
+        stock_quantity: 1.5,
+      },
+    });
+    const res = createMockRes();
+
+    await createProduct(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "stock_quantity must be a non-negative integer.");
+    assert.equal(queryCalled, false);
+  });
+
+  test("coerces valid price and stock values before inserting a product", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return { rows: [{ id: "p1", price: params[2], stock_quantity: params[5] }] };
+    };
+
+    const req = createMockReq({
+      body: {
+        name: "Camera",
+        price: "120.50",
+        category: "electronics",
+        stock_quantity: "7",
+      },
+    });
+    const res = createMockRes();
+
+    await createProduct(req, res);
+
+    assert.equal(res.statusCode, 201);
+    assert.equal(capturedParams[2], 120.5);
+    assert.equal(capturedParams[5], 7);
+  });
+
+  test("rejects product updates with an invalid discount value", async () => {
+    let queryCalled = false;
+    pool.query = async () => {
+      queryCalled = true;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { discount: 150 },
+    });
+    const res = createMockRes();
+
+    await updateProduct(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "discount must be a number between 0 and 100.");
+    assert.equal(queryCalled, false);
+  });
+
+  test("rejects product updates with an invalid refund amount", async () => {
+    let queryCalled = false;
+    pool.query = async () => {
+      queryCalled = true;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { refund_amount: -1 },
+    });
+    const res = createMockRes();
+
+    await updateProduct(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "refund_amount must be a non-negative number.");
+    assert.equal(queryCalled, false);
+  });
+
+  test("uses validated numeric values when updating product price and stock", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return { rows: [{ id: "p1", price: params[0], stock_quantity: params[1] }] };
+    };
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { price: "99.99", stock_quantity: "3" },
+    });
+    const res = createMockRes();
+
+    await updateProduct(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(capturedParams, [99.99, 3, "p1"]);
   });
 });
 
