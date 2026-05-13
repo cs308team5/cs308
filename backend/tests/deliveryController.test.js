@@ -159,7 +159,7 @@ describe("deliveryController.getMyDeliveries", () => {
     console.error = originalConsoleError;
   });
 
-  test("returns deliveries for the selected customer", async () => {
+  test("returns deliveries for the authenticated customer without trusting a route parameter", async () => {
     let capturedParams;
     const delivery = {
       delivery_id: "delivery-1",
@@ -176,7 +176,6 @@ describe("deliveryController.getMyDeliveries", () => {
     };
 
     const req = createMockReq({
-      params: { customerId: "customer-1" },
       customer: { customerId: "customer-1" },
     });
     const res = createMockRes();
@@ -186,6 +185,24 @@ describe("deliveryController.getMyDeliveries", () => {
     assert.equal(res.statusCode, 200);
     assert.deepEqual(capturedParams, ["customer-1"]);
     assert.deepEqual(res.body, { success: true, data: [delivery] });
+  });
+
+  test("uses customer_id from the token payload when customerId is absent", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      customer: { customer_id: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await getMyDeliveries(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(capturedParams, ["customer-1"]);
   });
 
   test("returns 401 when the request is unauthenticated", async () => {

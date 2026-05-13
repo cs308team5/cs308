@@ -100,7 +100,7 @@ export const getMyDeliveries = async (req, res) => {
     });
   }
 
-  if (String(authenticatedCustomerId) !== String(customerId)) {
+  if (customerId && String(authenticatedCustomerId) !== String(customerId)) {
     return res.status(403).json({
       success: false,
       message: "You can only view your own deliveries.",
@@ -130,7 +130,7 @@ export const getMyDeliveries = async (req, res) => {
       WHERE d.customer_id = $1
       GROUP BY d.delivery_id, o.order_id, o.total_price, o.created_at
       ORDER BY o.created_at DESC`,
-      [customerId]
+      [authenticatedCustomerId]
     );
 
     return res.status(200).json({ success: true, data: result.rows });
