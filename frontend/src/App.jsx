@@ -12,6 +12,7 @@ import AdminPage from "./pages/AdminPage";
 import AdminDeliveriesPage from "./pages/AdminDeliveriesPage.jsx";
 import AdminProductsPage from "./pages/AdminProductsPage.jsx";
 import SalesManagerPage from "./pages/SalesManagerPage.jsx";
+import SalesReportsPage from "./pages/SalesReportsPage.jsx";
 import { getCurrentUser } from "./services/authService.js";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
 import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
@@ -19,8 +20,16 @@ import { AppShell } from "./pages/Navbar.jsx";
 
 function SalesManagerRoute({ children }) {
   const user = getCurrentUser();
-  if (!user?.token) return <Navigate to="/login" replace />;
-  if (user?.role !== "sales_manager") return <Navigate to="/home" replace />;
+  const isSalesManager = user?.role === "sales_manager";
+
+  if (!user?.token) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isSalesManager) {
+    return <Navigate to="/home" replace />;
+  }
+
   return children;
 }
 
@@ -116,6 +125,14 @@ const router = createBrowserRouter([
         element: (
           <SalesManagerRoute>
             <SalesManagerPage />
+          </SalesManagerRoute>
+        ),
+      },
+      {
+        path: "/sales/reports",
+        element: (
+          <SalesManagerRoute>
+            <SalesReportsPage />
           </SalesManagerRoute>
         ),
       },

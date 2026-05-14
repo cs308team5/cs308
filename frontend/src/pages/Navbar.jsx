@@ -54,6 +54,14 @@ const ProductsIcon = () => (
     </svg>
 );
 
+const ReportsIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10" />
+        <line x1="12" y1="20" x2="12" y2="4" />
+        <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+);
+
 
 const CartIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
@@ -85,6 +93,7 @@ const RefundsIcon = () => (
 
 const SALES_MANAGER_NAV_ITEMS = [
     { id: "refunds", label: "Refunds", path: "/sales-manager", Icon: RefundsIcon },
+    { id: "sales-reports", label: "Reports", path: "/sales/reports", Icon: ReportsIcon },
 ];
 
 // Helper functions
@@ -150,6 +159,27 @@ export function GlobalNavbar() {
 
             <div className="navbar-right">
 
+                {user?.role === "sales_manager" ? (
+                    <>
+                        <button
+                            type="button"
+                            className="navbar-text-btn"
+                            onClick={() => navigate("/sales-manager")}
+                            title="Refund requests"
+                        >
+                            Refunds
+                        </button>
+                        <button
+                            type="button"
+                            className="navbar-text-btn"
+                            onClick={() => navigate("/sales/reports")}
+                            title="Sales reports"
+                        >
+                            Reports
+                        </button>
+                    </>
+                ) : null}
+
                 <button className="navbar-cart-btn" onClick={() => navigate("/cart")}>
                     <CartIcon />
                     Cart
@@ -209,18 +239,21 @@ export function GlobalSidebar() {
 
     return (
         <aside className="global-sidebar">
-            {navItems.map(({ id, label, path, Icon }) => (
+            {navItems.map((item) => {
+                const IconComp = item.Icon;
+                return (
                 <button
-                    key={id}
-                    className={`sidebar-icon-btn ${activeId === id ? "active" : ""}`}
-                    onClick={() => navigate(path)}
-                    data-tooltip={label}
-                    aria-label={label}
+                    key={item.id}
+                    className={`sidebar-icon-btn ${activeId === item.id ? "active" : ""}`}
+                    onClick={() => navigate(item.path)}
+                    data-tooltip={item.label}
+                    aria-label={item.label}
                 >
-                    <Icon />
-                    <span className="sidebar-icon-label">{label}</span>
+                    <IconComp />
+                    <span className="sidebar-icon-label">{item.label}</span>
                 </button>
-            ))}
+                );
+            })}
         </aside>
     );
 }

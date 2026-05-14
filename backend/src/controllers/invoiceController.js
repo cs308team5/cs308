@@ -316,6 +316,36 @@ function buildInvoiceListFilters(query) {
   };
 }
 
+/** Same date range as invoice reports; loss = refunds approved in-range (by reviewed_at). */
+function buildApprovedRefundLossFilters(query) {
+  const startDate = parseInvoiceDateParam(query.startDate, "startDate", "start");
+  const endDate = parseInvoiceDateParam(query.endDate, "endDate", "end");
+
+  if (startDate && endDate && startDate > endDate) {
+    const error = new Error("startDate cannot be after endDate.");
+    error.status = 400;
+    throw error;
+  }
+
+  const conditions = [`r.status = 'approved'`];
+  const values = [];
+
+  if (startDate) {
+    values.push(startDate.toISOString());
+    conditions.push(`r.reviewed_at >= $${values.length}`);
+  }
+
+  if (endDate) {
+    values.push(endDate.toISOString());
+    conditions.push(`r.reviewed_at <= $${values.length}`);
+  }
+
+  return {
+    whereClause: `WHERE ${conditions.join(" AND ")}`,
+    values,
+  };
+}
+
 async function saveInvoiceRecord(orderId, customerId, totalPrice) {
   const existing = await pool.query(
     `SELECT invoice_id FROM invoices WHERE order_id = $1`,
@@ -418,11 +448,12 @@ export const listInvoices = async (req, res) => {
               i.total_price,
               c.name AS customer_name,
               c.email AS customer_email,
-              o.status AS order_status,
+              COALESCE(d.status, o.status) AS order_status,
               o.created_at AS order_created_at
          FROM invoices i
          JOIN customers c ON c.customer_id = i.customer_id
          LEFT JOIN orders o ON o.order_id = i.order_id
+         LEFT JOIN deliveries d ON d.order_id = i.order_id
          ${whereClause}
          ORDER BY i.generated_at DESC, i.invoice_id DESC`,
       values
@@ -450,6 +481,10 @@ export const listInvoices = async (req, res) => {
 export const calculateRevenue = async (req, res) => {
   try {
     const { whereClause, values, filters } = buildInvoiceListFilters(req.query ?? {});
+    const { whereClause: refundWhere, values: refundValues } = buildApprovedRefundLossFilters(
+      req.query ?? {}
+    );
+
     const result = await pool.query(
       `SELECT COUNT(*)::int AS invoice_count,
               COALESCE(SUM(i.total_price), 0)::numeric AS gross_revenue
@@ -458,22 +493,31 @@ export const calculateRevenue = async (req, res) => {
       values
     );
 
+    const refundAgg = await pool.query(
+      `SELECT COALESCE(SUM(r.quantity * r.unit_price), 0)::numeric AS refunded_amount
+         FROM refund_requests r
+         ${refundWhere}`,
+      refundValues
+    );
+
     const summary = result.rows[0] ?? {};
     const grossRevenue = toMoney(summary.gross_revenue);
-    const refundedAmount = 0;
-    const loss = refundedAmount;
-    const netRevenue = toMoney(grossRevenue - refundedAmount);
-    const profit = netRevenue;
+    const refundedAmount = toMoney(refundAgg.rows[0]?.refunded_amount);
+    const loss = toMoney(refundedAmount);
+    const revenue = grossRevenue;
+    const profit = toMoney(revenue - loss);
+    const netRevenue = profit;
 
     return res.status(200).json({
       success: true,
       data: {
         invoice_count: Number(summary.invoice_count ?? 0),
+        revenue,
+        loss,
+        profit,
         gross_revenue: grossRevenue,
         refunded_amount: refundedAmount,
-        loss,
         net_revenue: netRevenue,
-        profit,
       },
       filters,
     });

@@ -1,0 +1,345 @@
+.sales-reports-page {
+  min-height: calc(100vh - 64px);
+  padding: 32px 40px 48px;
+  background: #f7f7f5;
+  color: var(--black);
+}
+
+.sales-reports-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.sales-reports-header h1 {
+  margin: 0 0 6px;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.sales-reports-header p {
+  margin: 0;
+  color: #777;
+  font-size: 14px;
+}
+
+.sales-reports-msg {
+  margin: 0;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sales-reports-msg.success {
+  background: #ecfdf3;
+  color: #166534;
+}
+
+.sales-reports-msg.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.sales-reports-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 24px;
+  margin-bottom: 22px;
+  padding: 18px 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+.sales-reports-filter-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.sales-reports-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+}
+
+.sales-reports-input {
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  min-width: 160px;
+}
+
+.sales-reports-apply {
+  padding: 10px 22px;
+  background: var(--blue);
+  color: var(--offwhite);
+  border: none;
+  border-radius: 10px;
+  font-family: "Playfair Display", serif;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sales-reports-apply:hover:not(:disabled) {
+  background: var(--pink);
+}
+
+.sales-reports-apply:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.sales-reports-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.sales-reports-summary-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+.sales-reports-summary-card span {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #777;
+  margin-bottom: 8px;
+}
+
+.sales-reports-summary-card strong {
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.sales-reports-summary-card.highlight {
+  border-left: 4px solid var(--blue);
+}
+
+.sales-reports-summary-card.muted strong {
+  font-size: 1.15rem;
+}
+
+.sales-reports-summary-foot {
+  margin: 0 0 28px;
+  font-size: 13px;
+  color: #666;
+}
+
+.sales-reports-summary-foot strong {
+  color: var(--black);
+  font-weight: 700;
+}
+
+.sales-reports-table-title {
+  margin: 0 0 14px;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sales-reports-table-wrap {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px 22px 24px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
+}
+
+.sales-reports-loading,
+.sales-reports-empty {
+  margin: 12px 0;
+  color: #666;
+  font-size: 15px;
+}
+
+.sales-reports-table-scroll {
+  overflow-x: auto;
+}
+
+.sales-reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.sales-reports-table th,
+.sales-reports-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.sales-reports-table th {
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.065em;
+  color: #111;
+  font-weight: 700;
+}
+
+.sales-reports-num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.sales-reports-order-id {
+  font-family: ui-monospace, "Cascadia Code", monospace;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.02em;
+}
+
+.sales-reports-actions-col {
+  width: 7.75rem;
+  min-width: 7.75rem;
+  max-width: 7.75rem;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Centered over stacked buttons; same typography as other headers */
+.sales-reports-table th.sales-reports-actions-header {
+  text-align: center;
+}
+
+.sales-reports-actions-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  min-width: 7.5rem;
+  vertical-align: middle;
+}
+
+.sales-reports-actions-cell .sales-reports-btn {
+  width: 100%;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sales-reports-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--black);
+  color: var(--offwhite);
+}
+
+.sales-reports-btn.secondary {
+  background: #fff;
+  color: var(--black);
+  border: 1px solid #ccc;
+}
+
+.sales-reports-btn:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.sales-reports-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Order status badges — aligned with MyOrders / AdminDeliveries palette */
+.sales-reports-status-cell {
+  vertical-align: middle;
+}
+
+.sales-reports-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.sales-reports-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sales-reports-status--pending {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.sales-reports-status--pending .sales-reports-status-dot {
+  background: #ca8a04;
+}
+
+.sales-reports-status--processing {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.sales-reports-status--processing .sales-reports-status-dot {
+  background: #9ca3af;
+}
+
+.sales-reports-status--in-transit {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.sales-reports-status--in-transit .sales-reports-status-dot {
+  background: #3b82f6;
+}
+
+.sales-reports-status--delivered {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.sales-reports-status--delivered .sales-reports-status-dot {
+  background: #4ade80;
+}
+
+.sales-reports-status--cancelled {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.sales-reports-status--cancelled .sales-reports-status-dot {
+  background: #ef4444;
+}
+
+.sales-reports-status--unknown {
+  background: #f4f4f5;
+  color: #52525b;
+}
+
+.sales-reports-status--unknown .sales-reports-status-dot {
+  background: #a1a1aa;
+}
