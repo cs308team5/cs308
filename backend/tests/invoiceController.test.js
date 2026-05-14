@@ -57,6 +57,8 @@ describe("invoiceController.listInvoices", () => {
     assert.equal(res.body.success, true);
     assert.equal(res.body.count, 1);
     assert.equal(res.body.data[0].pdf_url, "/api/invoice/manager/order-1/pdf");
+    assert.match(capturedSql, /LEFT JOIN deliveries d ON d\.order_id = i\.order_id/);
+    assert.match(capturedSql, /COALESCE\(d\.status, o\.status\) AS order_status/);
     assert.match(capturedSql, /i\.generated_at >= \$1/);
     assert.match(capturedSql, /i\.generated_at <= \$2/);
     assert.deepEqual(capturedParams, [
@@ -252,7 +254,16 @@ describe("invoiceController.calculateRevenue", () => {
   test("returns revenue summary filtered by date range", async () => {
     let capturedSql = "";
     let capturedParams = [];
+    let refundSql = "";
+    let refundParams = [];
     pool.query = async (sql, params = []) => {
+      if (/refund_requests/.test(sql)) {
+        refundSql = sql;
+        refundParams = params;
+        return {
+          rows: [{ refunded_amount: "0" }],
+        };
+      }
       capturedSql = sql;
       capturedParams = params;
       return {
@@ -276,11 +287,12 @@ describe("invoiceController.calculateRevenue", () => {
     assert.equal(res.body.success, true);
     assert.deepEqual(res.body.data, {
       invoice_count: 3,
+      revenue: 459.99,
+      loss: 0,
+      profit: 459.99,
       gross_revenue: 459.99,
       refunded_amount: 0,
-      loss: 0,
       net_revenue: 459.99,
-      profit: 459.99,
     });
     assert.match(capturedSql, /COUNT\(\*\)::int AS invoice_count/);
     assert.match(capturedSql, /SUM\(i\.total_price\)/);
@@ -290,17 +302,61 @@ describe("invoiceController.calculateRevenue", () => {
       "2026-05-01T00:00:00.000Z",
       "2026-05-31T23:59:59.999Z",
     ]);
+    assert.match(refundSql, /r\.status = 'approved'/);
+    assert.match(refundSql, /r\.quantity \* r\.unit_price/);
+    assert.match(refundSql, /r\.reviewed_at >= \$1/);
+    assert.match(refundSql, /r\.reviewed_at <= \$2/);
+    assert.deepEqual(refundParams, capturedParams);
+  });
+
+  test("subtracts approved refunds in range from profit", async () => {
+    pool.query = async (sql) => {
+      if (/refund_requests/.test(sql)) {
+        return { rows: [{ refunded_amount: "125.51" }] };
+      }
+      return {
+        rows: [
+          {
+            invoice_count: 2,
+            gross_revenue: "500.00",
+          },
+        ],
+      };
+    };
+
+    const req = createMockReq({
+      query: { startDate: "2026-05-01", endDate: "2026-05-31" },
+    });
+    const res = createMockRes();
+
+    await calculateRevenue(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.body.data, {
+      invoice_count: 2,
+      revenue: 500,
+      loss: 125.51,
+      profit: 374.49,
+      gross_revenue: 500,
+      refunded_amount: 125.51,
+      net_revenue: 374.49,
+    });
   });
 
   test("returns zero summary when there are no invoices", async () => {
-    pool.query = async () => ({
-      rows: [
-        {
-          invoice_count: 0,
-          gross_revenue: null,
-        },
-      ],
-    });
+    pool.query = async (sql) => {
+      if (/refund_requests/.test(sql)) {
+        return { rows: [{ refunded_amount: null }] };
+      }
+      return {
+        rows: [
+          {
+            invoice_count: 0,
+            gross_revenue: null,
+          },
+        ],
+      };
+    };
 
     const req = createMockReq();
     const res = createMockRes();
@@ -310,11 +366,12 @@ describe("invoiceController.calculateRevenue", () => {
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body.data, {
       invoice_count: 0,
+      revenue: 0,
+      loss: 0,
+      profit: 0,
       gross_revenue: 0,
       refunded_amount: 0,
-      loss: 0,
       net_revenue: 0,
-      profit: 0,
     });
   });
 
