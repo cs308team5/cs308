@@ -1,5 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  Area,
+  AreaChart,
+} from "recharts";
 import { getCurrentUser } from "../services/authService.js";
 import "./SalesReportsPage.css";
 
@@ -84,6 +97,145 @@ function printPdfBlob(blob, titleBase) {
   document.body.appendChild(printFrame);
 }
 
+function formatChartDayLabel(dateKey) {
+  const [y, m, d] = dateKey.split("-").map(Number);
+  if (!y) return dateKey;
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function localDateKeyFromIso(iso) {
+  const t = new Date(iso);
+  if (Number.isNaN(t.getTime())) return null;
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}
+
+function* daysInRangeInclusive(startStr, endStr) {
+  if (!startStr || !endStr) return;
+  const [sy, sm, sd] = startStr.split("-").map(Number);
+  const [ey, em, ed] = endStr.split("-").map(Number);
+  const cur = new Date(sy, sm - 1, sd);
+  const end = new Date(ey, em - 1, ed);
+  if (cur > end) return;
+  while (cur <= end) {
+    const dayKey = `${cur.getFullYear()}-${String(cur.getMonth() + 1).padStart(2, "0")}-${String(cur.getDate()).padStart(2, "0")}`;
+    yield dayKey;
+    cur.setDate(cur.getDate() + 1);
+  }
+}
+
+function buildDailyRevenueByInvoice(startDateInput, endDateInput, invoices) {
+  const perDay = new Map();
+  for (const inv of invoices) {
+    const key = localDateKeyFromIso(inv.generated_at);
+    if (!key) continue;
+    const amt = Number(inv.total_price ?? 0);
+    perDay.set(key, (perDay.get(key) ?? 0) + amt);
+  }
+  const rows = [];
+  for (const day of daysInRangeInclusive(startDateInput, endDateInput)) {
+    rows.push({
+      dateKey: day,
+      label: formatChartDayLabel(day),
+      revenue: Number((perDay.get(day) ?? 0).toFixed(2)),
+    });
+  }
+  return rows;
+}
+
+/** Approved refund cash by calendar day (reviewed_at), aligned with revenue loss logic */
+function buildDailyApprovedRefunds(startDateInput, endDateInput, refunds) {
+  const perDay = new Map();
+  for (const r of refunds) {
+    if (String(r.status ?? "").toLowerCase() !== "approved" || !r.reviewed_at) continue;
+    const key = localDateKeyFromIso(r.reviewed_at);
+    if (!key || key < startDateInput || key > endDateInput) continue;
+    const amt = Number(r.quantity ?? 0) * Number(r.unit_price ?? 0);
+    perDay.set(key, (perDay.get(key) ?? 0) + amt);
+  }
+  const rows = [];
+  for (const day of daysInRangeInclusive(startDateInput, endDateInput)) {
+    rows.push({
+      dateKey: day,
+      label: formatChartDayLabel(day),
+      refundAmount: Number((perDay.get(day) ?? 0).toFixed(2)),
+    });
+  }
+  return rows;
+}
+
+/** Refunds whose request fell in the date range, grouped by status (sum of line amounts in $) */
+function buildRefundRequestsByStatus(startDateInput, endDateInput, refunds) {
+  const labels = {
+    pending: "Pending",
+    received: "Received",
+    approved: "Approved",
+    rejected: "Rejected",
+  };
+  const agg = {
+    pending: { count: 0, amount: 0 },
+    received: { count: 0, amount: 0 },
+    approved: { count: 0, amount: 0 },
+    rejected: { count: 0, amount: 0 },
+  };
+  for (const r of refunds) {
+    if (!r.requested_at) continue;
+    const key = localDateKeyFromIso(r.requested_at);
+    if (!key || key < startDateInput || key > endDateInput) continue;
+    const st = String(r.status ?? "").toLowerCase();
+    if (!agg[st]) continue;
+    const amt = Number(r.quantity ?? 0) * Number(r.unit_price ?? 0);
+    agg[st].count += 1;
+    agg[st].amount += amt;
+  }
+  return Object.keys(labels).map((k) => ({
+    key: k,
+    name: labels[k],
+    count: agg[k].count,
+    amount: Number(agg[k].amount.toFixed(2)),
+  }));
+}
+
+const REFUND_STATUS_BAR_COLORS = {
+  pending: "#ca8a04",
+  received: "#2563eb",
+  approved: "#047857",
+  rejected: "#9ca3af",
+};
+
+function ChartTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const row = payload[0];
+  return (
+    <div className="sales-reports-chart-tooltip">
+      {payload.map((p) => (
+        <div key={String(p.dataKey)} className="sales-reports-chart-tooltip-row">
+          <span>{p.name}</span>
+          <strong>{formatCurrency(p.value)}</strong>
+        </div>
+      ))}
+      {row?.payload?.dateKey ? (
+        <div className="sales-reports-chart-tooltip-date">{row.payload.dateKey}</div>
+      ) : null}
+    </div>
+  );
+}
+
+function RefundStatusTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const p = payload[0]?.payload;
+  if (!p) return null;
+  return (
+    <div className="sales-reports-chart-tooltip">
+      <div className="sales-reports-chart-tooltip-title">{p.name}</div>
+      <div className="sales-reports-chart-tooltip-row">
+        <span>Amount</span>
+        <strong>{formatCurrency(p.amount)}</strong>
+      </div>
+    </div>
+  );
+}
+
 export default function SalesReportsPage() {
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -98,6 +250,7 @@ export default function SalesReportsPage() {
   const [endDate, setEndDate] = useState(toInputDate(today));
   const [invoices, setInvoices] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [refunds, setRefunds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("success");
@@ -121,6 +274,7 @@ export default function SalesReportsPage() {
     if (!token) {
       setInvoices([]);
       setSummary(null);
+      setRefunds([]);
       setLoading(false);
       return;
     }
@@ -129,17 +283,21 @@ export default function SalesReportsPage() {
     const qs = buildQuery();
 
     try {
-      const [invRes, revRes] = await Promise.all([
+      const [invRes, revRes, refRes] = await Promise.all([
         fetch(`/api/invoice/manager${qs}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch(`/api/invoice/manager/revenue${qs}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
+        fetch("/api/refunds", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
       ]);
 
       const invData = await invRes.json().catch(() => ({}));
       const revData = await revRes.json().catch(() => ({}));
+      const refData = await refRes.json().catch(() => ({}));
 
       if (!invRes.ok) {
         showMessage(invData.message || "Could not load invoices.", "error");
@@ -154,10 +312,17 @@ export default function SalesReportsPage() {
       } else {
         setSummary(revData.data ?? null);
       }
+
+      if (!refRes.ok) {
+        setRefunds([]);
+      } else {
+        setRefunds(refData.refunds ?? []);
+      }
     } catch {
       showMessage("Network error while loading reports.", "error");
       setInvoices([]);
       setSummary(null);
+      setRefunds([]);
     } finally {
       setLoading(false);
     }
@@ -208,6 +373,38 @@ export default function SalesReportsPage() {
       setPdfBusyOrderId(null);
     }
   };
+
+  const revenueTotal = summary
+    ? Number(summary.revenue ?? summary.gross_revenue ?? 0)
+    : 0;
+  const lossTotal = summary ? Number(summary.loss ?? summary.refunded_amount ?? 0) : 0;
+  const profitTotal = summary
+    ? Number(summary.profit ?? summary.net_revenue ?? 0)
+    : 0;
+
+  const periodBarData = useMemo(
+    () => [
+      { name: "Revenue", value: revenueTotal, fill: "var(--blue, #1B284E)" },
+      { name: "Loss", value: lossTotal, fill: "#b91c1c" },
+      { name: "Profit", value: profitTotal, fill: "#047857" },
+    ],
+    [revenueTotal, lossTotal, profitTotal]
+  );
+
+  const dailySeries = useMemo(
+    () => buildDailyRevenueByInvoice(startDate, endDate, invoices),
+    [startDate, endDate, invoices]
+  );
+
+  const dailyRefundSeries = useMemo(
+    () => buildDailyApprovedRefunds(startDate, endDate, refunds),
+    [startDate, endDate, refunds]
+  );
+
+  const refundStatusSeries = useMemo(
+    () => buildRefundRequestsByStatus(startDate, endDate, refunds),
+    [startDate, endDate, refunds]
+  );
 
   if (!token || user?.role !== "sales_manager") {
     return null;
@@ -273,6 +470,134 @@ export default function SalesReportsPage() {
           Based on <strong>{summary.invoice_count ?? 0}</strong> invoice{Number(summary.invoice_count) === 1 ? "" : "s"} in this range.
         </p>
         </>
+      )}
+
+      {summary && (
+        <section className="sales-reports-charts" aria-label="Charts">
+          <div className="sales-reports-chart-card">
+            <h2 className="sales-reports-chart-title">Revenue, loss &amp; profit</h2>
+            <p className="sales-reports-chart-caption">Totals for the selected date range</p>
+            <div className="sales-reports-chart-inner">
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={periodBarData} margin={{ top: 8, right: 12, left: 4, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
+                  <Tooltip content={<ChartTooltip />} cursor={{ fill: "rgba(27, 40, 78, 0.06)" }} />
+                  <Legend />
+                  <Bar dataKey="value" name="Amount" radius={[8, 8, 0, 0]}>
+                    {periodBarData.map((entry) => (
+                      <Cell key={entry.name} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="sales-reports-chart-card">
+            <h2 className="sales-reports-chart-title">Invoice revenue by day</h2>
+            <p className="sales-reports-chart-caption">Sum of invoice totals per calendar day</p>
+            <div className="sales-reports-chart-inner">
+              {dailySeries.length === 0 ? (
+                <p className="sales-reports-chart-empty">Select a date range to see daily totals.</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <AreaChart data={dailySeries} margin={{ top: 8, right: 12, left: 4, bottom: 8 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      name="Invoice revenue"
+                      stroke="var(--blue, #1B284E)"
+                      fill="var(--blue, #1B284E)"
+                      fillOpacity={0.15}
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {summary && (
+        <section className="sales-reports-refund-section" aria-label="Refund analysis charts">
+          <h2 className="sales-reports-refund-heading">Refund analysis</h2>
+          <div className="sales-reports-charts-grid">
+            <div className="sales-reports-chart-card sales-reports-chart-card--wide">
+              <h3 className="sales-reports-chart-title">Approved refunds by day</h3>
+              <p className="sales-reports-chart-caption">
+                Sum of approved refund amounts per calendar day (approval date; quantity × unit price).
+              </p>
+              <div className="sales-reports-chart-inner">
+                {dailyRefundSeries.length === 0 ? (
+                  <p className="sales-reports-chart-empty">Select a date range to see daily refunds.</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <AreaChart data={dailyRefundSeries} margin={{ top: 8, right: 12, left: 4, bottom: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e0" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
+                      <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `$${v}`} />
+                      <Tooltip content={<ChartTooltip />} />
+                      <Legend />
+                      <Area
+                        type="monotone"
+                        dataKey="refundAmount"
+                        name="Approved refunds"
+                        stroke="#b91c1c"
+                        fill="#b91c1c"
+                        fillOpacity={0.2}
+                        strokeWidth={2}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            <div className="sales-reports-chart-card sales-reports-chart-card--wide">
+              <h3 className="sales-reports-chart-title">Refund amounts by status</h3>
+              <p className="sales-reports-chart-caption">
+                Total amount ($) per status for requests first submitted in this range (quantity × unit price).
+              </p>
+              <div className="sales-reports-chart-inner sales-reports-chart-inner--horizontal">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart
+                    layout="vertical"
+                    data={refundStatusSeries}
+                    margin={{ top: 8, right: 24, left: 8, bottom: 36 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e0" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(v) => `$${v}`}
+                      label={{
+                        value: "Amount ($)",
+                        position: "insideBottom",
+                        offset: -8,
+                        style: { fill: "#555", fontSize: 12, fontWeight: 600 },
+                      }}
+                    />
+                    <YAxis type="category" dataKey="name" width={88} tick={{ fontSize: 12 }} />
+                    <Tooltip content={<RefundStatusTooltip />} />
+                    <Bar dataKey="amount" name="Amount ($)" radius={[0, 6, 6, 0]}>
+                      {refundStatusSeries.map((row) => (
+                        <Cell key={row.key} fill={REFUND_STATUS_BAR_COLORS[row.key] ?? "#94a3b8"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
       <section className="sales-reports-table-wrap">
