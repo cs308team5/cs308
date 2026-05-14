@@ -237,3 +237,127 @@
 .myorders-error {
   color: #dc2626;
 }
+
+/* ── Refund ── */
+.order-item-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.refund-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e5e5;
+  background: white;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b91c1c;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s;
+  flex-shrink: 0;
+}
+
+.refund-btn:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.refund-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.refund-expired {
+  font-size: 12px;
+  color: #aaa;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.refund-form {
+  margin: 8px 0 4px 74px;
+  background: #fafafa;
+  border: 1.5px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.refund-form-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.refund-textarea {
+  resize: vertical;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e5e5;
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: 0.2s;
+}
+
+.refund-textarea:focus {
+  border-color: #b91c1c;
+}
+
+.refund-form-error {
+  margin: 0;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+.refund-form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.refund-submit-btn {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: none;
+  background: #b91c1c;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.refund-submit-btn:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.refund-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.refund-cancel-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e5e5;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.refund-cancel-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}

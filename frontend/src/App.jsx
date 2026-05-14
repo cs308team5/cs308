@@ -11,10 +11,18 @@ import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
 import AdminPage from "./pages/AdminPage";
 import AdminDeliveriesPage from "./pages/AdminDeliveriesPage.jsx";
 import AdminProductsPage from "./pages/AdminProductsPage.jsx";
+import SalesManagerPage from "./pages/SalesManagerPage.jsx";
 import { getCurrentUser } from "./services/authService.js";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
 import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
 import { AppShell } from "./pages/Navbar.jsx";
+
+function SalesManagerRoute({ children }) {
+  const user = getCurrentUser();
+  if (!user?.token) return <Navigate to="/login" replace />;
+  if (user?.role !== "sales_manager") return <Navigate to="/home" replace />;
+  return children;
+}
 
 function ProductManagerRoute({ children }) {
   const user = getCurrentUser();
@@ -101,6 +109,14 @@ const router = createBrowserRouter([
           <ProductManagerRoute>
             <AdminProductsPage />
           </ProductManagerRoute>
+        ),
+      },
+      {
+        path: "/sales-manager",
+        element: (
+          <SalesManagerRoute>
+            <SalesManagerPage />
+          </SalesManagerRoute>
         ),
       },
     ],
