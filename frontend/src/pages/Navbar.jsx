@@ -75,6 +75,18 @@ const ADMIN_NAV_ITEMS = [
     { id: "deliveries", label: "Deliveries", path: "/admin/deliveries", Icon: DeliveriesIcon },
 ];
 
+const RefundsIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+        <path d="M12 7v5l4 2" />
+    </svg>
+);
+
+const SALES_MANAGER_NAV_ITEMS = [
+    { id: "refunds", label: "Refunds", path: "/sales-manager", Icon: RefundsIcon },
+];
+
 // Helper functions
 
 // For fallback if images can't be loaded
@@ -183,7 +195,12 @@ export function GlobalSidebar() {
     const location  = useLocation();
     const user = getCurrentUser();
     const isProductManager = user?.role === "product_manager";
-    const navItems = isProductManager ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS] : NAV_ITEMS;
+    const isSalesManager = user?.role === "sales_manager";
+    const navItems = isProductManager
+        ? [...NAV_ITEMS, ...ADMIN_NAV_ITEMS]
+        : isSalesManager
+        ? [...NAV_ITEMS, ...SALES_MANAGER_NAV_ITEMS]
+        : NAV_ITEMS;
 
     // Derive active tab from current path
     const activeId = [...navItems].sort((a, b) => b.path.length - a.path.length).find((item) =>

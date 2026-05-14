@@ -10,6 +10,7 @@ import checkoutRoutes from "./routes/checkoutRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
+import refundRoutes from "./routes/refundRoutes.js";
 
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/deliveries", deliveryRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/refunds", refundRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
