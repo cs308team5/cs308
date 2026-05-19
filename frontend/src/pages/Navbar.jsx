@@ -91,8 +91,17 @@ const RefundsIcon = () => (
     </svg>
 );
 
+const DiscountIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="19" y1="5" x2="5" y2="19" />
+        <circle cx="6.5" cy="6.5" r="2.5" />
+        <circle cx="17.5" cy="17.5" r="2.5" />
+    </svg>
+);
+
 const SALES_MANAGER_NAV_ITEMS = [
     { id: "refunds", label: "Refunds", path: "/sales-manager", Icon: RefundsIcon },
+    { id: "discounts", label: "Discounts", path: "/sales-manager/discounts", Icon: DiscountIcon },
     { id: "sales-reports", label: "Reports", path: "/sales/reports", Icon: ReportsIcon },
 ];
 
@@ -168,6 +177,14 @@ export function GlobalNavbar() {
                             title="Refund requests"
                         >
                             Refunds
+                        </button>
+                        <button
+                            type="button"
+                            className="navbar-text-btn"
+                            onClick={() => navigate("/sales-manager/discounts")}
+                            title="Discounts"
+                        >
+                            Discounts
                         </button>
                         <button
                             type="button"
