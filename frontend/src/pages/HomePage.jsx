@@ -44,6 +44,7 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", discountedPri
           title,
           img,
           price,
+          discountedPrice: discountedPriceLabel ? Number(discountedPriceLabel.replace("$", "")) : null,
           stock_quantity,
           description: "",
         });

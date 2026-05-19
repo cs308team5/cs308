@@ -102,16 +102,22 @@ export async function fetchCart(userId) {
 
   if (error) throw error;
 
-  return data.map(row => ({
-    id:          row.id,
-    product_id:  row.product_id,
-    quantity:    row.quantity,
-    name:        row.products.name,
-    description: row.products.description,
-    price:       Number(row.products.price),
-    image:       row.products.image_url,
-    stock_quantity: row.products.stock_quantity,
-  }));
+  return data.map(row => {
+    const originalPrice = Number(row.products.price);
+    const discountedPrice = row.products.discounted_price != null ? Number(row.products.discounted_price) : null;
+    return {
+      id:             row.id,
+      product_id:     row.product_id,
+      quantity:       row.quantity,
+      name:           row.products.name,
+      description:    row.products.description,
+      originalPrice,
+      price:          discountedPrice ?? originalPrice,
+      discountedPrice,
+      image:          row.products.image_url,
+      stock_quantity: row.products.stock_quantity,
+    };
+  });
 }
 /*
 export async function addToCart(userId, productId) {
@@ -229,12 +235,16 @@ export function addToGuestCart(product) {
     existing.quantity += 1;
   }
   else {
+    const originalPrice = Number(String(product.price).replace("$", ""));
+    const discountedPrice = product.discountedPrice ?? null;
     cart.push({
       product_id:     product.id,
       quantity:       1,
       name:           product.title,
       description:    product.description ?? "",
-      price:          Number(String(product.price).replace("$", "")),
+      originalPrice,
+      price:          discountedPrice ?? originalPrice,
+      discountedPrice,
       image:          product.img,
       stock_quantity: product.stock_quantity,
     });
