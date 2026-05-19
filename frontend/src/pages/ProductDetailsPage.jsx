@@ -189,7 +189,19 @@ export default function ProductDetailsPage() {
 
           <h1 className="title">{product.name}</h1>
 
-          <div className="price">{product.price} TL</div>
+          <div className="price">
+            {product.discounted_price && Number(product.discounted_price) > 0 ? (
+              <>
+                <span style={{ textDecoration: "line-through", opacity: 0.45, fontWeight: 400, fontSize: "0.85em", marginRight: 8 }}>${Number(product.price).toFixed(2)}</span>
+                <span style={{ color: "#dc2626" }}>${Number(product.discounted_price).toFixed(2)}</span>
+                <span style={{ fontSize: 13, marginLeft: 8, color: "#dc2626", fontWeight: 600 }}>
+                  -{Math.round(Number(product.discount_rate) * 100)}% off
+                </span>
+              </>
+            ) : (
+              `$${Number(product.price).toFixed(2)}`
+            )}
+          </div>
 
           <div className="rating">★ {averageLabel} ({reviewStats.count})</div>
 

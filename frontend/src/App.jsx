@@ -13,6 +13,7 @@ import AdminDeliveriesPage from "./pages/AdminDeliveriesPage.jsx";
 import AdminProductsPage from "./pages/AdminProductsPage.jsx";
 import SalesManagerPage from "./pages/SalesManagerPage.jsx";
 import SalesReportsPage from "./pages/SalesReportsPage.jsx";
+import DiscountsPage from "./pages/DiscountsPage.jsx";
 import { getCurrentUser } from "./services/authService.js";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
 import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
@@ -133,6 +134,14 @@ const router = createBrowserRouter([
         element: (
           <SalesManagerRoute>
             <SalesReportsPage />
+          </SalesManagerRoute>
+        ),
+      },
+      {
+        path: "/sales-manager/discounts",
+        element: (
+          <SalesManagerRoute>
+            <DiscountsPage />
           </SalesManagerRoute>
         ),
       },

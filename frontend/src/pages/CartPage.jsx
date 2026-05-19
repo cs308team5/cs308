@@ -92,7 +92,16 @@ export default function CartPage() {
               <button className="remove" onClick={() => removeItem(item.id)}>
                 Remove
               </button>
-              <h3>${(item.price * item.quantity).toFixed(2)}</h3>
+              {item.discountedPrice ? (
+                <div style={{ textAlign: "right" }}>
+                  <span style={{ textDecoration: "line-through", opacity: 0.45, fontSize: "0.85em", marginRight: 6 }}>
+                    ${(item.originalPrice * item.quantity).toFixed(2)}
+                  </span>
+                  <h3 style={{ margin: 0, color: "#dc2626" }}>${(item.price * item.quantity).toFixed(2)}</h3>
+                </div>
+              ) : (
+                <h3>${(item.price * item.quantity).toFixed(2)}</h3>
+              )}
             </div>
           </div>
         ))}
