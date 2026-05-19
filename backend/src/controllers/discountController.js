@@ -49,7 +49,7 @@ export const setDiscount = async (req, res) => {
     }
 
     const rate = parseFloat(discount_rate);
-    if (isNaN(rate) || rate < 0 || rate >= 1) {
+    if (isNaN(rate) || rate <= 0 || rate >= 1) {
         return res.status(400).json({ success: false, message: "discount_rate must be between 0 (inclusive) and 1 (exclusive)." });
     }
 
