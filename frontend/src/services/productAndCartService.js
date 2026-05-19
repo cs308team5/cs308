@@ -14,6 +14,7 @@ const escapeSearchValue = (value) =>
 const mapProduct = (row) => {
   const priceValue = Number(row.price ?? 0);
   const stockQuantity = Number(row.stock_quantity ?? 0);
+  const discountedPrice = row.discounted_price != null ? Number(row.discounted_price) : null;
 
   return {
     id: row.id,
@@ -22,6 +23,9 @@ const mapProduct = (row) => {
     creator: row.additional_attributes?.creator ?? "",
     price: `$${priceValue.toFixed(2)}`,
     priceValue,
+    discountRate: row.discount_rate ?? null,
+    discountedPrice: discountedPrice,
+    discountedPriceLabel: discountedPrice != null ? `$${discountedPrice.toFixed(2)}` : null,
     stock_quantity: stockQuantity,
     inStock: stockQuantity > 0,
     category: row.category ?? "uncategorized",

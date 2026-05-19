@@ -521,7 +521,7 @@
 }
 
 .listing-card-footer {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .listing-row-actions {

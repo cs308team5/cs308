@@ -21,7 +21,7 @@ const PennantSvg = ({ className, onClick }) => (
 );
 
 
-export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity }) => {
+export const PolaroidCard = ({ title, creator, img, price = "$50", discountedPriceLabel, customStyle, productId, stock_quantity }) => {
   const navigate = useNavigate();
   const inStock = Number(stock_quantity) > 0;
   const [isPinned, setIsPinned] = useState(false);
@@ -85,7 +85,14 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
         </div>
 
         <div className="polaroid-buy-container">
-          <span className="reveal-price">{price}</span>
+          <span className="reveal-price" style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+            {discountedPriceLabel ? (
+              <>
+                <span style={{ textDecoration: "line-through", opacity: 0.45, fontWeight: 400, fontSize: "0.8em" }}>{price}</span>
+                <span style={{ color: "#dc2626" }}>{discountedPriceLabel}</span>
+              </>
+            ) : price}
+          </span>
           <button
             className={`reveal-cart-btn ${!inStock ? "disabled" : ""}`}
             onClick={handleAddToCart}
@@ -143,6 +150,7 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
               creator={item.creator}
               img={item.img}
               price={item.price}
+              discountedPriceLabel={item.discountedPriceLabel}
               productId={item.id}
               stock_quantity={item.stock_quantity}
             />

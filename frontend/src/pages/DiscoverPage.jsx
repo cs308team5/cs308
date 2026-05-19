@@ -59,7 +59,14 @@ const ProductGridCard = ({ product, onOpen, onAddToCart }) => {
         <p className="listing-description">{product.description || "No description available for this product yet."}</p>
 
         <div className="listing-card-footer">
-          <span className="listing-price">{product.price}</span>
+          <span className="listing-price" style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "nowrap" }}>
+            {product.discountedPriceLabel ? (
+              <>
+                <span style={{ textDecoration: "line-through", opacity: 0.45, fontWeight: 400, fontSize: "0.8em" }}>{product.price}</span>
+                <span style={{ color: "#dc2626" }}>{product.discountedPriceLabel}</span>
+              </>
+            ) : product.price}
+          </span>
           <button
             className={`listing-action ${!inStock ? "disabled" : ""}`}
             onClick={(event) => {
@@ -118,7 +125,14 @@ const ProductListRow = ({ product, onOpen, onAddToCart }) => {
         </p>
 
         <div className="listing-row-footer">
-          <span className="listing-price">{product.price}</span>
+          <span className="listing-price" style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "nowrap" }}>
+            {product.discountedPriceLabel ? (
+              <>
+                <span style={{ textDecoration: "line-through", opacity: 0.45, fontWeight: 400, fontSize: "0.8em" }}>{product.price}</span>
+                <span style={{ color: "#dc2626" }}>{product.discountedPriceLabel}</span>
+              </>
+            ) : product.price}
+          </span>
           <div className="listing-row-actions">
             <button
               className={`listing-action ${!inStock ? "disabled" : ""}`}

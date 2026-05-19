@@ -331,6 +331,8 @@ export const getProductById = async (req, res) => {
       name: p.name,
       description: p.description,
       price: p.price,
+      discount_rate: p.discount_rate,
+      discounted_price: p.discounted_price,
       category: p.category,
       stock: p.stock_quantity,
       image_url: p.image_url,
