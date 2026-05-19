@@ -1,4 +1,44 @@
 import pool from "../config/db.js";
+import { sendEmail } from "../services/emailService.js";
+
+async function notifyWishlistUsers(product) {
+    const { rows } = await pool.query(
+        `SELECT c.email, c.name
+         FROM wishlist_items w
+         JOIN customers c ON c.customer_id = w.customer_id
+         WHERE w.product_id = $1`,
+        [product.id]
+    );
+
+    if (rows.length === 0) return;
+
+    const discountPct = Math.round(Number(product.discount_rate) * 100);
+    const originalPrice = Number(product.price).toFixed(2);
+    const discountedPrice = Number(product.discounted_price).toFixed(2);
+
+    for (const user of rows) {
+        await sendEmail({
+            to: user.email,
+            subject: `Price drop on "${product.name}" — ${discountPct}% off!`,
+            html: `
+                <p>Hi ${user.name},</p>
+                <p>Great news! A product on your wishlist just got a discount:</p>
+                <table style="border-collapse:collapse;margin:16px 0;">
+                    <tr>
+                        <td style="padding:8px 16px 8px 0;font-weight:600;">${product.name}</td>
+                        <td style="padding:8px 0;">
+                            <span style="text-decoration:line-through;opacity:0.5;margin-right:8px;">$${originalPrice}</span>
+                            <span style="color:#dc2626;font-weight:700;">$${discountedPrice}</span>
+                            <span style="color:#dc2626;font-size:0.85em;margin-left:6px;">(${discountPct}% off)</span>
+                        </td>
+                    </tr>
+                </table>
+                <p>Don't miss out — head over to the store and grab it before it's gone!</p>
+                <p>— The Dare Team</p>
+            `,
+        });
+    }
+}
 
 export const setDiscount = async (req, res) => {
     const { id } = req.params;
@@ -25,7 +65,14 @@ export const setDiscount = async (req, res) => {
         if (result.rowCount === 0) {
             return res.status(404).json({ success: false, message: "Product not found." });
         }
-        res.json({ success: true, product: result.rows[0] });
+
+        const product = result.rows[0];
+        res.json({ success: true, product });
+
+        // Notify wishlist users after responding — errors are non-fatal
+        notifyWishlistUsers(product).catch(err =>
+            console.error("Wishlist notification error:", err)
+        );
     } catch (err) {
         console.error("setDiscount error:", err);
         res.status(500).json({ success: false, message: "Server error." });
