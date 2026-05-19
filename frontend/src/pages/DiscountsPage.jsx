@@ -10,6 +10,8 @@ export default function DiscountsPage() {
     const isSalesManager = user?.role === "sales_manager";
 
     const [products, setProducts] = useState([]);
+    const [search, setSearch] = useState("");
+    const [showActiveOnly, setShowActiveOnly] = useState(false);
     const [loading, setLoading] = useState(true);
     const [rates, setRates] = useState({});
     const [actionId, setActionId] = useState(null);
@@ -112,6 +114,10 @@ export default function DiscountsPage() {
     }
 
     const discountedCount = products.filter(p => p.discount_rate).length;
+    const visibleProducts = products.filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase()) &&
+        (!showActiveOnly || p.discount_rate)
+    );
 
     return (
         <main className="admin-content">
@@ -128,13 +134,41 @@ export default function DiscountsPage() {
                     </div>
                     {msg && <p className={`admin-msg ${msgType}`}>{msg}</p>}
                 </div>
+                <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 20, justifyContent: "space-between" }}>
+                    <input
+                        type="text"
+                        placeholder="Search products..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        style={{
+                            width: "100%", maxWidth: 360, padding: "8px 14px",
+                            borderRadius: 8, border: "1px solid #d1d5db",
+                            fontSize: 14, boxSizing: "border-box",
+                        }}
+                    />
+                    <button
+                        onClick={() => setShowActiveOnly(v => !v)}
+                        style={{
+                            padding: "8px 16px", borderRadius: 8, fontSize: 14, fontWeight: 600,
+                            border: "1px solid #d1d5db", cursor: "pointer", whiteSpace: "nowrap",
+                            background: showActiveOnly ? "var(--black, #111)" : "transparent",
+                            color: showActiveOnly ? "#fff" : "inherit",
+                            transition: "background 0.15s, color 0.15s",
+                        }}
+                    >
+                        Active discounts
+                    </button>
+                </div>
 
                 <div className="admin-list">
                     {loading && <p className="admin-empty">Loading...</p>}
                     {!loading && products.length === 0 && (
                         <p className="admin-empty">No products found.</p>
                     )}
-                    {products.map(p => (
+                    {!loading && products.length > 0 && visibleProducts.length === 0 && (
+                        <p className="admin-empty">No products match your search.</p>
+                    )}
+                    {visibleProducts.map(p => (
                         <div className="admin-card" key={p.id}>
                             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
                                 {p.image_url && (
