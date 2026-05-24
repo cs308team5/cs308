@@ -6,6 +6,7 @@ import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
 import { faCartShopping, faHeart as faHeartSolid, faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { getCurrentUser } from "../services/authService.js";
 import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
+import { addToWishlist, fetchWishlist, removeFromWishlist } from "../services/wishlistService.js";
 import SearchBar from "../components/SearchBar.jsx";
 
 import brushStroke from "../assets/homePageAssets/brushStroke.png";
@@ -22,20 +23,29 @@ const PennantSvg = ({ className, onClick }) => (
 );
 
 
-export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, productId, stock_quantity }) => {
+export const PolaroidCard = ({
+  title,
+  creator,
+  img,
+  price = "$50",
+  customStyle,
+  productId,
+  stock_quantity,
+  isWishlisted = false,
+  onToggleWishlist,
+}) => {
   const navigate = useNavigate();
   const inStock = Number(stock_quantity) > 0;
   const [isLiked, setIsLiked] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
 
   const toggleLike = (event) => {
     event.stopPropagation();
     setIsLiked((current) => !current);
   };
 
-  const togglePin = (event) => {
+  const handleToggleWishlist = (event) => {
     event.stopPropagation();
-    setIsPinned((current) => !current);
+    onToggleWishlist?.(productId);
   };
 
   const handleAddToCart = async (event) => {
@@ -77,7 +87,14 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", customStyle, 
           {img && <img src={img} alt={title} className="polaroid-img" />}
         </div>
 
-        <PennantSvg className={`polaroid-pennant ${isPinned ? "pinned" : ""}`} onClick={togglePin} />
+        <button
+          type="button"
+          className={`polaroid-pennant-btn ${isWishlisted ? "pinned" : ""}`}
+          onClick={handleToggleWishlist}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <PennantSvg className="polaroid-pennant" />
+        </button>
 
         <div className="polaroid-content">
           <div className="polaroid-content-text">
@@ -131,7 +148,7 @@ const CheckMoreCard = ({ linkedFilter }) => {
   );
 };
 
-const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
+const PolaroidRow = ({ title, sort, linkedFilter, searchQuery, wishlistIds, onToggleWishlist }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef(null);
@@ -164,6 +181,8 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
               price={item.price}
               productId={item.id}
               stock_quantity={item.stock_quantity}
+              isWishlisted={wishlistIds.has(String(item.id))}
+              onToggleWishlist={onToggleWishlist}
             />
           ))
         )}
@@ -179,6 +198,7 @@ export default function HomePage() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState(new Set());
   const navigate = useNavigate();
 
 
@@ -196,6 +216,60 @@ export default function HomePage() {
       setDisplayName(user.username || user.name || "User");
     }
   }, []);
+
+  useEffect(() => {
+    const user = getCurrentUser();
+
+    const loadWishlist = () => {
+      if (!user?.customer_id) {
+        setWishlistIds(new Set());
+        return;
+      }
+
+      fetchWishlist(user.customer_id)
+        .then((items) => setWishlistIds(new Set(items.map((item) => String(item.product_id)))))
+        .catch(() => setWishlistIds(new Set()));
+    };
+
+    loadWishlist();
+    window.addEventListener("wishlistUpdated", loadWishlist);
+    return () => window.removeEventListener("wishlistUpdated", loadWishlist);
+  }, []);
+
+  const handleToggleWishlist = async (productId) => {
+    const user = getCurrentUser();
+
+    if (!user?.customer_id) {
+      navigate("/login");
+      return;
+    }
+
+    const key = String(productId);
+    const wasWishlisted = wishlistIds.has(key);
+
+    setWishlistIds((current) => {
+      const next = new Set(current);
+      if (wasWishlisted) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+    try {
+      if (wasWishlisted) {
+        await removeFromWishlist(user.customer_id, productId);
+      } else {
+        await addToWishlist(user.customer_id, productId);
+      }
+    } catch (err) {
+      setWishlistIds((current) => {
+        const next = new Set(current);
+        if (wasWishlisted) next.add(key);
+        else next.delete(key);
+        return next;
+      });
+      alert(err.message);
+    }
+  };
 
   useEffect(() => {
     const trimmedQuery = searchQuery.trim();
@@ -241,11 +315,11 @@ export default function HomePage() {
         </div>
 
         <div className="feed-column">
-          <PolaroidRow title="For Your Recent Tastes" sort="recent_taste" linkedFilter="recent_taste" searchQuery={searchQuery} />
-          <PolaroidRow title="Some Recommendations From Us" sort="recommended" linkedFilter="recommended" searchQuery={searchQuery} />
-          <PolaroidRow title="Everyone's New Favorites" sort="top_rated" linkedFilter="top_rated" searchQuery={searchQuery} />
-          <PolaroidRow title="From Who You Follow" sort="followed" linkedFilter="followed" searchQuery={searchQuery} />
-          <PolaroidRow title="Cheaper Than Ever" sort="discount" linkedFilter="discount" searchQuery={searchQuery} />
+          <PolaroidRow title="For Your Recent Tastes" sort="recent_taste" linkedFilter="recent_taste" searchQuery={searchQuery} wishlistIds={wishlistIds} onToggleWishlist={handleToggleWishlist} />
+          <PolaroidRow title="Some Recommendations From Us" sort="recommended" linkedFilter="recommended" searchQuery={searchQuery} wishlistIds={wishlistIds} onToggleWishlist={handleToggleWishlist} />
+          <PolaroidRow title="Everyone's New Favorites" sort="top_rated" linkedFilter="top_rated" searchQuery={searchQuery} wishlistIds={wishlistIds} onToggleWishlist={handleToggleWishlist} />
+          <PolaroidRow title="From Who You Follow" sort="followed" linkedFilter="followed" searchQuery={searchQuery} wishlistIds={wishlistIds} onToggleWishlist={handleToggleWishlist} />
+          <PolaroidRow title="Cheaper Than Ever" sort="discount" linkedFilter="discount" searchQuery={searchQuery} wishlistIds={wishlistIds} onToggleWishlist={handleToggleWishlist} />
         </div>
       </main>
     </div>

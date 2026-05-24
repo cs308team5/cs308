@@ -178,6 +178,28 @@ export async function removeFromCart(cartItemId) {
   if (error) throw error;
 }
 
+export async function mergeGuestCartOnLogin(userId) {
+  const guestCart = getGuestCart();
+  if (!guestCart.length) return [];
+
+  const errors = [];
+
+  for (const item of guestCart) {
+    for (let i = 0; i < item.quantity; i++) {
+      try {
+        await addToCart(userId, item.product_id);
+      } catch (err) {
+        // Stock limit hit or other error — stop adding more of this item
+        errors.push({ product_id: item.product_id, name: item.name, reason: err.message });
+        break;
+      }
+    }
+  }
+
+  saveGuestCart([]);
+  return errors; // Caller can optionally surface these to the user
+}
+
 // Local cart for quests
 
 export function getGuestCart() {

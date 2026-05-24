@@ -1,3 +1,15 @@
+import {mergeGuestCartOnLogin} from "./productAndCartService.js";
+
+async function readJsonResponse(response) {
+  const raw = await response.text();
+
+  if (!raw) {
+    return {};
+  }
+
+  return JSON.parse(raw);
+}
+
 export async function register({ fullName, username, email, password }) {
   try {
     const cleanFullName = fullName?.trim();
@@ -24,7 +36,7 @@ export async function register({ fullName, username, email, password }) {
       }),
     });
 
-    const data = await response.json();
+    const data = await readJsonResponse(response);
 
     if (!response.ok) {
       return {
@@ -42,7 +54,7 @@ export async function register({ fullName, username, email, password }) {
     console.error("Registration catch error:", err);
     return {
       success: false,
-      message: err.message || "Registration failed.",
+      message: "Registration failed. Please make sure the backend server is running.",
     };
   }
 }
@@ -60,7 +72,7 @@ export async function login(email, password) {
       }),
     });
 
-    const data = await response.json();
+    const data = await readJsonResponse(response);
 
     if (!response.ok || !data.customer || !data.token) {
       return {
@@ -79,7 +91,9 @@ export async function login(email, password) {
     };
 
     localStorage.setItem("user", JSON.stringify(normalizedUser));
-    localStorage.removeItem("guest_cart");
+    mergeGuestCartOnLogin(normalizedUser.customer_id).catch((err) => {
+      console.error("Error merging guest cart on login:", err);
+    });
 
     return {
       success: true,
@@ -90,7 +104,7 @@ export async function login(email, password) {
     console.error("Login catch error:", err);
     return {
       success: false,
-      message: "Login failed. Please try again.",
+      message: "Login failed. Please make sure the backend server is running.",
     };
   }
 }
