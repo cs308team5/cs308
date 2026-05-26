@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CommentSection from "../components/CommentSection";
 import {
@@ -10,12 +10,13 @@ import {
   updateCartQuantity,
 } from "../services/productAndCartService";
 import { getCurrentUser } from "../services/authService";
+import { addToWishlist, fetchWishlist, removeFromWishlist } from "../services/wishlistService";
 import "./ProductDetailsPage.css";
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const user = useMemo(() => getCurrentUser(), []);
 
   const [product, setProduct] = useState(null);
   const [cartItem, setCartItem] = useState(null);
@@ -23,6 +24,7 @@ export default function ProductDetailsPage() {
     average: 0,
     count: 0,
   });
+  const [isWishlisted, setIsWishlisted] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
@@ -55,6 +57,19 @@ export default function ProductDetailsPage() {
     };
 
     syncCartItem();
+  }, [id, user]);
+
+  useEffect(() => {
+    if (!user?.customer_id || !id) {
+      setIsWishlisted(false);
+      return;
+    }
+
+    fetchWishlist(user.customer_id)
+      .then((items) => {
+        setIsWishlisted(items.some((item) => String(item.product_id) === String(id)));
+      })
+      .catch(() => setIsWishlisted(false));
   }, [id, user]);
 
   if (!product) return <div className="loading">Loading...</div>;
@@ -172,6 +187,27 @@ export default function ProductDetailsPage() {
     }
   };
 
+  const handleToggleWishlist = async () => {
+    if (!user?.customer_id) {
+      navigate("/login");
+      return;
+    }
+
+    const previous = isWishlisted;
+    setIsWishlisted(!previous);
+
+    try {
+      if (previous) {
+        await removeFromWishlist(user.customer_id, id);
+      } else {
+        await addToWishlist(user.customer_id, id);
+      }
+    } catch (err) {
+      setIsWishlisted(previous);
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="page">
       
@@ -196,6 +232,14 @@ export default function ProductDetailsPage() {
           <div className={isOutOfStock ? "out-of-stock" : "in-stock"}>
             STOCK: {stockQuantity}
           </div>
+
+          <button
+            type="button"
+            className={`wishlist-detail-btn ${isWishlisted ? "active" : ""}`}
+            onClick={handleToggleWishlist}
+          >
+            {isWishlisted ? "REMOVE FROM WISHLIST" : "ADD TO WISHLIST"}
+          </button>
 
           {cartQuantity > 0 ? (
             <div className="cart-quantity-control">

@@ -366,6 +366,58 @@
 }
 
 .listing-image-shell {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.listing-pennant-btn {
+    position: absolute;
+    top: -20px;
+    right: 12px;
+    width: 30px;
+    height: 58px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    z-index: 4;
+    transition: top 0.24s ease;
+}
+
+.listing-pennant {
+    width: 30px;
+    height: auto;
+    fill: var(--blue);
+    transition: fill 0.2s ease;
+    filter: drop-shadow(0 5px 10px rgba(18, 18, 18, 0.18));
+}
+
+/* passive + pennant hovered → move down a bit */
+.listing-pennant-btn:not(.pinned):hover {
+    top: 0px;
+}
+
+/* active (pinned) → stay down, green */
+.listing-pennant-btn.pinned {
+    top: 0px;
+}
+
+.listing-pennant-btn.pinned .listing-pennant {
+    fill: var(--green);
+}
+
+/* active + pennant hovered → no change */
+.listing-pennant-btn.pinned:hover {
+    top: 0px;
+}
+
+.listing-row-image-shell {
+    position: relative;
+    width: 190px;
+    min-width: 190px;
+    height: 190px;
+    overflow: hidden;
     cursor: inherit;
 }
 
@@ -425,6 +477,24 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+}
+
+.listing-secondary-action {
+    min-height: 42px;
+    padding: 0 16px;
+    border-radius: 999px;
+    border: 1px solid rgba(27, 40, 78, 0.18);
+    background: transparent;
+    color: var(--blue);
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.listing-secondary-action.active {
+    border-color: transparent;
+    background: rgba(30, 81, 40, 0.12);
+    color: var(--green);
 }
 
 .stock-badge.in {

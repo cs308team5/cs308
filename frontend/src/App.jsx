@@ -8,6 +8,7 @@ import TestPage from "./pages/TestPage";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
 import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
+import WishlistPage from "./pages/WishlistPage.jsx";
 import AdminPage from "./pages/AdminPage";
 import AdminDeliveriesPage from "./pages/AdminDeliveriesPage.jsx";
 import AdminProductsPage from "./pages/AdminProductsPage.jsx";
@@ -67,6 +68,14 @@ const router = createBrowserRouter([
     children: [
       { path: "/home",          element: <HomePage /> },
       { path: "/discover",      element: <DiscoverPage /> },
+      {
+        path: "/wishlist",
+        element: (
+          <ProtectedRoute>
+            <WishlistPage />
+          </ProtectedRoute>
+        ),
+      },
       { path: "/cart",          element: <CartPage /> },
       { path: "/products/:id",  element: <ProductDetailsPage /> },
       { path: "/orders",        element: <OrderTrackingPage /> },
