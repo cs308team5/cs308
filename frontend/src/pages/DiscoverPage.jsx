@@ -1,8 +1,6 @@
 import "./DiscoverPage.css";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { fetchProducts } from "../services/productAndCartService.js";
-import { getCurrentUser } from "../services/authService.js";
 import { addToWishlist, fetchWishlist, removeFromWishlist } from "../services/wishlistService.js";
 import { addToCart, addToGuestCart, fetchProducts } from "../services/productAndCartService.js";
 import { getCurrentUser } from "../services/authService.js";

@@ -187,26 +187,6 @@ export async function removeFromCart(cartItemId) {
 
 export async function mergeGuestCartOnLogin(userId) {
   const guestCart = getGuestCart();
-  if (guestCart.length === 0) return;
-
-  for(const item of guestCart) {
-    for(let i = 0; i < item.quantity; i++) {
-      try 
-      {
-        await addToCart(userId, item.product_id, 1);
-      } 
-      catch (error) 
-      {
-        console.error(`Failed to merge item ${item.product_id} into cart:`, error);
-      }
-    }
-  }
-
-  saveGuestCart([]);
-}
-
-export async function mergeGuestCartOnLogin(userId) {
-  const guestCart = getGuestCart();
   if (!guestCart.length) return [];
 
   const errors = [];
