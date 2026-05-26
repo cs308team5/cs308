@@ -12,6 +12,7 @@ import deliveryRoutes from "./routes/deliveryRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import refundRoutes from "./routes/refundRoutes.js";
 import discountRoutes from "./routes/discountRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 
 dotenv.config();
@@ -23,6 +24,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
