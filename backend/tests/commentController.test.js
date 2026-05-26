@@ -84,6 +84,10 @@ describe("commentController.submitComment", () => {
         return { rows: [{ "?column?": 1 }] };
       }
 
+      if (/FROM comments/i.test(sql) && /LOWER\(TRIM\(status\)\)/i.test(sql)) {
+        return { rows: [] };
+      }
+
       return {
         rows: [
           {
@@ -110,6 +114,31 @@ describe("commentController.submitComment", () => {
     assert.equal(res.body.success, true);
     assert.equal(res.body.data.status, "pending");
     assert.deepEqual(insert.params, ["customer-1", "product-1", "Great product"]);
+  });
+
+  test("returns 400 when the customer already has a pending or approved comment", async () => {
+    pool.query = async (sql) => {
+      if (/SELECT id FROM products/i.test(sql)) {
+        return { rows: [{ id: "product-1" }] };
+      }
+
+      if (/JOIN order_items/i.test(sql)) {
+        return { rows: [{ "?column?": 1 }] };
+      }
+
+      return { rows: [{ id: "comment-1", status: "approved" }] };
+    };
+
+    const req = createMockReq({
+      body: { productId: "product-1", text: "Another comment" },
+      customer: { customerId: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await submitComment(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.body.message, "You already have a comment for this product.");
   });
 });
 

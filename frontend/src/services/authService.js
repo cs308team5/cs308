@@ -77,7 +77,11 @@ export async function login(email, password) {
     if (!response.ok || !data.customer || !data.token) {
       return {
         success: false,
-        message: data.message || "Email or password is incorrect.",
+        message:
+          data.message ||
+          (response.status === 502
+            ? "Backend server is not reachable. Please restart the backend."
+            : "Email or password is incorrect."),
       };
     }
 

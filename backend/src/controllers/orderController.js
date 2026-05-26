@@ -10,20 +10,48 @@ function formatDeliveryAddress(deliveryAddress) {
         return deliveryAddress.trim();
     }
 
-    const addressParts = [
+    return [
         deliveryAddress.address,
         deliveryAddress.street,
         deliveryAddress.city,
         deliveryAddress.state,
         deliveryAddress.zip,
         deliveryAddress.country,
-    ];
+    ]
+        .filter(Boolean)
+        .join(", ")
+        .trim();
+}
 
-    return addressParts.filter(Boolean).join(", ").trim();
+function formatOptionalAddress(address) {
+    if (!address) {
+        return null;
+    }
+
+    if (typeof address === "string") {
+        return address.trim() || null;
+    }
+
+    const formattedAddress = [
+        address.address,
+        address.street,
+        address.city,
+        address.state,
+        address.zip,
+        address.country,
+    ]
+        .filter(Boolean)
+        .join(", ")
+        .trim();
+
+    return formattedAddress || null;
 }
 
 export async function createOrder(customer_id, cart_items, total_price, deliveryAddress) {
     const formattedDeliveryAddress = formatDeliveryAddress(deliveryAddress);
+    const formattedBillingAddress = formatOptionalAddress(deliveryAddress?.billingAddress);
+    const phone =
+        typeof deliveryAddress === "object" ? deliveryAddress.phone?.trim() || null : null;
 
     const client = await pool.connect();
     try {
@@ -54,9 +82,9 @@ export async function createOrder(customer_id, cart_items, total_price, delivery
         }
 
         await client.query(
-            `INSERT INTO deliveries (order_id, customer_id, delivery_address, status)
-             VALUES ($1, $2, $3, 'processing')`,
-            [order_id, customer_id, formattedDeliveryAddress]
+            `INSERT INTO deliveries (order_id, customer_id, delivery_address, billing_address, phone, status)
+             VALUES ($1, $2, $3, $4, $5, 'processing')`,
+            [order_id, customer_id, formattedDeliveryAddress, formattedBillingAddress, phone]
         );
 
         await client.query(

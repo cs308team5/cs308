@@ -2,8 +2,7 @@ import "./HomePage.css";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faHeart as faHeartRegular } from "@fortawesome/free-regular-svg-icons";
-import { faCartShopping, faHeart as faHeartSolid, faShareNodes } from "@fortawesome/free-solid-svg-icons";
+import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { getCurrentUser } from "../services/authService.js";
 import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
 import { addToWishlist, fetchWishlist, removeFromWishlist } from "../services/wishlistService.js";
@@ -68,7 +67,6 @@ export const PolaroidCard = ({
         await addToCart(user.customer_id, productId);
       }
 
-      window.dispatchEvent(new Event("cartUpdated"));
     } catch (err) {
       console.error("Supabase Add to Cart Error:", err);
       alert(`${err.message}`);
@@ -106,17 +104,6 @@ export const PolaroidCard = ({
           </div>
           <div className="polaroid-content-utility">
             <FontAwesomeIcon icon={faShareNodes} color="var(--blue)" size="lg" />
-            <div className="like-container">
-              <p className="like-count">123</p>
-              <FontAwesomeIcon
-                className={isLiked ? "heart-pop" : ""}
-                onClick={toggleLike}
-                style={{ cursor: "pointer" }}
-                icon={isLiked ? faHeartSolid : faHeartRegular}
-                color={isLiked ? "var(--pink)" : "var(--blue)"}
-                size="lg"
-              />
-            </div>
           </div>
         </div>
 

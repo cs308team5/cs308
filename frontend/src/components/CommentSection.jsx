@@ -108,8 +108,10 @@ export default function CommentSection({ productId, onStatsChange }) {
   const [userMap, setUserMap] = useState({});
   const [ratingValue, setRatingValue] = useState(0);
   const [commentText, setCommentText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitMsg, setSubmitMsg] = useState("");
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [commentSubmitting, setCommentSubmitting] = useState(false);
+  const [ratingMsg, setRatingMsg] = useState("");
+  const [commentMsg, setCommentMsg] = useState("");
   const [canReview, setCanReview] = useState(false);
   const [eligibilityLoaded, setEligibilityLoaded] = useState(false);
 
@@ -253,14 +255,24 @@ export default function CommentSection({ productId, onStatsChange }) {
     );
   }, [comments, ratings]);
 
-  const handleSubmit = async () => {
+  const currentUserRating = useMemo(
+    () => ratings.find((rating) => String(rating.user_id) === String(userId)),
+    [ratings, userId],
+  );
+
+  const handleSubmitRating = async () => {
     if (!user?.token || !userId) {
-      setSubmitMsg("Log in to submit a rating.");
+      setRatingMsg("Log in to submit a rating.");
       return;
     }
 
     if (!canReview) {
-      setSubmitMsg("Only customers who purchased this product can rate or comment.");
+      setRatingMsg("Only customers who purchased this product can rate.");
+      return;
+    }
+
+    if (currentUserRating) {
+      setRatingMsg("You have already rated this product.");
       return;
     }
 
@@ -270,12 +282,12 @@ export default function CommentSection({ productId, onStatsChange }) {
       ratingValue > 5 ||
       !Number.isInteger(ratingValue * 2)
     ) {
-      setSubmitMsg("Select a rating.");
+      setRatingMsg("Select a rating.");
       return;
     }
 
-    setSubmitting(true);
-    setSubmitMsg("");
+    setRatingSubmitting(true);
+    setRatingMsg("");
 
     try {
       const ratingResponse = await fetch(`/api/products/${productId}/rating`, {
@@ -295,26 +307,6 @@ export default function CommentSection({ productId, onStatsChange }) {
         throw new Error(ratingData.message || "Could not submit rating.");
       }
 
-      if (commentText.trim()) {
-        const commentResponse = await fetch("/api/comments", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
-          },
-          body: JSON.stringify({
-            productId,
-            text: commentText.trim(),
-          }),
-        });
-
-        const commentData = await commentResponse.json();
-
-        if (!commentResponse.ok) {
-          throw new Error(commentData.message || "Could not submit comment.");
-        }
-      }
-
       setRatings((current) => [
         {
           id: ratingData.data?.id ?? `temp-${Date.now()}`,
@@ -331,17 +323,65 @@ export default function CommentSection({ productId, onStatsChange }) {
       }));
 
       setRatingValue(0);
-      setCommentText("");
-      setSubmitMsg(
-        commentText.trim()
-          ? "Your rating was submitted. Your comment is pending approval."
-          : "Your rating was submitted.",
-      );
+      setRatingMsg("Your rating was submitted.");
     } catch (error) {
-      console.error("Error submitting review:", error);
-      setSubmitMsg(error.message || "Error submitting.");
+      console.error("Error submitting rating:", error);
+      setRatingMsg(error.message || "Error submitting rating.");
     } finally {
-      setSubmitting(false);
+      setRatingSubmitting(false);
+    }
+  };
+
+  const handleSubmitComment = async () => {
+    if (!user?.token || !userId) {
+      setCommentMsg("Log in to submit a comment.");
+      return;
+    }
+
+    if (!canReview) {
+      setCommentMsg("Only customers who purchased this product can comment.");
+      return;
+    }
+
+    if (!commentText.trim()) {
+      setCommentMsg("Write a comment.");
+      return;
+    }
+
+    setCommentSubmitting(true);
+    setCommentMsg("");
+
+    try {
+      const commentResponse = await fetch("/api/comments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+        body: JSON.stringify({
+          productId,
+          text: commentText.trim(),
+        }),
+      });
+
+      const commentData = await commentResponse.json();
+
+      if (!commentResponse.ok) {
+        throw new Error(commentData.message || "Could not submit comment.");
+      }
+
+      setUserMap((current) => ({
+        ...current,
+        [userId]: user.username || user.name || "Customer",
+      }));
+
+      setCommentText("");
+      setCommentMsg("Your comment is pending approval.");
+    } catch (error) {
+      console.error("Error submitting comment:", error);
+      setCommentMsg(error.message || "Error submitting comment.");
+    } finally {
+      setCommentSubmitting(false);
     }
   };
 
@@ -351,36 +391,52 @@ export default function CommentSection({ productId, onStatsChange }) {
       ? "Write comment..."
       : "Only customers who purchased this product can comment";
 
-  const reviewDisabled = !user || !canReview || submitting;
+  const ratingDisabled = !user || !canReview || ratingSubmitting || Boolean(currentUserRating);
+  const commentDisabled = !user || !canReview || commentSubmitting;
 
   return (
     <div className="cs-container">
       <h2 className="cs-title">Ratings & Comments</h2>
 
       <div className="cs-input-wrap">
-        <StarRatingInput
-          value={ratingValue}
-          onChange={setRatingValue}
-          disabled={reviewDisabled}
-        />
+        <div className="cs-form-block">
+          <p className="cs-form-label">Rate this product</p>
+          <StarRatingInput
+            value={currentUserRating ? Number(currentUserRating.rating) : ratingValue}
+            onChange={setRatingValue}
+            disabled={ratingDisabled}
+          />
+          <button
+            type="button"
+            className="cs-submit-btn"
+            onClick={handleSubmitRating}
+            disabled={ratingDisabled || ratingValue <= 0}
+          >
+            {ratingSubmitting ? "Submitting..." : "Submit Rating"}
+          </button>
+          {ratingMsg && <p className="cs-msg">{ratingMsg}</p>}
+        </div>
 
-        <textarea
-          className="cs-textarea"
-          value={commentText}
-          onChange={(event) => setCommentText(event.target.value)}
-          placeholder={placeholderText}
-          disabled={reviewDisabled}
-          rows={4}
-        />
-
-        <button
-          type="button"
-          className="cs-submit-btn"
-          onClick={handleSubmit}
-          disabled={reviewDisabled || ratingValue <= 0}
-        >
-          {submitting ? "Submitting..." : "Submit"}
-        </button>
+        <div className="cs-form-block">
+          <p className="cs-form-label">Write a comment</p>
+          <textarea
+            className="cs-textarea"
+            value={commentText}
+            onChange={(event) => setCommentText(event.target.value)}
+            placeholder={placeholderText}
+            disabled={commentDisabled}
+            rows={4}
+          />
+          <button
+            type="button"
+            className="cs-submit-btn"
+            onClick={handleSubmitComment}
+            disabled={commentDisabled || !commentText.trim()}
+          >
+            {commentSubmitting ? "Submitting..." : "Submit Comment"}
+          </button>
+          {commentMsg && <p className="cs-msg">{commentMsg}</p>}
+        </div>
 
         {!user && <p className="cs-msg cs-msg-muted">Log in to rate or comment.</p>}
         {user && eligibilityLoaded && !canReview && (
@@ -388,7 +444,6 @@ export default function CommentSection({ productId, onStatsChange }) {
             Only customers who purchased this product can rate or comment.
           </p>
         )}
-        {submitMsg && <p className="cs-msg">{submitMsg}</p>}
       </div>
 
       <div className="cs-list">

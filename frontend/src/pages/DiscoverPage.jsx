@@ -4,6 +4,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { fetchProducts } from "../services/productAndCartService.js";
 import { getCurrentUser } from "../services/authService.js";
 import { addToWishlist, fetchWishlist, removeFromWishlist } from "../services/wishlistService.js";
+import { addToCart, addToGuestCart, fetchProducts } from "../services/productAndCartService.js";
+import { getCurrentUser } from "../services/authService.js";
 import SearchBar from "../components/SearchBar.jsx";
 
 
@@ -55,13 +57,14 @@ const WishlistPennantButton = ({ isWishlisted, onClick }) => (
 const ProductGridCard = ({ product, isWishlisted, onOpen, onToggleWishlist }) => {
   const stock = getStockStatus(product.stock_quantity);
   const hasRatings = product.ratingCount > 0;
+  const inStock = product.stock_quantity > 0;
   const popularityLabel = hasRatings
     ? `★ ${product.popularityScore.toFixed(1)} (${product.ratingCount})`
     : "★ No ratings";
 
   return (
-    <article className="listing-card">
-      <div className="listing-image-shell" onClick={onOpen} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && onOpen()}>
+    <article className="listing-card" onClick={onOpen} role="button" tabIndex={0} onKeyDown={(event) => event.key === "Enter" && onOpen()}>
+      <div className="listing-image-shell">
         {product.img ? (
           <img src={product.img} alt={product.title} className="listing-image" />
         ) : (
@@ -89,8 +92,15 @@ const ProductGridCard = ({ product, isWishlisted, onOpen, onToggleWishlist }) =>
 
         <div className="listing-card-footer">
           <span className="listing-price">{product.price}</span>
-          <button className="listing-action" onClick={onOpen}>
-            View details
+          <button
+            className={`listing-action ${!inStock ? "disabled" : ""}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAddToCart();
+            }}
+            disabled={!inStock}
+          >
+            {inStock ? "Add to Cart" : "Out of Stock"}
           </button>
         </div>
       </div>
@@ -101,6 +111,7 @@ const ProductGridCard = ({ product, isWishlisted, onOpen, onToggleWishlist }) =>
 const ProductListRow = ({ product, isWishlisted, onOpen, onToggleWishlist }) => {
   const stock = getStockStatus(product.stock_quantity);
   const hasRatings = product.ratingCount > 0;
+  const inStock = product.stock_quantity > 0;
   const popularityLabel = hasRatings
     ? `★ ${product.popularityScore.toFixed(1)} (${product.ratingCount})`
     : "★ No ratings";
@@ -113,13 +124,6 @@ const ProductListRow = ({ product, isWishlisted, onOpen, onToggleWishlist }) => 
         ) : (
           <div className="listing-row-image listing-image-placeholder">No image</div>
         )}
-        <WishlistPennantButton
-          isWishlisted={isWishlisted}
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggleWishlist(product.id);
-          }}
-        />
       </div>
 
       <div className="listing-row-content">
@@ -147,9 +151,18 @@ const ProductListRow = ({ product, isWishlisted, onOpen, onToggleWishlist }) => 
 
         <div className="listing-row-footer">
           <span className="listing-price">{product.price}</span>
-          <button className="listing-action" onClick={onOpen}>
-            View details
-          </button>
+          <div className="listing-row-actions">
+            <button
+              className={`listing-action ${!inStock ? "disabled" : ""}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                onAddToCart();
+              }}
+              disabled={!inStock}
+            >
+              {inStock ? "Add to Cart" : "Out of Stock"}
+            </button>
+          </div>
         </div>
       </div>
     </article>
@@ -544,6 +557,7 @@ export default function DiscoverPage() {
                     isWishlisted={wishlistIds.has(String(product.id))}
                     onOpen={() => navigate(`/products/${product.id}`)}
                     onToggleWishlist={handleToggleWishlist}
+                    onAddToCart={() => handleAddToCart(product)}
                   />
                 ) : (
                   <ProductListRow
@@ -552,6 +566,7 @@ export default function DiscoverPage() {
                     isWishlisted={wishlistIds.has(String(product.id))}
                     onOpen={() => navigate(`/products/${product.id}`)}
                     onToggleWishlist={handleToggleWishlist}
+                    onAddToCart={() => handleAddToCart(product)}
                   />
                 )
               )}

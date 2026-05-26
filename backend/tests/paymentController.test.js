@@ -110,6 +110,8 @@ describe("paymentController.processPayment", () => {
       "order-1",
       "authenticated-customer",
       "123 Main St, Istanbul, Turkey",
+      null,
+      null,
     ]);
     assert.deepEqual(cartDelete.params, ["authenticated-customer"]);
   });

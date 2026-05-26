@@ -126,7 +126,12 @@ export function GlobalNavbar() {
         setIsAdmin(Boolean(u?.isAdmin ?? u?.is_admin));
         loadCart(u);
 
-        const onCartUpdate = () => loadCart(u);
+        const onCartUpdate = () => {
+            const latestUser = getCurrentUser();
+            setUser(latestUser);
+            setIsAdmin(Boolean(latestUser?.isAdmin ?? latestUser?.is_admin));
+            loadCart(latestUser);
+        };
         window.addEventListener("cartUpdated", onCartUpdate);
         return () => window.removeEventListener("cartUpdated", onCartUpdate);
     }, []);
@@ -165,9 +170,13 @@ export function GlobalNavbar() {
                     )}
                 </button>
 
-                {user && (
+                {user ? (
                     <button className="navbar-text-btn" onClick={handleLogout}>
                         Logout
+                    </button>
+                ) : (
+                    <button className="navbar-text-btn" onClick={() => navigate("/login")}>
+                        Login
                     </button>
                 )}
             </div>
