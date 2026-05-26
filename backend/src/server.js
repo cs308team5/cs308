@@ -10,7 +10,6 @@ import checkoutRoutes from "./routes/checkoutRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import deliveryRoutes from "./routes/deliveryRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
-import wishlistRoutes from "./routes/wishlistRoutes.js";
 
 
 dotenv.config();
@@ -22,7 +21,6 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/payment", paymentRoutes);
