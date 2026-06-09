@@ -493,6 +493,17 @@ export const calculateRevenue = async (req, res) => {
       values
     );
 
+    // Cost of goods sold for the same set of invoices, using the fixed
+    // per-product cost (cost = 30% of price) stored on products.
+    const costResult = await pool.query(
+      `SELECT COALESCE(SUM(oi.quantity * p.cost), 0)::numeric AS total_cost
+         FROM invoices i
+         JOIN order_items oi ON oi.order_id = i.order_id
+         JOIN products p     ON p.id = oi.product_id
+         ${whereClause}`,
+      values
+    );
+
     const refundAgg = await pool.query(
       `SELECT COALESCE(SUM(r.quantity * r.unit_price), 0)::numeric AS refunded_amount
          FROM refund_requests r
@@ -502,10 +513,11 @@ export const calculateRevenue = async (req, res) => {
 
     const summary = result.rows[0] ?? {};
     const grossRevenue = toMoney(summary.gross_revenue);
+    const totalCost = toMoney(costResult.rows[0]?.total_cost);
     const refundedAmount = toMoney(refundAgg.rows[0]?.refunded_amount);
-    const loss = toMoney(refundedAmount);
     const revenue = grossRevenue;
-    const profit = toMoney(revenue - loss);
+    // Profit accounts for both the cost of goods sold and any approved refunds.
+    const profit = toMoney(revenue - totalCost - refundedAmount);
     const netRevenue = profit;
 
     return res.status(200).json({
@@ -513,10 +525,13 @@ export const calculateRevenue = async (req, res) => {
       data: {
         invoice_count: Number(summary.invoice_count ?? 0),
         revenue,
-        loss,
+        cost: totalCost,
+        // Kept as an alias so older clients that read `loss` still render
+        // the cost figure in their existing card.
+        loss: totalCost,
+        refunded_amount: refundedAmount,
         profit,
         gross_revenue: grossRevenue,
-        refunded_amount: refundedAmount,
         net_revenue: netRevenue,
       },
       filters,
