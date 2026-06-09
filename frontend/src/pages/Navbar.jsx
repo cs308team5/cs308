@@ -29,6 +29,12 @@ const OrdersIcon = () => (
     </svg>
 );
 
+const WishlistIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+);
+
 const CommentsIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
@@ -74,6 +80,7 @@ const CartIcon = () => (
 const NAV_ITEMS = [
     { id: "home",     label: "Home",     path: "/home",     Icon: HomeIcon },
     { id: "discover", label: "Discover", path: "/discover", Icon: DiscoverIcon },
+    { id: "wishlist", label: "Wishlist", path: "/wishlist", Icon: WishlistIcon },
     { id: "myorders",  label: "Orders", path: "/my-orders",  Icon: OrdersIcon },
 ];
 

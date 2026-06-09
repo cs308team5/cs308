@@ -331,8 +331,6 @@ export const getProductById = async (req, res) => {
       name: p.name,
       description: p.description,
       price: p.price,
-      discount_rate: p.discount_rate,
-      discounted_price: p.discounted_price,
       category: p.category,
       stock: p.stock_quantity,
       image_url: p.image_url,
@@ -343,6 +341,14 @@ export const getProductById = async (req, res) => {
       additional_attributes: p.additional_attributes,
       inStock: p.stock_quantity > 0
     };
+
+    if (p.discount_rate !== undefined) {
+      product.discount_rate = p.discount_rate;
+    }
+
+    if (p.discounted_price !== undefined) {
+      product.discounted_price = p.discounted_price;
+    }
 
     res.status(200).json({
       success: true,

@@ -1,6 +1,7 @@
 import "./DiscoverPage.css";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { addToWishlist, fetchWishlist, removeFromWishlist } from "../services/wishlistService.js";
 import { addToCart, addToGuestCart, fetchProducts } from "../services/productAndCartService.js";
 import { getCurrentUser } from "../services/authService.js";
 import SearchBar from "../components/SearchBar.jsx";
@@ -28,8 +29,29 @@ const getStockStatus = (stockQuantity) => {
   return { label: "In stock", tone: "in" };
 };
 
+const PennantSvg = ({ className }) => (
+  <svg className={className} width="60" height="114" viewBox="0 0 60 114" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M0 0 H60 V110.298 C60 112.343 58.3428 114 56.2984 114 C55.4579 114 54.6424 113.714 53.9861 113.189 L30 94 L6.01391 113.189 C5.35758 113.714 4.54208 114 3.70156 114 C1.65725 114 0 112.343 0 110.298 Z"
+      stroke="#f3efe7"
+      strokeWidth="15"
+      paintOrder="stroke fill"
+    />
+  </svg>
+);
 
-const ProductGridCard = ({ product, onOpen, onAddToCart }) => {
+const WishlistPennantButton = ({ isWishlisted, onClick }) => (
+  <button
+    type="button"
+    className={`listing-pennant-btn ${isWishlisted ? "pinned" : ""}`}
+    onClick={onClick}
+    aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+  >
+    <PennantSvg className="listing-pennant" />
+  </button>
+);
+
+const ProductGridCard = ({ product, isWishlisted, onOpen, onAddToCart, onToggleWishlist }) => {
   const stock = getStockStatus(product.stock_quantity);
   const hasRatings = product.ratingCount > 0;
   const inStock = product.stock_quantity > 0;
@@ -45,6 +67,13 @@ const ProductGridCard = ({ product, onOpen, onAddToCart }) => {
         ) : (
           <div className="listing-image listing-image-placeholder">No image</div>
         )}
+        <WishlistPennantButton
+          isWishlisted={isWishlisted}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleWishlist(product.id);
+          }}
+        />
       </div>
 
       <div className="listing-card-body">
@@ -83,7 +112,7 @@ const ProductGridCard = ({ product, onOpen, onAddToCart }) => {
   );
 };
 
-const ProductListRow = ({ product, onOpen, onAddToCart }) => {
+const ProductListRow = ({ product, isWishlisted, onOpen, onAddToCart, onToggleWishlist }) => {
   const stock = getStockStatus(product.stock_quantity);
   const hasRatings = product.ratingCount > 0;
   const inStock = product.stock_quantity > 0;
@@ -99,6 +128,13 @@ const ProductListRow = ({ product, onOpen, onAddToCart }) => {
         ) : (
           <div className="listing-row-image listing-image-placeholder">No image</div>
         )}
+        <WishlistPennantButton
+          isWishlisted={isWishlisted}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggleWishlist(product.id);
+          }}
+        />
       </div>
 
       <div className="listing-row-content">
@@ -165,6 +201,7 @@ export default function DiscoverPage() {
   const [viewMode, setViewMode] = useState("grid");
   const [products, setProducts] = useState([]);
   const [categorySource, setCategorySource] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -188,6 +225,25 @@ export default function DiscoverPage() {
     return () => {
       cancelled = true;
     };
+  }, []);
+
+  useEffect(() => {
+    const loadWishlist = () => {
+      const user = getCurrentUser();
+
+      if (!user?.customer_id) {
+        setWishlistIds(new Set());
+        return;
+      }
+
+      fetchWishlist(user.customer_id)
+        .then((items) => setWishlistIds(new Set(items.map((item) => String(item.product_id)))))
+        .catch(() => setWishlistIds(new Set()));
+    };
+
+    loadWishlist();
+    window.addEventListener("wishlistUpdated", loadWishlist);
+    return () => window.removeEventListener("wishlistUpdated", loadWishlist);
   }, []);
 
   useEffect(() => {
@@ -347,6 +403,41 @@ export default function DiscoverPage() {
     }
   };
 
+  const handleToggleWishlist = async (productId) => {
+    const user = getCurrentUser();
+
+    if (!user?.customer_id) {
+      navigate("/login");
+      return;
+    }
+
+    const key = String(productId);
+    const wasWishlisted = wishlistIds.has(key);
+
+    setWishlistIds((current) => {
+      const next = new Set(current);
+      if (wasWishlisted) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+    try {
+      if (wasWishlisted) {
+        await removeFromWishlist(user.customer_id, productId);
+      } else {
+        await addToWishlist(user.customer_id, productId);
+      }
+    } catch (err) {
+      setWishlistIds((current) => {
+        const next = new Set(current);
+        if (wasWishlisted) next.add(key);
+        else next.delete(key);
+        return next;
+      });
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="app-shell">
 
@@ -498,15 +589,19 @@ export default function DiscoverPage() {
                   <ProductGridCard
                     key={product.id}
                     product={product}
+                    isWishlisted={wishlistIds.has(String(product.id))}
                     onOpen={() => navigate(`/products/${product.id}`)}
                     onAddToCart={() => handleAddToCart(product)}
+                    onToggleWishlist={handleToggleWishlist}
                   />
                 ) : (
                   <ProductListRow
                     key={product.id}
                     product={product}
+                    isWishlisted={wishlistIds.has(String(product.id))}
                     onOpen={() => navigate(`/products/${product.id}`)}
                     onAddToCart={() => handleAddToCart(product)}
+                    onToggleWishlist={handleToggleWishlist}
                   />
                 )
               )}

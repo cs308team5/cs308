@@ -530,3 +530,41 @@
     gap: 10px;
     flex-wrap: wrap;
 }
+
+.listing-image-shell,
+.listing-row-image-shell {
+    position: relative;
+    overflow: hidden;
+}
+
+.listing-pennant-btn {
+    position: absolute;
+    top: -20px;
+    right: 12px;
+    width: 30px;
+    height: 58px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 2;
+    transition: top 0.2s ease;
+}
+
+.listing-pennant {
+    width: 30px;
+    height: auto;
+    fill: var(--blue);
+    transition: fill 0.2s ease;
+    filter: drop-shadow(0 5px 10px rgba(18, 18, 18, 0.18));
+}
+
+.listing-pennant-btn:not(.pinned):hover,
+.listing-pennant-btn.pinned,
+.listing-pennant-btn.pinned:hover {
+    top: 0;
+}
+
+.listing-pennant-btn.pinned .listing-pennant {
+    fill: var(--green);
+}

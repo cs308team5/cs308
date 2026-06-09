@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faShareNodes } from "@fortawesome/free-solid-svg-icons";
 import { getCurrentUser } from "../services/authService.js";
 import { fetchProducts, addToCart, addToGuestCart } from "../services/productAndCartService.js";
+import { addToWishlist, fetchWishlist, removeFromWishlist } from "../services/wishlistService.js";
 import SearchBar from "../components/SearchBar.jsx";
 
 import brushStroke from "../assets/homePageAssets/brushStroke.png";
@@ -21,14 +22,24 @@ const PennantSvg = ({ className, onClick }) => (
 );
 
 
-export const PolaroidCard = ({ title, creator, img, price = "$50", discountedPriceLabel, customStyle, productId, stock_quantity }) => {
+export const PolaroidCard = ({
+  title,
+  creator,
+  img,
+  price = "$50",
+  discountedPriceLabel,
+  customStyle,
+  productId,
+  stock_quantity,
+  isWishlisted = false,
+  onToggleWishlist,
+}) => {
   const navigate = useNavigate();
   const inStock = Number(stock_quantity) > 0;
-  const [isPinned, setIsPinned] = useState(false);
 
   const togglePin = (event) => {
     event.stopPropagation();
-    setIsPinned((current) => !current);
+    onToggleWishlist?.(productId);
   };
 
   const handleAddToCart = async (event) => {
@@ -70,7 +81,7 @@ export const PolaroidCard = ({ title, creator, img, price = "$50", discountedPri
           {img && <img src={img} alt={title} className="polaroid-img" />}
         </div>
 
-        <PennantSvg className={`polaroid-pennant ${isPinned ? "pinned" : ""}`} onClick={togglePin} />
+        <PennantSvg className={`polaroid-pennant ${isWishlisted ? "pinned" : ""}`} onClick={togglePin} />
 
         <div className="polaroid-content">
           <div className="polaroid-content-text">
@@ -122,7 +133,9 @@ const CheckMoreCard = ({ linkedFilter }) => {
 
 const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
   const [items, setItems] = useState([]);
+  const [wishlistIds, setWishlistIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -131,6 +144,60 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [searchQuery, sort]);
+
+  useEffect(() => {
+    const loadWishlist = () => {
+      const user = getCurrentUser();
+
+      if (!user?.customer_id) {
+        setWishlistIds(new Set());
+        return;
+      }
+
+      fetchWishlist(user.customer_id)
+        .then((data) => setWishlistIds(new Set(data.map((item) => String(item.product_id)))))
+        .catch(() => setWishlistIds(new Set()));
+    };
+
+    loadWishlist();
+    window.addEventListener("wishlistUpdated", loadWishlist);
+    return () => window.removeEventListener("wishlistUpdated", loadWishlist);
+  }, []);
+
+  const handleToggleWishlist = async (productId) => {
+    const user = getCurrentUser();
+
+    if (!user?.customer_id) {
+      navigate("/login");
+      return;
+    }
+
+    const key = String(productId);
+    const wasWishlisted = wishlistIds.has(key);
+
+    setWishlistIds((current) => {
+      const next = new Set(current);
+      if (wasWishlisted) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+
+    try {
+      if (wasWishlisted) {
+        await removeFromWishlist(user.customer_id, productId);
+      } else {
+        await addToWishlist(user.customer_id, productId);
+      }
+    } catch (err) {
+      setWishlistIds((current) => {
+        const next = new Set(current);
+        if (wasWishlisted) next.add(key);
+        else next.delete(key);
+        return next;
+      });
+      alert(err.message);
+    }
+  };
 
   return (
     <section className="polaroid-row-container">
@@ -154,6 +221,8 @@ const PolaroidRow = ({ title, sort, linkedFilter, searchQuery }) => {
               discountedPriceLabel={item.discountedPriceLabel}
               productId={item.id}
               stock_quantity={item.stock_quantity}
+              isWishlisted={wishlistIds.has(String(item.id))}
+              onToggleWishlist={handleToggleWishlist}
             />
           ))
         )}
