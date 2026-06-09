@@ -81,7 +81,13 @@ export const PolaroidCard = ({
           {img && <img src={img} alt={title} className="polaroid-img" />}
         </div>
 
-        <PennantSvg className={`polaroid-pennant ${isWishlisted ? "pinned" : ""}`} onClick={togglePin} />
+        <button
+          type="button"
+          className={`polaroid-pennant-btn ${isWishlisted ? "pinned" : ""}`}
+          onClick={togglePin}
+        >
+          <PennantSvg className="polaroid-pennant" />
+        </button>
 
         <div className="polaroid-content">
           <div className="polaroid-content-text">

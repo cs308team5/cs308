@@ -358,9 +358,17 @@
     top: 0px;
 }
 
-.polaroid-pennant.pinned {
+
+.polaroid-pennant-btn.pinned {
+    top: 0px;
+}
+
+.polaroid-pennant-btn.pinned .polaroid-pennant {
     fill: var(--green);
-    top: -30px;
+}
+
+.polaroid-pennant-btn.pinned:hover {
+    top: 0px;
 }
 
 .polaroid-content {
