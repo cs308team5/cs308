@@ -331,18 +331,31 @@
     object-fit: cover;
 }
 
-.polaroid-pennant {
+.polaroid-pennant-btn {
     position: absolute;
-    top: -100px;
+    top: -20px;
     right: 5px;
     width: 30px;
-    fill: var(--blue);
+    height: 58px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    z-index: 4;
     pointer-events: all;
-    transition: all 0.3s ease;
+    transition: top 0.24s ease;
 }
 
-.polaroid-container:hover .polaroid-pennant {
-    top: -50px;
+.polaroid-pennant {
+    width: 30px;
+    height: auto;
+    fill: var(--blue);
+    transition: transform 0.2s ease;
+}
+
+
+.polaroid-pennant-btn:not(.pinned):hover {
+    top: 0px;
 }
 
 .polaroid-pennant.pinned {
