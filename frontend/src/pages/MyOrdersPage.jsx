@@ -7,6 +7,7 @@ const STATUS_CONFIG = {
   processing: { label: "Processing", color: "#6b7280", bg: "#f3f4f6", dot: "#9ca3af" },
   "in-transit": { label: "In Transit", color: "#1d4ed8", bg: "#eff6ff", dot: "#3b82f6" },
   delivered: { label: "Delivered", color: "#15803d", bg: "#f0fdf4", dot: "#4ade80" },
+  cancelled: { label: "Cancelled", color: "#b91c1c", bg: "#fef2f2", dot: "#ef4444" },
 };
 
 const REFUND_STATUS_CONFIG = {
@@ -35,6 +36,7 @@ export default function MyOrdersPage() {
   const [refundReason, setRefundReason] = useState("");
   const [refundSubmitting, setRefundSubmitting] = useState(false);
   const [refundMsg, setRefundMsg] = useState("");
+  const [cancelBusyId, setCancelBusyId] = useState(null);
 
   useEffect(() => {
     if (!user?.token) {
@@ -66,7 +68,7 @@ export default function MyOrdersPage() {
 
   const fetchMyRefunds = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/refunds/my-refunds", {
+      const res = await fetch("/api/refunds/my-refunds", {
         headers: { Authorization: `Bearer ${user.token}` },
       });
       const data = await res.json();
@@ -100,7 +102,7 @@ export default function MyOrdersPage() {
     setRefundSubmitting(true);
     setRefundMsg("");
     try {
-      const res = await fetch("http://localhost:3000/api/refunds", {
+      const res = await fetch("/api/refunds", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -125,6 +127,36 @@ export default function MyOrdersPage() {
       setRefundMsg("Could not submit refund request.");
     } finally {
       setRefundSubmitting(false);
+    }
+  };
+
+  const cancelOrder = async (orderId) => {
+    if (!window.confirm(`Cancel order #${orderId}?`)) return;
+
+    setCancelBusyId(orderId);
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Could not cancel order.");
+        return;
+      }
+
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.order_id === orderId
+            ? { ...order, status: "cancelled", delivery_status: "cancelled" }
+            : order
+        )
+      );
+    } catch {
+      alert("Could not cancel order.");
+    } finally {
+      setCancelBusyId(null);
     }
   };
 
@@ -167,6 +199,7 @@ export default function MyOrdersPage() {
             const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.processing;
             const isOpen = expanded[order.order_id];
             const eligibleForRefund = isWithin30Days(order.created_at);
+            const canCancel = status === "processing";
             const date = new Date(order.created_at).toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
@@ -195,6 +228,15 @@ export default function MyOrdersPage() {
                     >
                       {isOpen ? "Hide items" : "View items"}
                     </button>
+                    {canCancel && (
+                      <button
+                        className="cancel-order-btn"
+                        onClick={() => cancelOrder(order.order_id)}
+                        disabled={cancelBusyId === order.order_id}
+                      >
+                        {cancelBusyId === order.order_id ? "Cancelling..." : "Cancel order"}
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -9,6 +9,8 @@ export default function RegisterPage() {
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [taxId, setTaxId] = useState("");
+  const [homeAddress, setHomeAddress] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,6 +40,16 @@ export default function RegisterPage() {
 
     if (!validateEmail(email)) {
       setError("Please enter a valid email address.");
+      return;
+    }
+
+    if (!taxId.trim()) {
+      setError("Tax ID is required.");
+      return;
+    }
+
+    if (!homeAddress.trim()) {
+      setError("Home address is required.");
       return;
     }
 
@@ -87,6 +99,8 @@ export default function RegisterPage() {
         username,
         email,
         password,
+        taxId,
+        address: homeAddress,
       });
 
       if (!response.success) {
@@ -143,6 +157,22 @@ export default function RegisterPage() {
             placeholder="your@email.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
+          />
+
+          <label className="caps">Tax ID</label>
+          <input
+            type="text"
+            placeholder="tax identification number"
+            value={taxId}
+            onChange={(event) => setTaxId(event.target.value)}
+          />
+
+          <label className="caps">Home Address</label>
+          <input
+            type="text"
+            placeholder="street, city, country"
+            value={homeAddress}
+            onChange={(event) => setHomeAddress(event.target.value)}
           />
 
           <label className="caps">Password</label>

@@ -519,6 +519,14 @@ export const createProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
   const fields = req.body;
+
+  if (fields.price !== undefined) {
+    return res.status(403).json({
+      success: false,
+      message: "Product prices are managed by sales managers.",
+    });
+  }
+
   const validation = validateProductNumericInputs(fields);
 
   if (validation.error) {
@@ -526,7 +534,7 @@ export const updateProduct = async (req, res) => {
   }
 
   const allowed = [
-    "name", "description", "price", "category", "image_url",
+    "name", "description", "category", "image_url",
     "stock_quantity", "model", "serial_number",
     "warranty_status", "distributor_information", "additional_attributes"
   ];

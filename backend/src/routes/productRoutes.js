@@ -51,7 +51,7 @@ router.get("/:id", getProductById);
 router.get("/:id/review-eligibility", authMiddleware, getReviewEligibility);
 router.post("/:id/rating", authMiddleware, submitRating);
 
-// Admin routes (auth korumalı)
+// Product manager routes.
 router.post("/", authMiddleware, requireProductManager, createProduct);
 router.put("/:id", authMiddleware, requireProductManager, updateProduct);
 router.patch("/:id/stock", authMiddleware, requireProductManager, updateProductStock);

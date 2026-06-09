@@ -217,8 +217,8 @@ export default function AdminProductsPage() {
     };
 
     const handleSubmitProduct = async () => {
-        if (!form.name || !form.price || !form.category) {
-            showMsg("Name, price and category are required.", "error");
+        if (!form.name || !form.category || (!editingId && !form.price)) {
+            showMsg(editingId ? "Name and category are required." : "Name, price and category are required.", "error");
             return;
         }
         if (!token) {
@@ -230,9 +230,14 @@ export default function AdminProductsPage() {
         const url = editingId ? `/api/products/${editingId}` : "/api/products";
         const payload = {
             ...form,
-            price: Number(form.price),
             stock_quantity: Number(form.stock_quantity),
         };
+
+        if (editingId) {
+            delete payload.price;
+        } else {
+            payload.price = Number(form.price);
+        }
 
         try {
             const res = await fetch(url, {
@@ -264,7 +269,7 @@ export default function AdminProductsPage() {
                 {[
                     { name: "name", placeholder: "Product Name *" },
                     { name: "category", placeholder: "Category *" },
-                    { name: "price", placeholder: "Price *", type: "number" },
+                    ...(!editingId ? [{ name: "price", placeholder: "Price *", type: "number" }] : []),
                     { name: "stock_quantity", placeholder: "Stock Quantity", type: "number" },
                     { name: "image_url", placeholder: "Image URL" },
                     { name: "model", placeholder: "Model" },

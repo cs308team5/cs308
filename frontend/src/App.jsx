@@ -4,7 +4,6 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import CartPage from "./pages/CartPage";
 import CheckoutPage from "./pages/CheckoutPage";
-import TestPage from "./pages/TestPage";
 import DiscoverPage from "./pages/DiscoverPage.jsx";
 import InvoicePage from "./pages/InvoicePage.jsx";
 import ProductDetailsPage from "./pages/ProductDetailsPage.jsx";
@@ -12,6 +11,7 @@ import WishlistPage from "./pages/WishlistPage.jsx";
 import AdminPage from "./pages/AdminPage";
 import AdminDeliveriesPage from "./pages/AdminDeliveriesPage.jsx";
 import AdminProductsPage from "./pages/AdminProductsPage.jsx";
+import AdminInvoicesPage from "./pages/AdminInvoicesPage.jsx";
 import SalesManagerPage from "./pages/SalesManagerPage.jsx";
 import SalesReportsPage from "./pages/SalesReportsPage.jsx";
 import DiscountsPage from "./pages/DiscountsPage.jsx";
@@ -131,6 +131,14 @@ const router = createBrowserRouter([
         ),
       },
       {
+        path: "/admin/invoices",
+        element: (
+          <ProductManagerRoute>
+            <AdminInvoicesPage />
+          </ProductManagerRoute>
+        ),
+      },
+      {
         path: "/sales-manager",
         element: (
           <SalesManagerRoute>
@@ -164,7 +172,6 @@ const router = createBrowserRouter([
       { path: "/login",    element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
       { path: "/invoice",  element: <InvoicePage /> },
-      { path: "/test",     element: <TestPage /> },
     ],
   },
 ]);

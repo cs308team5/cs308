@@ -636,23 +636,43 @@ describe("productController product numeric validation", () => {
     assert.equal(queryCalled, false);
   });
 
-  test("uses validated numeric values when updating product price and stock", async () => {
-    let capturedParams;
-    pool.query = async (sql, params = []) => {
-      capturedParams = params;
-      return { rows: [{ id: "p1", price: params[0], stock_quantity: params[1] }] };
+  test("rejects product manager price updates", async () => {
+    let queryCalled = false;
+    pool.query = async () => {
+      queryCalled = true;
+      return { rows: [] };
     };
 
     const req = createMockReq({
       params: { id: "p1" },
-      body: { price: "99.99", stock_quantity: "3" },
+      body: { price: "99.99" },
+    });
+    const res = createMockRes();
+
+    await updateProduct(req, res);
+
+    assert.equal(res.statusCode, 403);
+    assert.equal(res.body.message, "Product prices are managed by sales managers.");
+    assert.equal(queryCalled, false);
+  });
+
+  test("uses validated numeric values when updating product stock", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return { rows: [{ id: "p1", stock_quantity: params[0] }] };
+    };
+
+    const req = createMockReq({
+      params: { id: "p1" },
+      body: { stock_quantity: "3" },
     });
     const res = createMockRes();
 
     await updateProduct(req, res);
 
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(capturedParams, [99.99, 3, "p1"]);
+    assert.deepEqual(capturedParams, [3, "p1"]);
   });
 });
 

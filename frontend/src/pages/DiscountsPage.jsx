@@ -14,6 +14,7 @@ export default function DiscountsPage() {
     const [showActiveOnly, setShowActiveOnly] = useState(false);
     const [loading, setLoading] = useState(true);
     const [rates, setRates] = useState({});
+    const [prices, setPrices] = useState({});
     const [actionId, setActionId] = useState(null);
     const [msg, setMsg] = useState("");
     const [msgType, setMsgType] = useState("success");
@@ -22,6 +23,40 @@ export default function DiscountsPage() {
         setMsg(text);
         setMsgType(type);
         setTimeout(() => setMsg(""), 3000);
+    };
+
+    const handleSetPrice = async (productId) => {
+        const price = Number(prices[productId]);
+        if (!Number.isFinite(price) || price <= 0) {
+            showMsg("Enter a valid positive price.", "error");
+            return;
+        }
+
+        setActionId(productId);
+        try {
+            const res = await fetch(`/api/discounts/${productId}/price`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ price }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                setProducts(prev =>
+                    prev.map(p => p.id === productId ? { ...p, ...data.product } : p)
+                );
+                setPrices(prev => ({ ...prev, [productId]: "" }));
+                showMsg("Price updated.");
+            } else {
+                showMsg(data.message || "Failed to update price.", "error");
+            }
+        } catch {
+            showMsg("Failed to update price.", "error");
+        } finally {
+            setActionId(null);
+        }
     };
 
     useEffect(() => {
@@ -126,7 +161,7 @@ export default function DiscountsPage() {
                     <div>
                         <p className="admin-kicker">Pricing</p>
                         <h1 className="admin-title">
-                            Discounts
+                            Pricing & Discounts
                             {discountedCount > 0 && (
                                 <span className="admin-pending-badge">{discountedCount} active</span>
                             )}
@@ -200,11 +235,30 @@ export default function DiscountsPage() {
                             <p className="admin-comment-author">
                                 Price: ${Number(p.price).toFixed(2)}
                                 {p.discounted_price && (
-                                    <> → <strong>${Number(p.discounted_price).toFixed(2)}</strong></>
+                                    <> -&gt; <strong>${Number(p.discounted_price).toFixed(2)}</strong></>
                                 )}
-                                {p.category && <> · {p.category}</>}
+                                {p.category && <> - {p.category}</>}
                             </p>
                             <div className="admin-actions" style={{ alignItems: "center", gap: 8 }}>
+                                <input
+                                    type="number"
+                                    min="0.01"
+                                    step="0.01"
+                                    placeholder="New price"
+                                    value={prices[p.id] ?? ""}
+                                    onChange={e => setPrices(prev => ({ ...prev, [p.id]: e.target.value }))}
+                                    style={{
+                                        width: 120, padding: "6px 10px", borderRadius: 6,
+                                        border: "1px solid #d1d5db", fontSize: 14,
+                                    }}
+                                />
+                                <button
+                                    className="admin-btn add-product"
+                                    disabled={actionId === p.id}
+                                    onClick={() => handleSetPrice(p.id)}
+                                >
+                                    Set Price
+                                </button>
                                 <input
                                     type="number"
                                     min="1"

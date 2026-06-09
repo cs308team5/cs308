@@ -83,6 +83,10 @@ describe("checkoutController.checkout", () => {
           };
         }
 
+        if (/UPDATE products/i.test(sql)) {
+          return { rowCount: 1, rows: [{ stock_quantity: 3 }] };
+        }
+
         return { rows: [] };
       },
       releaseCalled: false,
@@ -114,6 +118,7 @@ describe("checkoutController.checkout", () => {
 
     const orderInsert = queries.find(({ sql }) => /INSERT INTO orders/i.test(sql));
     const itemInserts = queries.filter(({ sql }) => /INSERT INTO order_items/i.test(sql));
+    const stockUpdates = queries.filter(({ sql }) => /UPDATE products/i.test(sql));
     const deliveryInsert = queries.find(({ sql }) => /INSERT INTO deliveries/i.test(sql));
 
     assert.equal(res.statusCode, 201);
@@ -130,6 +135,8 @@ describe("checkoutController.checkout", () => {
     assert.deepEqual(orderInsert.params, ["customer-1", 70, "pending"]);
     assert.deepEqual(itemInserts[0].params, ["order-1", "product-1", 2, 25]);
     assert.deepEqual(itemInserts[1].params, ["order-1", "product-2", 1, 20]);
+    assert.deepEqual(stockUpdates[0].params, [2, "product-1"]);
+    assert.deepEqual(stockUpdates[1].params, [1, "product-2"]);
     assert.deepEqual(deliveryInsert.params, [
       "order-1",
       "customer-1",
@@ -170,6 +177,49 @@ describe("checkoutController.checkout", () => {
     assert.equal(res.body.message, "Checkout failed.");
     assert.equal(res.body.error, "Invalid cart item.");
     assert.equal(queries.some(({ sql }) => sql === "BEGIN"), true);
+    assert.equal(queries.some(({ sql }) => sql === "ROLLBACK"), true);
+    assert.equal(client.releaseCalled, true);
+  });
+
+  test("rolls back when checkout stock is insufficient", async () => {
+    const queries = [];
+    const client = {
+      async query(sql, params = []) {
+        queries.push({ sql, params });
+
+        if (/INSERT INTO orders/i.test(sql)) {
+          return {
+            rows: [{ order_id: "order-1", status: "pending", created_at: "now" }],
+          };
+        }
+
+        if (/UPDATE products/i.test(sql)) {
+          return { rowCount: 0, rows: [] };
+        }
+
+        return { rows: [] };
+      },
+      releaseCalled: false,
+      release() {
+        this.releaseCalled = true;
+      },
+    };
+
+    pool.connect = async () => client;
+
+    const req = createMockReq({
+      body: {
+        cart: [{ product_id: "product-1", quantity: 2, unit_price: 25 }],
+        shippingAddress: "123 Main St",
+      },
+      customer: { customerId: "customer-1" },
+    });
+    const res = createMockRes();
+
+    await checkout(req, res);
+
+    assert.equal(res.statusCode, 500);
+    assert.equal(res.body.error, "Insufficient stock for product product-1.");
     assert.equal(queries.some(({ sql }) => sql === "ROLLBACK"), true);
     assert.equal(client.releaseCalled, true);
   });

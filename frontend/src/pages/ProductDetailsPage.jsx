@@ -26,7 +26,7 @@ export default function ProductDetailsPage() {
   const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/products/${id}`)
+    fetch(`/api/products/${id}`)
       .then((res) => res.json())
       .then((data) => setProduct(data.data))
       .catch((err) => console.error(err));
@@ -203,7 +203,7 @@ export default function ProductDetailsPage() {
             )}
           </div>
 
-          <div className="rating">★ {averageLabel} ({reviewStats.count})</div>
+          <div className="rating">* {averageLabel} ({reviewStats.count})</div>
 
           <div className={isOutOfStock ? "out-of-stock" : "in-stock"}>
             STOCK: {stockQuantity}
@@ -248,7 +248,7 @@ export default function ProductDetailsPage() {
               className="section-title dropdown-header"
               onClick={() => setDetailsOpen(!detailsOpen)}
             >
-              DETAILS <span>{detailsOpen ? "▲" : "▼"}</span>
+              DETAILS <span>{detailsOpen ? "^" : "v"}</span>
             </div>
 
             {detailsOpen && (

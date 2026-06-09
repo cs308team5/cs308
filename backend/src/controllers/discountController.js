@@ -99,6 +99,42 @@ export const removeDiscount = async (req, res) => {
     }
 };
 
+export const setProductPrice = async (req, res) => {
+    const { id } = req.params;
+    const { price } = req.body;
+    const numericPrice = Number(price);
+
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+        return res.status(400).json({
+            success: false,
+            message: "price must be a positive number.",
+        });
+    }
+
+    try {
+        const result = await pool.query(
+            `UPDATE products
+             SET price = $1,
+                 discounted_price = CASE
+                    WHEN discount_rate IS NULL THEN NULL
+                    ELSE ROUND($1::numeric * (1 - discount_rate::numeric), 2)
+                 END
+             WHERE id = $2
+             RETURNING id, name, price, discount_rate, discounted_price`,
+            [numericPrice, id]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ success: false, message: "Product not found." });
+        }
+
+        return res.json({ success: true, product: result.rows[0] });
+    } catch (err) {
+        console.error("setProductPrice error:", err);
+        return res.status(500).json({ success: false, message: "Server error." });
+    }
+};
+
 export const getDiscountedProducts = async (req, res) => {
     try {
         const result = await pool.query(

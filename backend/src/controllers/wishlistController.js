@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 
 const getCustomerId = (req) =>
-  req.body?.userId ?? req.body?.customerId ?? req.params?.userId ?? req.query?.userId;
+  req.customer?.customerId ?? req.customer?.customer_id;
 
 const getProductId = (req) =>
   req.body?.productId ?? req.body?.product_id ?? req.params?.productId;
@@ -10,9 +10,9 @@ export const listWishlist = async (req, res) => {
   const userId = getCustomerId(req);
 
   if (!userId) {
-    return res.status(400).json({
+    return res.status(401).json({
       success: false,
-      message: "userId is required",
+      message: "Authentication required.",
     });
   }
 
@@ -70,7 +70,7 @@ export const addToWishlist = async (req, res) => {
   if (!userId || !productId) {
     return res.status(400).json({
       success: false,
-      message: "userId and productId are required",
+      message: "productId is required",
     });
   }
 
@@ -118,7 +118,7 @@ export const removeFromWishlist = async (req, res) => {
   if (!userId || !productId) {
     return res.status(400).json({
       success: false,
-      message: "userId and productId are required",
+      message: "productId is required",
     });
   }
 

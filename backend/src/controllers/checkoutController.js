@@ -134,6 +134,18 @@ export const checkout = async (req, res) => {
           Number(item.unit_price),
         ]
       );
+
+      const stockResult = await client.query(
+        `UPDATE products
+            SET stock_quantity = stock_quantity - $1
+          WHERE id = $2 AND stock_quantity >= $1
+          RETURNING stock_quantity`,
+        [Number(item.quantity), item.product_id]
+      );
+
+      if (stockResult.rowCount === 0) {
+        throw new Error(`Insufficient stock for product ${item.product_id}.`);
+      }
     }
 
     await client.query(

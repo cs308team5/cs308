@@ -17,16 +17,18 @@ const normalizeRole = (role) => {
   return "customer";
 };
 
-export async function register({ fullName, username, email, password }) {
+export async function register({ fullName, username, email, password, taxId, address }) {
   try {
     const cleanFullName = fullName?.trim();
     const cleanUsername = username?.trim().toLowerCase();
     const cleanEmail = email?.trim().toLowerCase();
+    const cleanTaxId = taxId?.trim();
+    const cleanAddress = address?.trim();
 
-    if (!cleanFullName || !cleanUsername || !cleanEmail || !password) {
+    if (!cleanFullName || !cleanUsername || !cleanEmail || !password || !cleanTaxId || !cleanAddress) {
       return {
         success: false,
-        message: "Full name, username, email, and password are required.",
+        message: "Full name, username, email, password, tax ID, and home address are required.",
       };
     }
 
@@ -40,6 +42,8 @@ export async function register({ fullName, username, email, password }) {
         username: cleanUsername,
         email: cleanEmail,
         password,
+        tax_id: cleanTaxId,
+        address: cleanAddress,
       }),
     });
 

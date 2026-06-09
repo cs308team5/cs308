@@ -263,6 +263,28 @@
   border-color: #fca5a5;
 }
 
+.cancel-order-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: 0.2s;
+}
+
+.cancel-order-btn:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.cancel-order-btn:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
 .refund-status-badge {
   display: inline-flex;
   align-items: center;

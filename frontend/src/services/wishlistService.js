@@ -1,3 +1,5 @@
+import { getCurrentUser } from "./authService.js";
+
 const parseResponse = async (response) => {
   const raw = await response.text();
   const data = raw ? JSON.parse(raw) : {};
@@ -7,6 +9,11 @@ const parseResponse = async (response) => {
   }
 
   return data;
+};
+
+const authHeaders = () => {
+  const user = getCurrentUser();
+  return user?.token ? { Authorization: `Bearer ${user.token}` } : {};
 };
 
 const normalizeWishlistItem = (item) => {
@@ -37,7 +44,9 @@ export async function fetchWishlist(userId) {
     return [];
   }
 
-  const data = await parseResponse(await fetch(`/api/wishlist/${userId}`));
+  const data = await parseResponse(await fetch("/api/wishlist", {
+    headers: authHeaders(),
+  }));
   return (data.data ?? data.items ?? []).map(normalizeWishlistItem);
 }
 
@@ -50,8 +59,9 @@ export async function addToWishlist(userId, productId) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),
     },
-    body: JSON.stringify({ userId, productId }),
+    body: JSON.stringify({ productId }),
   }));
 
   window.dispatchEvent(new Event("wishlistUpdated"));
@@ -67,8 +77,9 @@ export async function removeFromWishlist(userId, productId) {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders(),
     },
-    body: JSON.stringify({ userId, productId }),
+    body: JSON.stringify({ productId }),
   }));
 
   window.dispatchEvent(new Event("wishlistUpdated"));

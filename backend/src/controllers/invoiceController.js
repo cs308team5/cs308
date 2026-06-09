@@ -440,6 +440,9 @@ function toMoney(value) {
 export const listInvoices = async (req, res) => {
   try {
     const { whereClause, values, filters } = buildInvoiceListFilters(req.query ?? {});
+    const managerPdfBase = req.path?.startsWith("/product-manager")
+      ? "/api/invoice/product-manager"
+      : "/api/invoice/manager";
     const result = await pool.query(
       `SELECT i.invoice_id,
               i.order_id,
@@ -463,7 +466,7 @@ export const listInvoices = async (req, res) => {
       success: true,
       data: result.rows.map((invoice) => ({
         ...invoice,
-        pdf_url: `/api/invoice/manager/${invoice.order_id}/pdf`,
+        pdf_url: `${managerPdfBase}/${invoice.order_id}/pdf`,
       })),
       count: result.rows.length,
       filters,

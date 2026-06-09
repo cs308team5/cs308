@@ -35,6 +35,16 @@ const mapProduct = (row) => {
   };
 };
 
+const getAuthToken = () => {
+  const user = JSON.parse(localStorage.getItem("user") ?? "null");
+  return user?.token ?? null;
+};
+
+const parseJsonResponse = async (response) => {
+  const raw = await response.text();
+  return raw ? JSON.parse(raw) : {};
+};
+
 export async function fetchProducts({ category = [], min_price = 0, max_price = 10000, sort = "all", search = "", limit = 1000 } = {}) {
   let query = supabase.from("products").select("*").gte("price", min_price).lte("price", max_price).limit(limit);
 
@@ -95,27 +105,39 @@ export async function fetchProducts({ category = [], min_price = 0, max_price = 
 
 
 export async function fetchCart(userId) {
-  const { data, error } = await supabase
-    .from("cart_items")
-    .select("*, products(*)")
-    .eq("customer_id", userId);
+  if (userId === undefined) {
+    throw new Error("userId is undefined.");
+  }
 
-  if (error) throw error;
+  const token = getAuthToken();
 
-  return data.map(row => {
-    const originalPrice = Number(row.products.price);
-    const discountedPrice = row.products.discounted_price != null ? Number(row.products.discounted_price) : null;
+  if (!token) {
+    throw new Error("Please log in to view your cart.");
+  }
+
+  const response = await fetch("/api/cart", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const result = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(result.message || "Failed to load cart");
+  }
+
+  return (result.data ?? []).map(row => {
+    const originalPrice = Number(row.price);
+    const discountedPrice = row.discounted_price != null ? Number(row.discounted_price) : null;
     return {
       id:             row.id,
       product_id:     row.product_id,
       quantity:       row.quantity,
-      name:           row.products.name,
-      description:    row.products.description,
+      name:           row.name,
+      description:    row.description,
       originalPrice,
       price:          discountedPrice ?? originalPrice,
       discountedPrice,
-      image:          row.products.image_url,
-      stock_quantity: row.products.stock_quantity,
+      image:          row.image_url,
+      stock_quantity: row.stock_quantity,
     };
   });
 }
@@ -158,16 +180,22 @@ export async function addToCart(userId, productId, quantity = 1) {
     throw new Error("userId or productId is undefined.");
   }
 
+  const token = getAuthToken();
+
+  if (!token) {
+    throw new Error("Please log in to add items to your cart.");
+  }
+
   const response = await fetch("/api/cart/add", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ userId, productId, quantity }),
   });
 
-  const raw = await response.text();
-  const data = raw ? JSON.parse(raw) : {};
+  const data = await parseJsonResponse(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Failed to add to cart");
@@ -178,21 +206,49 @@ export async function addToCart(userId, productId, quantity = 1) {
 }
 
 export async function updateCartQuantity(cartItemId, quantity) {
-  const { error } = await supabase
-    .from("cart_items")
-    .update({ quantity })
-    .eq("id", cartItemId);
-  if (error) throw error;
+  const token = getAuthToken();
+
+  if (!token) {
+    throw new Error("Please log in to update your cart.");
+  }
+
+  const response = await fetch(`/api/cart/${cartItemId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ quantity }),
+  });
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to update cart");
+  }
+
   notifyCartUpdated();
+  return data;
 }
 
 export async function removeFromCart(cartItemId) {
-  const { error } = await supabase
-    .from("cart_items")
-    .delete()
-    .eq("id", cartItemId);
-  if (error) throw error;
+  const token = getAuthToken();
+
+  if (!token) {
+    throw new Error("Please log in to update your cart.");
+  }
+
+  const response = await fetch(`/api/cart/${cartItemId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await parseJsonResponse(response);
+
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to remove cart item");
+  }
+
   notifyCartUpdated();
+  return data;
 }
 
 export async function mergeGuestCartOnLogin(userId) {

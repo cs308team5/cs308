@@ -22,19 +22,22 @@ describe("wishlistController", () => {
   });
 
   test("addToWishlist returns 400 when fields are missing", async () => {
-    const req = createMockReq({ body: { userId: "u1" } });
+    const req = createMockReq({ customer: { customerId: "u1" } });
     const res = createMockRes();
 
     await addToWishlist(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body.message, "userId and productId are required");
+    assert.equal(res.body.message, "productId is required");
   });
 
   test("addToWishlist returns 404 when product does not exist", async () => {
     pool.query = async () => ({ rows: [] });
 
-    const req = createMockReq({ body: { userId: "u1", productId: "p1" } });
+    const req = createMockReq({
+      body: { productId: "p1" },
+      customer: { customerId: "u1" },
+    });
     const res = createMockRes();
 
     await addToWishlist(req, res);
@@ -57,7 +60,10 @@ describe("wishlistController", () => {
       };
     };
 
-    const req = createMockReq({ body: { userId: "u1", productId: "p1" } });
+    const req = createMockReq({
+      body: { productId: "p1" },
+      customer: { customerId: "u1" },
+    });
     const res = createMockRes();
 
     await addToWishlist(req, res);
@@ -74,7 +80,10 @@ describe("wishlistController", () => {
       return call === 1 ? { rows: [{ id: "p1" }] } : { rows: [] };
     };
 
-    const req = createMockReq({ body: { userId: "u1", productId: "p1" } });
+    const req = createMockReq({
+      body: { productId: "p1" },
+      customer: { customerId: "u1" },
+    });
     const res = createMockRes();
 
     await addToWishlist(req, res);
@@ -90,7 +99,10 @@ describe("wishlistController", () => {
       return { rows: [{ id: "w1" }] };
     };
 
-    const req = createMockReq({ body: { userId: "u1", productId: "p1" } });
+    const req = createMockReq({
+      body: { productId: "p1" },
+      customer: { customerId: "u1" },
+    });
     const res = createMockRes();
 
     await removeFromWishlist(req, res);
@@ -118,7 +130,7 @@ describe("wishlistController", () => {
       }],
     });
 
-    const req = createMockReq({ params: { userId: "u1" } });
+    const req = createMockReq({ customer: { customerId: "u1" } });
     const res = createMockRes();
 
     await listWishlist(req, res);
@@ -126,5 +138,25 @@ describe("wishlistController", () => {
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.data.length, 1);
     assert.equal(res.body.data[0].product.name, "Dress");
+  });
+
+  test("listWishlist ignores spoofed userId parameters", async () => {
+    let capturedParams;
+    pool.query = async (sql, params = []) => {
+      capturedParams = params;
+      return { rows: [] };
+    };
+
+    const req = createMockReq({
+      params: { userId: "attacker" },
+      query: { userId: "attacker" },
+      customer: { customerId: "u1" },
+    });
+    const res = createMockRes();
+
+    await listWishlist(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(capturedParams, ["u1"]);
   });
 });

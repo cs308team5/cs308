@@ -1,7 +1,7 @@
 import { describe, test, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import pool from "../src/config/db.js";
-import { setDiscount, removeDiscount, getDiscountedProducts } from "../src/controllers/discountController.js";
+import { setDiscount, removeDiscount, getDiscountedProducts, setProductPrice } from "../src/controllers/discountController.js";
 import { createMockReq, createMockRes } from "./helpers/httpTestUtils.js";
 
 describe("discountController", () => {
@@ -132,6 +132,53 @@ describe("discountController", () => {
             await removeDiscount(req, res);
 
             assert.equal(res.statusCode, 500);
+            assert.equal(res.body.success, false);
+        });
+    });
+
+    describe("setProductPrice", () => {
+        test("returns 400 when price is invalid", async () => {
+            const req = createMockReq({ params: { id: "1" }, body: { price: -4 } });
+            const res = createMockRes();
+
+            await setProductPrice(req, res);
+
+            assert.equal(res.statusCode, 400);
+            assert.equal(res.body.success, false);
+            assert.equal(res.body.message, "price must be a positive number.");
+        });
+
+        test("updates price and recalculates discounted_price when discount exists", async () => {
+            let capturedParams;
+            pool.query = async (sql, params) => {
+                capturedParams = params;
+                return {
+                    rowCount: 1,
+                    rows: [{ id: "1", name: "Art Print", price: 120, discount_rate: 0.25, discounted_price: 90 }],
+                };
+            };
+
+            const req = createMockReq({ params: { id: "1" }, body: { price: "120" } });
+            const res = createMockRes();
+
+            await setProductPrice(req, res);
+
+            assert.equal(res.statusCode, 200);
+            assert.equal(res.body.success, true);
+            assert.equal(res.body.product.price, 120);
+            assert.equal(res.body.product.discounted_price, 90);
+            assert.deepEqual(capturedParams, [120, "1"]);
+        });
+
+        test("returns 404 when price target is not found", async () => {
+            pool.query = async () => ({ rowCount: 0, rows: [] });
+
+            const req = createMockReq({ params: { id: "missing" }, body: { price: 120 } });
+            const res = createMockRes();
+
+            await setProductPrice(req, res);
+
+            assert.equal(res.statusCode, 404);
             assert.equal(res.body.success, false);
         });
     });
