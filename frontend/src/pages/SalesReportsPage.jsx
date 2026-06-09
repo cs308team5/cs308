@@ -377,7 +377,12 @@ export default function SalesReportsPage() {
   const revenueTotal = summary
     ? Number(summary.revenue ?? summary.gross_revenue ?? 0)
     : 0;
-  const lossTotal = summary ? Number(summary.loss ?? summary.refunded_amount ?? 0) : 0;
+  // `loss` is kept as an alias of `cost` server-side, so prefer the explicit
+  // `cost` field but fall back for older payloads.
+  const costTotal = summary
+    ? Number(summary.cost ?? summary.loss ?? 0)
+    : 0;
+  const refundedTotal = summary ? Number(summary.refunded_amount ?? 0) : 0;
   const profitTotal = summary
     ? Number(summary.profit ?? summary.net_revenue ?? 0)
     : 0;
@@ -385,10 +390,11 @@ export default function SalesReportsPage() {
   const periodBarData = useMemo(
     () => [
       { name: "Revenue", value: revenueTotal, fill: "var(--blue, #1B284E)" },
-      { name: "Loss", value: lossTotal, fill: "#b91c1c" },
+      { name: "Cost", value: costTotal, fill: "#b91c1c" },
+      { name: "Refunds", value: refundedTotal, fill: "#ca8a04" },
       { name: "Profit", value: profitTotal, fill: "#047857" },
     ],
-    [revenueTotal, lossTotal, profitTotal]
+    [revenueTotal, costTotal, refundedTotal, profitTotal]
   );
 
   const dailySeries = useMemo(
@@ -452,22 +458,27 @@ export default function SalesReportsPage() {
 
       {summary && (
         <>
-        <section className="sales-reports-summary" aria-label="Revenue loss profit">
+        <section className="sales-reports-summary" aria-label="Revenue cost refunds profit">
           <div className="sales-reports-summary-card">
             <span>Revenue</span>
-            <strong>{formatCurrency(summary.revenue ?? summary.gross_revenue)}</strong>
+            <strong>{formatCurrency(revenueTotal)}</strong>
           </div>
           <div className="sales-reports-summary-card">
-            <span>Loss</span>
-            <strong>{formatCurrency(summary.loss ?? summary.refunded_amount)}</strong>
+            <span>Cost</span>
+            <strong>{formatCurrency(costTotal)}</strong>
+          </div>
+          <div className="sales-reports-summary-card">
+            <span>Refunds</span>
+            <strong>{formatCurrency(refundedTotal)}</strong>
           </div>
           <div className="sales-reports-summary-card highlight">
             <span>Profit</span>
-            <strong>{formatCurrency(summary.profit)}</strong>
+            <strong>{formatCurrency(profitTotal)}</strong>
           </div>
         </section>
         <p className="sales-reports-summary-foot">
           Based on <strong>{summary.invoice_count ?? 0}</strong> invoice{Number(summary.invoice_count) === 1 ? "" : "s"} in this range.
+          {" "}Profit = Revenue &minus; Cost &minus; Refunds.
         </p>
         </>
       )}
@@ -475,7 +486,7 @@ export default function SalesReportsPage() {
       {summary && (
         <section className="sales-reports-charts" aria-label="Charts">
           <div className="sales-reports-chart-card">
-            <h2 className="sales-reports-chart-title">Revenue, loss &amp; profit</h2>
+            <h2 className="sales-reports-chart-title">Revenue, cost, refunds &amp; profit</h2>
             <p className="sales-reports-chart-caption">Totals for the selected date range</p>
             <div className="sales-reports-chart-inner">
               <ResponsiveContainer width="100%" height={280}>
