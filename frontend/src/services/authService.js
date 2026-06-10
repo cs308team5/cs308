@@ -130,6 +130,60 @@ export async function logout() {
   };
 }
 
+export async function updateProfile({ name, email, taxId, address }) {
+  const user = getCurrentUser();
+
+  if (!user?.token) {
+    return { success: false, message: "Please log in again." };
+  }
+
+  try {
+    const response = await fetch("/api/auth/profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${user.token}`,
+      },
+      body: JSON.stringify({
+        name: name?.trim(),
+        email: email?.trim().toLowerCase(),
+        tax_id: taxId?.trim(),
+        address: address?.trim(),
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.customer) {
+      return {
+        success: false,
+        message: data.message || "Profile could not be updated.",
+      };
+    }
+
+    const updatedUser = {
+      ...user,
+      ...data.customer,
+      token: user.token,
+      customer_id: data.customer.customer_id ?? data.customer.customerId,
+      customerId: data.customer.customerId ?? data.customer.customer_id,
+      role: normalizeRole(data.customer.role),
+    };
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    window.dispatchEvent(new Event("profileUpdated"));
+
+    return {
+      success: true,
+      message: data.message || "Profile updated successfully.",
+      data: updatedUser,
+    };
+  } catch (err) {
+    console.error("Profile update catch error:", err);
+    return { success: false, message: "Profile could not be updated." };
+  }
+}
+
 export function getCurrentUser() {
   const user = localStorage.getItem("user");
   if (!user) return null;

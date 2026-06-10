@@ -170,7 +170,11 @@ export function GlobalNavbar() {
             loadCart(latestUser);
         };
         window.addEventListener("cartUpdated", onCartUpdate);
-        return () => window.removeEventListener("cartUpdated", onCartUpdate);
+        window.addEventListener("profileUpdated", onCartUpdate);
+        return () => {
+            window.removeEventListener("cartUpdated", onCartUpdate);
+            window.removeEventListener("profileUpdated", onCartUpdate);
+        };
     }, []);
 
     const handleLogout = async () => {

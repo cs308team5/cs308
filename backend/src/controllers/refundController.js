@@ -1,4 +1,24 @@
 import pool from "../config/db.js";
+import { sendEmail } from "../services/emailService.js";
+
+async function notifyRefundApproved(refund) {
+  if (!refund.customer_email) return;
+
+  const productName = refund.product_name || `Product #${refund.product_id}`;
+  const refundedAmount = (Number(refund.unit_price) * Number(refund.quantity)).toFixed(2);
+
+  await sendEmail({
+    to: refund.customer_email,
+    subject: `Refund approved for ${productName}`,
+    html: `
+      <p>Hi ${refund.customer_name || "there"},</p>
+      <p>Your refund request for <strong>${productName}</strong> has been approved.</p>
+      <p><strong>Refund amount:</strong> $${refundedAmount}</p>
+      <p>The returned item has been added back to store stock.</p>
+      <p>- The Dare Team</p>
+    `,
+  });
+}
 
 // POST /api/refunds
 export async function requestRefund(req, res) {
@@ -111,7 +131,14 @@ export async function reviewRefund(req, res) {
 
   try {
     const refundResult = await pool.query(
-      "SELECT * FROM refund_requests WHERE refund_id = $1",
+      `SELECT r.*,
+              c.email AS customer_email,
+              c.name AS customer_name,
+              p.name AS product_name
+       FROM refund_requests r
+       JOIN customers c ON c.customer_id = r.customer_id
+       LEFT JOIN products p ON p.id = r.product_id
+       WHERE r.refund_id = $1`,
       [refundId]
     );
     if (refundResult.rows.length === 0) {
@@ -146,6 +173,12 @@ export async function reviewRefund(req, res) {
     }
 
     res.json({ success: true, message: `Refund marked as ${status}.` });
+
+    if (status === "approved") {
+      notifyRefundApproved(refund).catch((err) =>
+        console.error("Refund approval notification error:", err)
+      );
+    }
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

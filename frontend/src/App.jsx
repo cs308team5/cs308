@@ -15,6 +15,7 @@ import AdminInvoicesPage from "./pages/AdminInvoicesPage.jsx";
 import SalesManagerPage from "./pages/SalesManagerPage.jsx";
 import SalesReportsPage from "./pages/SalesReportsPage.jsx";
 import DiscountsPage from "./pages/DiscountsPage.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
 import { getCurrentUser } from "./services/authService.js";
 import MyOrdersPage from "./pages/MyOrdersPage.jsx";
 import OrderTrackingPage from "./pages/OrderTrackingPage.jsx";
@@ -96,6 +97,14 @@ const router = createBrowserRouter([
       },
       { path: "/cart",          element: <CartPage /> },
       { path: "/products/:id",  element: <ProductDetailsPage /> },
+      {
+        path: "/profile",
+        element: (
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        ),
+      },
       { path: "/orders",        element: <OrderTrackingPage /> },
       { path: "/my-orders",     element: <MyOrdersPage /> },
       {

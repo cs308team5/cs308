@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "../src/config/db.js";
-import { login, signup } from "../src/controllers/authController.js";
+import { login, signup, updateProfile } from "../src/controllers/authController.js";
 import { createMockReq, createMockRes } from "./helpers/httpTestUtils.js";
 
 describe("authController.signup", () => {
@@ -139,6 +139,8 @@ describe("authController.signup", () => {
             name: "Ada",
             username: "ada",
             email: "a@b.com",
+            tax_id: "123",
+            address: "Sabanci",
           },
         ],
       };
@@ -175,6 +177,8 @@ describe("authController.signup", () => {
       name: "Ada",
       username: "ada",
       email: "a@b.com",
+      tax_id: "123",
+      address: "Sabanci",
       role: "customer",
       isProductManager: false,
       isSalesManager: false,
@@ -310,6 +314,8 @@ describe("authController.login", () => {
           name: "Ada",
           username: "ada",
           email: "a@b.com",
+          tax_id: "123",
+          address: "Sabanci",
           password_hash: "$2b$10$hashed",
         },
       ],
@@ -335,6 +341,8 @@ describe("authController.login", () => {
           name: "Ada",
           username: "ada",
           email: "a@b.com",
+          tax_id: "123",
+          address: "Sabanci",
           password_hash: "$2b$10$hashed",
         },
       ],
@@ -357,6 +365,8 @@ describe("authController.login", () => {
       name: "Ada",
       username: "ada",
       email: "a@b.com",
+      tax_id: "123",
+      address: "Sabanci",
       role: "customer",
       isProductManager: false,
       isSalesManager: false,
@@ -469,5 +479,133 @@ describe("authController.login", () => {
 
     assert.equal(res.statusCode, 500);
     assert.equal(res.body.message, "Server error");
+  });
+});
+
+describe("authController.updateProfile", () => {
+  const originalQuery = pool.query;
+  const originalConsoleError = console.error;
+
+  beforeEach(() => {
+    console.error = () => {};
+  });
+
+  afterEach(() => {
+    pool.query = originalQuery;
+    console.error = originalConsoleError;
+  });
+
+  test("returns 401 when the customer is missing", async () => {
+    const req = createMockReq({
+      body: {
+        name: "Ada",
+        email: "ada@example.com",
+        tax_id: "123",
+        address: "Sabanci",
+      },
+    });
+    const res = createMockRes();
+
+    await updateProfile(req, res);
+
+    assert.equal(res.statusCode, 401);
+    assert.equal(res.body.message, "Authentication required");
+  });
+
+  test("returns 400 when required profile fields are missing", async () => {
+    const req = createMockReq({
+      customer: { customerId: "c1" },
+      body: {
+        name: "Ada",
+        email: "ada@example.com",
+        tax_id: "",
+        address: "Sabanci",
+      },
+    });
+    const res = createMockRes();
+
+    await updateProfile(req, res);
+
+    assert.equal(res.statusCode, 400);
+    assert.match(res.body.message, /tax ID/i);
+  });
+
+  test("returns 409 when the email belongs to another customer", async () => {
+    pool.query = async () => ({ rows: [{ customer_id: "c2" }] });
+
+    const req = createMockReq({
+      customer: { customerId: "c1" },
+      body: {
+        name: "Ada",
+        email: "taken@example.com",
+        tax_id: "123",
+        address: "Sabanci",
+      },
+    });
+    const res = createMockRes();
+
+    await updateProfile(req, res);
+
+    assert.equal(res.statusCode, 409);
+    assert.equal(res.body.message, "Email already registered");
+  });
+
+  test("updates the authenticated customer's profile and returns safe customer data", async () => {
+    const queries = [];
+    pool.query = async (sql, params) => {
+      queries.push({ sql, params });
+
+      if (queries.length === 1) {
+        return { rows: [] };
+      }
+
+      return {
+        rows: [
+          {
+            customer_id: "c1",
+            name: "Ada Lovelace",
+            username: "ada",
+            email: "ada@example.com",
+            tax_id: "987",
+            address: "Istanbul",
+            role: "customer",
+          },
+        ],
+      };
+    };
+
+    const req = createMockReq({
+      customer: { customerId: "c1" },
+      body: {
+        name: " Ada Lovelace ",
+        email: "ADA@EXAMPLE.COM ",
+        tax_id: " 987 ",
+        address: " Istanbul ",
+      },
+    });
+    const res = createMockRes();
+
+    await updateProfile(req, res);
+
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(queries[1].params, [
+      "Ada Lovelace",
+      "ada@example.com",
+      "987",
+      "Istanbul",
+      "c1",
+    ]);
+    assert.deepEqual(res.body.customer, {
+      customerId: "c1",
+      customer_id: "c1",
+      name: "Ada Lovelace",
+      username: "ada",
+      email: "ada@example.com",
+      tax_id: "987",
+      address: "Istanbul",
+      role: "customer",
+      isProductManager: false,
+      isSalesManager: false,
+    });
   });
 });
