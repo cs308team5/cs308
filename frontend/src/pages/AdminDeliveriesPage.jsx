@@ -9,6 +9,7 @@ const STATUS_CONFIG = {
   processing: { label: "Processing", className: "processing" },
   "in-transit": { label: "In Transit", className: "in-transit" },
   delivered: { label: "Delivered", className: "delivered" },
+  cancelled: { label: "Cancelled", className: "cancelled" },
 };
 
 function formatCurrency(value) {
@@ -41,11 +42,11 @@ export default function AdminDeliveriesPage() {
   const counts = useMemo(() => {
     return deliveries.reduce(
       (acc, delivery) => {
-        const status = delivery.status ?? "processing";
+        const status = delivery.order_status === "cancelled" ? "cancelled" : (delivery.status ?? "processing");
         acc[status] = (acc[status] ?? 0) + 1;
         return acc;
       },
-      { processing: 0, "in-transit": 0, delivered: 0 }
+      { processing: 0, "in-transit": 0, delivered: 0, cancelled: 0 }
     );
   }, [deliveries]);
 
@@ -142,7 +143,7 @@ export default function AdminDeliveriesPage() {
       </header>
 
       <section className="delivery-summary" aria-label="Delivery status summary">
-        {STATUS_OPTIONS.map((status) => (
+        {[...STATUS_OPTIONS, "cancelled"].map((status) => (
           <div className="delivery-summary-item" key={status}>
             <span>{STATUS_CONFIG[status].label}</span>
             <strong>{counts[status] ?? 0}</strong>
@@ -157,7 +158,8 @@ export default function AdminDeliveriesPage() {
       ) : (
         <section className="delivery-admin-list">
           {deliveries.map((delivery) => {
-            const status = delivery.status ?? "processing";
+            const isCancelled = delivery.order_status === "cancelled";
+            const status = isCancelled ? "cancelled" : (delivery.status ?? "processing");
             const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.processing;
             const items = (delivery.items ?? []).filter((item) => item.name);
 
@@ -196,18 +198,20 @@ export default function AdminDeliveriesPage() {
                   <span className={`delivery-status-pill ${config.className}`}>
                     {config.label}
                   </span>
-                  <select
-                    value={status}
-                    disabled={savingId === delivery.delivery_id}
-                    onChange={(event) => updateStatus(delivery.delivery_id, event.target.value)}
-                    aria-label={`Delivery status for order ${delivery.order_id}`}
-                  >
-                    {STATUS_OPTIONS.map((option) => (
-                      <option value={option} key={option}>
-                        {STATUS_CONFIG[option].label}
-                      </option>
-                    ))}
-                  </select>
+                  {!isCancelled && (
+                    <select
+                      value={status}
+                      disabled={savingId === delivery.delivery_id}
+                      onChange={(event) => updateStatus(delivery.delivery_id, event.target.value)}
+                      aria-label={`Delivery status for order ${delivery.order_id}`}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <option value={option} key={option}>
+                          {STATUS_CONFIG[option].label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
 
                 {items.length > 0 && (

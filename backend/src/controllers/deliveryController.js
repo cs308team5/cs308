@@ -15,6 +15,19 @@ export const updateDeliveryStatus = async (req, res) => {
   const isCompleted = status === "delivered";
 
   try {
+    const orderCheck = await pool.query(
+      `SELECT o.status FROM deliveries d JOIN orders o ON d.order_id = o.order_id WHERE d.delivery_id = $1`,
+      [deliveryId]
+    );
+
+    if (orderCheck.rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Delivery not found." });
+    }
+
+    if (orderCheck.rows[0].status === "cancelled") {
+      return res.status(409).json({ success: false, message: "Cannot update status of a cancelled order." });
+    }
+
     const result = await pool.query(
       `
       UPDATE deliveries
@@ -58,6 +71,7 @@ export const getAllDeliveries = async (req, res) => {
         d.delivery_address,
         d.status,
         d.is_completed,
+        o.status AS order_status,
         o.total_price,
         o.created_at,
         COALESCE(c.username, c.name, 'Customer') AS customer_name,
