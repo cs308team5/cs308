@@ -127,17 +127,19 @@ export async function fetchCart(userId) {
   return (result.data ?? []).map(row => {
     const originalPrice = Number(row.price);
     const discountedPrice = row.discounted_price != null ? Number(row.discounted_price) : null;
+    const quantity = Number(row.quantity ?? 0);
+    const stockQuantity = Number(row.stock_quantity ?? 0);
     return {
       id:             row.id,
       product_id:     row.product_id,
-      quantity:       row.quantity,
+      quantity,
       name:           row.name,
       description:    row.description,
       originalPrice,
       price:          discountedPrice ?? originalPrice,
       discountedPrice,
       image:          row.image_url,
-      stock_quantity: row.stock_quantity,
+      stock_quantity: stockQuantity,
     };
   });
 }
@@ -274,7 +276,11 @@ export async function mergeGuestCartOnLogin(userId) {
 // Local cart for quests
 
 export function getGuestCart() {
-  return JSON.parse(localStorage.getItem("guest_cart") ?? "[]");
+  return JSON.parse(localStorage.getItem("guest_cart") ?? "[]").map((item) => ({
+    ...item,
+    quantity: Number(item.quantity ?? 0),
+    stock_quantity: Number(item.stock_quantity ?? 0),
+  }));
 }
 
 export function saveGuestCart(cart) {
@@ -288,7 +294,7 @@ export function addToGuestCart(product) {
 
   if (existing) {
 
-    existing.quantity += 1;
+    existing.quantity = Number(existing.quantity || 0) + 1;
   }
   else {
     const originalPrice = Number(String(product.price).replace("$", ""));

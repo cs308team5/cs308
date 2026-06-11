@@ -28,8 +28,11 @@ export default function CartPage() {
   }, []);
 
   const updateQuantity = async (item, change) => {
-    if (change > 0 && item.quantity >= item.stock_quantity) return;
-    const newQty = Math.max(1, item.quantity + change);
+    const currentQuantity = Number(item.quantity || 0);
+    const stockQuantity = Number(item.stock_quantity || 0);
+
+    if (change > 0 && currentQuantity >= stockQuantity) return;
+    const newQty = Math.max(1, currentQuantity + change);
 
     if (!user) {
       const updated = cart.map(c =>
@@ -58,7 +61,7 @@ export default function CartPage() {
   };
 
   const subtotal = cart.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0),
     0
   );
 
@@ -84,7 +87,7 @@ export default function CartPage() {
               <div className="quantity">
                 <button onClick={() => updateQuantity(item, -1)}>-</button>
                 <span>{item.quantity}</span>
-                <button className={item.quantity >= item.stock_quantity ? "stock-reached" : ""} onClick={() => updateQuantity(item, 1)} disabled={item.quantity >= item.stock_quantity}>{item.quantity >= item.stock_quantity ? "Stock Reached" : "+"}</button>
+                <button className={Number(item.quantity || 0) >= Number(item.stock_quantity || 0) ? "stock-reached" : ""} onClick={() => updateQuantity(item, 1)} disabled={Number(item.quantity || 0) >= Number(item.stock_quantity || 0)}>{Number(item.quantity || 0) >= Number(item.stock_quantity || 0) ? "Stock Reached" : "+"}</button>
               </div>
             </div>
 
@@ -95,12 +98,12 @@ export default function CartPage() {
               {item.discountedPrice ? (
                 <div style={{ textAlign: "right" }}>
                   <span style={{ textDecoration: "line-through", opacity: 0.45, fontSize: "0.85em", marginRight: 6 }}>
-                    ${(item.originalPrice * item.quantity).toFixed(2)}
+                    ${(Number(item.originalPrice || 0) * Number(item.quantity || 0)).toFixed(2)}
                   </span>
-                  <h3 style={{ margin: 0, color: "#dc2626" }}>${(item.price * item.quantity).toFixed(2)}</h3>
+                  <h3 style={{ margin: 0, color: "#dc2626" }}>${(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}</h3>
                 </div>
               ) : (
-                <h3>${(item.price * item.quantity).toFixed(2)}</h3>
+                <h3>${(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}</h3>
               )}
             </div>
           </div>

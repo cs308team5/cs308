@@ -61,7 +61,7 @@ export default function ProductDetailsPage() {
 
   const averageLabel =
     reviewStats.count > 0 ? reviewStats.average.toFixed(1) : "No ratings";
-  const cartQuantity = cartItem?.quantity ?? 0;
+  const cartQuantity = Number(cartItem?.quantity ?? 0);
   const stockQuantity = Number(product.stock ?? cartItem?.stock_quantity ?? 0);
   const isOutOfStock = !product.inStock || stockQuantity <= 0;
   const isAtMaxStock = stockQuantity > 0 && cartQuantity >= stockQuantity;
@@ -73,11 +73,12 @@ export default function ProductDetailsPage() {
     );
 
     if (existingItem) {
-      if (existingItem.quantity >= stockQuantity) return;
+      const existingQuantity = Number(existingItem.quantity || 0);
+      if (existingQuantity >= stockQuantity) return;
 
       const updatedCart = guestCart.map((item) =>
         String(item.product_id) === String(id)
-          ? { ...item, quantity: item.quantity + 1 }
+          ? { ...item, quantity: Number(item.quantity || 0) + 1 }
           : item,
       );
       saveGuestCart(updatedCart);
@@ -113,7 +114,7 @@ export default function ProductDetailsPage() {
 
       await addToCart(user.customer_id, id);
       if (cartItem) {
-        setCartItem({ ...cartItem, quantity: cartItem.quantity + 1 });
+        setCartItem({ ...cartItem, quantity: Number(cartItem.quantity || 0) + 1 });
       } else {
         const cart = await fetchCart(user.customer_id);
         const existingItem =
@@ -128,7 +129,7 @@ export default function ProductDetailsPage() {
   const handleQuantityChange = async (change) => {
     if (!cartItem) return;
 
-    const nextQuantity = cartItem.quantity + change;
+    const nextQuantity = Number(cartItem.quantity || 0) + change;
 
     try {
       if (!user) {
