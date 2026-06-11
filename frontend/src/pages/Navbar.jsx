@@ -138,11 +138,11 @@ function getInitials(name = "") {
 async function readCartCount(user) {
     if (!user?.customer_id) {
         const guestCart = JSON.parse(localStorage.getItem("guest_cart") ?? "[]");
-        return guestCart.reduce((s, i) => s + i.quantity, 0);
+        return guestCart.reduce((s, i) => s + Number(i.quantity || 0), 0);
     }
     try {
         const items = await fetchCart(user.customer_id);
-        return items.reduce((s, i) => s + i.quantity, 0);
+        return items.reduce((s, i) => s + Number(i.quantity || 0), 0);
     } catch {
         return 0;
     }
@@ -188,35 +188,6 @@ export function GlobalNavbar() {
             <h1 className="navbar-logo">THE DARE</h1>
 
             <div className="navbar-right">
-
-                {user?.role === "sales_manager" ? (
-                    <>
-                        <button
-                            type="button"
-                            className="navbar-text-btn"
-                            onClick={() => navigate("/sales-manager")}
-                            title="Refund requests"
-                        >
-                            Refunds
-                        </button>
-                        <button
-                            type="button"
-                            className="navbar-text-btn"
-                            onClick={() => navigate("/sales-manager/discounts")}
-                            title="Discounts"
-                        >
-                            Discounts
-                        </button>
-                        <button
-                            type="button"
-                            className="navbar-text-btn"
-                            onClick={() => navigate("/sales/reports")}
-                            title="Sales reports"
-                        >
-                            Reports
-                        </button>
-                    </>
-                ) : null}
 
                 <button className="navbar-cart-btn" onClick={() => navigate("/cart")}>
                     <CartIcon />
