@@ -198,7 +198,7 @@ export default function MyOrdersPage() {
             const status = order.delivery_status ?? "processing";
             const config = STATUS_CONFIG[status] ?? STATUS_CONFIG.processing;
             const isOpen = expanded[order.order_id];
-            const eligibleForRefund = isWithin30Days(order.created_at);
+            const eligibleForRefund = status === "delivered" && isWithin30Days(order.created_at);
             const canCancel = status === "processing";
             const date = new Date(order.created_at).toLocaleDateString("en-US", {
               year: "numeric",
@@ -295,6 +295,8 @@ export default function MyOrdersPage() {
                               >
                                 Request Refund
                               </button>
+                            ) : status !== "delivered" ? (
+                              <span className="refund-expired">Available after delivery</span>
                             ) : (
                               <span className="refund-expired">Refund period expired</span>
                             )}

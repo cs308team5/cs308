@@ -31,11 +31,21 @@ export async function requestRefund(req, res) {
 
   try {
     const orderResult = await pool.query(
-      "SELECT order_id, created_at FROM orders WHERE order_id = $1 AND customer_id = $2",
+      `SELECT o.order_id, o.created_at, COALESCE(d.status, o.status, 'processing') AS delivery_status
+       FROM orders o
+       LEFT JOIN deliveries d ON d.order_id = o.order_id
+       WHERE o.order_id = $1 AND o.customer_id = $2`,
       [order_id, customerId]
     );
     if (orderResult.rows.length === 0) {
       return res.status(404).json({ success: false, message: "Order not found." });
+    }
+
+    if (orderResult.rows[0].delivery_status !== "delivered") {
+      return res.status(400).json({
+        success: false,
+        message: "Refund requests are only available after delivery. Please cancel processing orders instead.",
+      });
     }
 
     const daysSincePurchase =

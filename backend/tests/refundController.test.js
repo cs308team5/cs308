@@ -65,7 +65,7 @@ describe("refundController", () => {
     });
 
     test("returns 400 when order is older than 30 days (30-day rule)", async () => {
-      pool.query = async () => ({ rows: [{ order_id: 1, created_at: OLD_DATE }] });
+      pool.query = async () => ({ rows: [{ order_id: 1, created_at: OLD_DATE, delivery_status: "delivered" }] });
 
       const req = createMockReq({
         body: { order_id: 1, product_id: "prod-1" },
@@ -79,11 +79,28 @@ describe("refundController", () => {
       assert.match(res.body.message, /30 days/i);
     });
 
+    test("returns 400 when the order has not been delivered yet", async () => {
+      pool.query = async () => ({
+        rows: [{ order_id: 1, created_at: RECENT_DATE, delivery_status: "processing" }],
+      });
+
+      const req = createMockReq({
+        body: { order_id: 1, product_id: "prod-1" },
+        customer: { customerId: "cust-1" },
+      });
+      const res = createMockRes();
+
+      await requestRefund(req, res);
+
+      assert.equal(res.statusCode, 400);
+      assert.match(res.body.message, /after delivery/i);
+    });
+
     test("returns 404 when product is not in the order", async () => {
       let call = 0;
       pool.query = async () => {
         call++;
-        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE }] };
+        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE, delivery_status: "delivered" }] };
         return { rows: [] }; // product not in order
       };
 
@@ -103,7 +120,7 @@ describe("refundController", () => {
       let call = 0;
       pool.query = async () => {
         call++;
-        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE }] };
+        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE, delivery_status: "delivered" }] };
         if (call === 2) return { rows: [{ quantity: 1, unit_price: "50.00" }] };
         return { rows: [{ refund_id: 99 }] }; // duplicate found
       };
@@ -133,7 +150,7 @@ describe("refundController", () => {
       let call = 0;
       pool.query = async () => {
         call++;
-        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE }] };
+        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE, delivery_status: "delivered" }] };
         if (call === 2) return { rows: [{ quantity: 2, unit_price: "49.99" }] };
         if (call === 3) return { rows: [] }; // no existing refund
         return { rows: [newRefund] };        // insert result
@@ -158,7 +175,7 @@ describe("refundController", () => {
       pool.query = async (sql, params) => {
         queries.push({ sql, params });
         call++;
-        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE }] };
+        if (call === 1) return { rows: [{ order_id: 1, created_at: RECENT_DATE, delivery_status: "delivered" }] };
         if (call === 2) return { rows: [{ quantity: 1, unit_price: "29.99" }] }; // discounted price
         if (call === 3) return { rows: [] };
         return { rows: [{ refund_id: 5, unit_price: "29.99" }] };
