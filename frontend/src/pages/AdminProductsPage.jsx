@@ -268,7 +268,6 @@ export default function AdminProductsPage() {
             <div className="form-grid">
                 {[
                     { name: "name", placeholder: "Product Name *" },
-                    { name: "category", placeholder: "Category *" },
                     ...(!editingId ? [{ name: "price", placeholder: "Price *", type: "number" }] : []),
                     { name: "stock_quantity", placeholder: "Stock Quantity", type: "number" },
                     { name: "image_url", placeholder: "Image URL" },
@@ -287,6 +286,17 @@ export default function AdminProductsPage() {
                         onChange={handleFormChange}
                     />
                 ))}
+                <select
+                    className="form-input"
+                    name="category"
+                    value={form.category}
+                    onChange={handleFormChange}
+                >
+                    <option value="">Select Category *</option>
+                    {categories.map((category) => (
+                        <option value={category} key={category}>{category}</option>
+                    ))}
+                </select>
                 <textarea
                     className="form-input form-textarea"
                     name="description"
